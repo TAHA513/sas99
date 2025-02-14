@@ -211,6 +211,79 @@ export default function SettingsPage() {
             <h1 className="text-3xl font-bold">إعدادات النظام</h1>
             <p className="text-muted-foreground mt-2">إدارة إعدادات المتجر والتكاملات</p>
           </div>
+
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="h-4 w-4 ml-2" />
+                إضافة حساب جديد
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>إضافة حساب تواصل اجتماعي</DialogTitle>
+                <DialogDescription>
+                  قم بإدخال معلومات الحساب للربط مع النظام
+                </DialogDescription>
+              </DialogHeader>
+
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit((data) => accountMutation.mutate(data))} className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="platform"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>المنصة</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="اختر المنصة" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="facebook">فيسبوك</SelectItem>
+                            <SelectItem value="instagram">انستغرام</SelectItem>
+                            <SelectItem value="snapchat">سناب شات</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="username"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>اسم المستخدم</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="password"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>كلمة المرور</FormLabel>
+                        <FormControl>
+                          <Input type="password" {...field} />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+
+                  <Button type="submit" disabled={accountMutation.isPending} className="w-full">
+                    {accountMutation.isPending ? "جاري الحفظ..." : "حفظ الحساب"}
+                  </Button>
+                </form>
+              </Form>
+            </DialogContent>
+          </Dialog>
         </div>
 
         <Tabs defaultValue="store" className="space-y-6">
@@ -441,82 +514,6 @@ export default function SettingsPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-6">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-medium">الحسابات النشطة</h3>
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button>
-                          <Plus className="h-4 w-4 ml-2" />
-                          إضافة حساب جديد
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent>
-                        <DialogHeader>
-                          <DialogTitle>إضافة حساب تواصل اجتماعي</DialogTitle>
-                          <DialogDescription>
-                            قم بإدخال معلومات الحساب للربط مع النظام
-                          </DialogDescription>
-                        </DialogHeader>
-
-                        <Form {...form}>
-                          <form onSubmit={form.handleSubmit((data) => accountMutation.mutate(data))} className="space-y-4">
-                            <FormField
-                              control={form.control}
-                              name="platform"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>المنصة</FormLabel>
-                                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                    <FormControl>
-                                      <SelectTrigger>
-                                        <SelectValue placeholder="اختر المنصة" />
-                                      </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                      <SelectItem value="facebook">فيسبوك</SelectItem>
-                                      <SelectItem value="instagram">انستغرام</SelectItem>
-                                      <SelectItem value="snapchat">سناب شات</SelectItem>
-                                    </SelectContent>
-                                  </Select>
-                                </FormItem>
-                              )}
-                            />
-
-                            <FormField
-                              control={form.control}
-                              name="username"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>اسم المستخدم</FormLabel>
-                                  <FormControl>
-                                    <Input {...field} />
-                                  </FormControl>
-                                </FormItem>
-                              )}
-                            />
-
-                            <FormField
-                              control={form.control}
-                              name="password"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>كلمة المرور</FormLabel>
-                                  <FormControl>
-                                    <Input type="password" {...field} />
-                                  </FormControl>
-                                </FormItem>
-                              )}
-                            />
-
-                            <Button type="submit" disabled={accountMutation.isPending} className="w-full">
-                              {accountMutation.isPending ? "جاري الحفظ..." : "حفظ الحساب"}
-                            </Button>
-                          </form>
-                        </Form>
-                      </DialogContent>
-                    </Dialog>
-                  </div>
-
                   <div className="grid gap-4">
                     {socialAccounts?.map((account) => (
                       <div key={account.id} className="flex items-center justify-between p-4 border rounded-lg">
