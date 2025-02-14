@@ -221,8 +221,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/theme", async (req, res) => {
     const { primary, variant, radius } = req.body;
     try {
-      const fs = require('fs/promises');
-      const path = require('path');
+      const fs = await import('fs/promises');
+      const path = await import('path');
 
       // Read current theme
       const themePath = path.join(process.cwd(), 'theme.json');
