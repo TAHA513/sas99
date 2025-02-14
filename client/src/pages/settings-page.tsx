@@ -27,7 +27,40 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
-// ... (rest of the imports and type definitions remain unchanged)
+// إعداد مخططات التحقق (Validation Schemas)
+const whatsappSchema = z.object({
+  WHATSAPP_API_TOKEN: z.string().min(1, "رمز الوصول مطلوب"),
+  WHATSAPP_BUSINESS_PHONE_NUMBER: z.string().min(1, "رقم الهاتف مطلوب"),
+});
+
+const googleCalendarSchema = z.object({
+  GOOGLE_CLIENT_ID: z.string().min(1, "معرف العميل مطلوب"),
+  GOOGLE_CLIENT_SECRET: z.string().min(1, "الرمز السري مطلوب"),
+});
+
+const socialMediaSchema = z.object({
+  FACEBOOK_APP_ID: z.string().min(1, "معرف التطبيق مطلوب"),
+  FACEBOOK_APP_SECRET: z.string().min(1, "الرمز السري مطلوب"),
+  INSTAGRAM_ACCESS_TOKEN: z.string().min(1, "رمز الوصول مطلوب"),
+});
+
+const socialMediaAccountSchema = z.object({
+  platform: z.enum(['facebook', 'instagram', 'snapchat']),
+  username: z.string().min(1, "اسم المستخدم مطلوب"),
+  password: z.string().min(1, "كلمة المرور مطلوبة"),
+});
+
+type WhatsAppSettings = z.infer<typeof whatsappSchema>;
+type GoogleCalendarSettings = z.infer<typeof googleCalendarSchema>;
+type SocialMediaSettings = z.infer<typeof socialMediaSchema>;
+type SocialMediaAccountFormData = z.infer<typeof socialMediaAccountSchema>;
+
+interface InsertThemeSetting {
+  theme: "light" | "dark" | "system";
+  font: string;
+  fontSize: "small" | "medium" | "large";
+  direction: "rtl" | "ltr";
+}
 
 const CustomCard = ({ className, ...props }: CardComponentProps) => (
   <CardComponent className={cn("w-full", className)} {...props} />
