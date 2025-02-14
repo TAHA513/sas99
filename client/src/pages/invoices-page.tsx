@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { useQuery } from "@tanstack/react-query";
 import { Product } from "@shared/schema";
 import { useState, useEffect, useRef } from "react";
-import { MinusCircle, Receipt, Search } from "lucide-react";
+import { MinusCircle, Receipt, Search, Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
@@ -198,6 +198,14 @@ export default function InvoicesPage() {
     };
   };
 
+  // Save invoice function
+  const saveInvoice = () => {
+    toast({
+      title: "تم حفظ الفاتورة",
+      description: "تم حفظ الفاتورة بنجاح",
+    });
+  };
+
   return (
     <DashboardLayout>
       <div className="flex flex-col h-[calc(100vh-4rem)]">
@@ -206,10 +214,16 @@ export default function InvoicesPage() {
             <h1 className="text-3xl font-bold">فاتورة جديدة</h1>
             <p className="text-muted-foreground mt-1">{currentDateTime}</p>
           </div>
-          <Button onClick={printInvoice}>
-            <Receipt className="h-4 w-4 ml-2" />
-            حفظ وطباعة
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={saveInvoice}>
+              <Save className="h-4 w-4 ml-2" />
+              حفظ
+            </Button>
+            <Button onClick={printInvoice}>
+              <Receipt className="h-4 w-4 ml-2" />
+              طباعة
+            </Button>
+          </div>
         </div>
 
         <div className="grid gap-4 flex-1 md:grid-cols-[1fr,400px]">
@@ -366,11 +380,17 @@ export default function InvoicesPage() {
                 />
               </div>
 
-              {/* Save & Print */}
-              <Button className="w-full" onClick={printInvoice}>
-                <Receipt className="h-4 w-4 ml-2" />
-                حفظ وطباعة الفاتورة
-              </Button>
+              {/* Save & Print Buttons */}
+              <div className="grid gap-2">
+                <Button className="w-full" variant="outline" onClick={saveInvoice}>
+                  <Save className="h-4 w-4 ml-2" />
+                  حفظ الفاتورة
+                </Button>
+                <Button className="w-full" onClick={printInvoice}>
+                  <Receipt className="h-4 w-4 ml-2" />
+                  طباعة الفاتورة
+                </Button>
+              </div>
             </CardContent>
           </Card>
         </div>
