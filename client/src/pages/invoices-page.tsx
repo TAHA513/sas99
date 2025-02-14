@@ -6,11 +6,12 @@ import { Label } from "@/components/ui/label";
 import { useQuery } from "@tanstack/react-query";
 import { Product, StoreSetting } from "@shared/schema";
 import { useState, useEffect, useRef } from "react";
-import { MinusCircle, Receipt, Search, Save } from "lucide-react";
+import { MinusCircle, Receipt, Search, Save, FileSpreadsheet } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
 import { queryClient, apiRequest } from "@/lib/queryClient";
+import * as XLSX from 'xlsx';
 
 type InvoiceItem = {
   productId: number;
@@ -325,6 +326,77 @@ export default function InvoicesPage() {
     }
   };
 
+  // Add new function to export to Excel
+  const exportToExcel = () => {
+    const workbook = XLSX.utils.book_new();
+
+    // Convert items to Excel format
+    const excelData = items.map(item => ({
+      'اسم المنتج': item.name,
+      'الكمية': item.quantity,
+      'السعر': item.price,
+      'المجموع': item.total
+    }));
+
+    // Add summary row
+    excelData.push({
+      'اسم المنتج': 'المجموع الفرعي',
+      'الكمية': '',
+      'السعر': '',
+      'المجموع': subtotal
+    });
+
+    if (discount > 0) {
+      excelData.push({
+        'اسم المنتج': `الخصم (${discount}%)`,
+        'الكمية': '',
+        'السعر': '',
+        'المجموع': discountAmount
+      });
+    }
+
+    excelData.push({
+      'اسم المنتج': 'الإجمالي النهائي',
+      'الكمية': '',
+      'السعر': '',
+      'المجموع': finalTotal
+    });
+
+    // Create worksheet
+    const worksheet = XLSX.utils.json_to_sheet(excelData, { RTL: true });
+
+    // Set column widths
+    const colWidths = [
+      { wch: 30 }, // Product name
+      { wch: 10 }, // Quantity
+      { wch: 10 }, // Price
+      { wch: 10 }, // Total
+    ];
+    worksheet['!cols'] = colWidths;
+
+    // Add the worksheet to workbook
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'الفاتورة');
+
+    // Generate Excel file
+    const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+    const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+
+    // Create download link
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `فاتورة_${format(new Date(), 'yyyy-MM-dd_HH-mm')}.xlsx`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    toast({
+      title: "تم تصدير الفاتورة",
+      description: "تم تصدير الفاتورة بنجاح إلى ملف Excel",
+    });
+  };
+
   return (
     <DashboardLayout>
       <div className="flex flex-col h-[calc(100vh-4rem)]">
@@ -334,6 +406,10 @@ export default function InvoicesPage() {
             <p className="text-muted-foreground mt-1">{currentDateTime}</p>
           </div>
           <div className="flex gap-2">
+            <Button variant="outline" onClick={exportToExcel} disabled={items.length === 0}>
+              <FileSpreadsheet className="h-4 w-4 ml-2" />
+              تصدير Excel
+            </Button>
             <Button variant="outline" onClick={saveInvoice}>
               <Save className="h-4 w-4 ml-2" />
               حفظ فقط
