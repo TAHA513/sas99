@@ -1,5 +1,5 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
 import { MarketingCampaign } from "@shared/schema";
 
 interface CampaignStatsProps {
@@ -10,6 +10,7 @@ export function CampaignStats({ campaigns }: CampaignStatsProps) {
   // تحليل البيانات للمخططات
   const activeCampaigns = campaigns?.filter(c => c.status === 'active') || [];
   const totalBudget = activeCampaigns.reduce((sum, c) => sum + (c.budget || 0), 0);
+  const totalMessages = campaigns.reduce((sum, c) => sum + (c.messageCount || 0), 0);
 
   const platformData = activeCampaigns.reduce((acc, campaign) => {
     campaign.platforms?.forEach(platform => {
@@ -31,6 +32,15 @@ export function CampaignStats({ campaigns }: CampaignStatsProps) {
   const campaignPerformance = activeCampaigns.map(campaign => ({
     name: campaign.name,
     budget: (campaign.budget || 0) / 100,
+    messages: campaign.messageCount || 0
+  }));
+
+  const messageStats = campaigns.map(campaign => ({
+    name: campaign.name,
+    messages: campaign.messageCount || 0,
+    platform: campaign.type === 'facebook' ? 'فيسبوك' :
+              campaign.type === 'instagram' ? 'انستغرام' :
+              campaign.type === 'snapchat' ? 'سناب شات' : campaign.type
   }));
 
   return (
@@ -46,14 +56,14 @@ export function CampaignStats({ campaigns }: CampaignStatsProps) {
         </CardContent>
       </Card>
 
-      {/* عدد الحملات النشطة */}
+      {/* إجمالي الرسائل المستلمة */}
       <Card>
         <CardHeader>
-          <CardTitle>الحملات النشطة</CardTitle>
-          <CardDescription>عدد الحملات الإعلانية النشطة حالياً</CardDescription>
+          <CardTitle>إجمالي التفاعلات</CardTitle>
+          <CardDescription>عدد الرسائل والتفاعلات المستلمة من جميع الحملات</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="text-3xl font-bold">{activeCampaigns.length}</div>
+          <div className="text-3xl font-bold">{totalMessages.toLocaleString()}</div>
         </CardContent>
       </Card>
 
@@ -88,6 +98,38 @@ export function CampaignStats({ campaigns }: CampaignStatsProps) {
             ) : (
               <div className="flex items-center justify-center h-full text-muted-foreground">
                 لا توجد حملات نشطة حالياً
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* عدد الرسائل لكل حملة */}
+      <Card className="col-span-2">
+        <CardHeader>
+          <CardTitle>عدد التفاعلات لكل حملة</CardTitle>
+          <CardDescription>إحصائيات التفاعلات والرسائل المستلمة لكل حملة</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="h-[300px]">
+            {messageStats.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={messageStats}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis />
+                  <Tooltip 
+                    formatter={(value, name) => [
+                      `${value} رسالة`,
+                      name === 'messages' ? 'عدد التفاعلات' : name
+                    ]}
+                  />
+                  <Bar dataKey="messages" fill="#10B981" />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-full text-muted-foreground">
+                لا توجد بيانات متاحة
               </div>
             )}
           </div>

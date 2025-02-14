@@ -58,6 +58,7 @@ export const marketingCampaigns = pgTable("marketing_campaigns", {
   socialMediaSettings: text("social_media_settings"), // JSON string for platform-specific settings
   targetAudience: text("target_audience"), // JSON string for targeting options
   budget: integer("budget"), // Campaign budget in cents
+  messageCount: integer("message_count").notNull().default(0), // Number of messages/interactions received
   adCreatives: text("ad_creatives").array(), // Array of ad creative URLs
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),

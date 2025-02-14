@@ -116,6 +116,7 @@ export class MemStorage implements IStorage {
       content: "اكتشف عروضنا المميزة لموسم الصيف! خصومات تصل إلى 50%",
       platforms: ["facebook"],
       budget: 50000, // 500 SAR
+      messageCount: 245, // تفاعلات وردود
       targetAudience: JSON.stringify({
         age: "18-35",
         gender: "all",
@@ -137,6 +138,7 @@ export class MemStorage implements IStorage {
       content: "استعد لشهر رمضان مع أفضل العروض والخصومات",
       platforms: ["instagram"],
       budget: 100000, // 1000 SAR
+      messageCount: 412, // تفاعلات وردود
       targetAudience: JSON.stringify({
         age: "25-55",
         gender: "all",
@@ -158,6 +160,7 @@ export class MemStorage implements IStorage {
       content: "عروض حصرية لمتابعينا على سناب شات",
       platforms: ["snapchat"],
       budget: 30000, // 300 SAR
+      messageCount: 178, // تفاعلات وردود
       targetAudience: JSON.stringify({
         age: "16-24",
         gender: "all",
