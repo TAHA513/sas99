@@ -37,6 +37,14 @@ export const staff = pgTable("staff", {
   workHours: text("work_hours").array(),
 });
 
+export const settings = pgTable("settings", {
+  id: serial("id").primaryKey(),
+  key: text("key").notNull().unique(),
+  value: text("value").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
 // Schema validation
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
@@ -47,6 +55,10 @@ export const insertUserSchema = createInsertSchema(users).pick({
 export const insertCustomerSchema = createInsertSchema(customers);
 export const insertAppointmentSchema = createInsertSchema(appointments);
 export const insertStaffSchema = createInsertSchema(staff);
+export const insertSettingSchema = createInsertSchema(settings).pick({
+  key: true,
+  value: true,
+});
 
 // Types
 export type User = typeof users.$inferSelect;
@@ -57,3 +69,5 @@ export type Appointment = typeof appointments.$inferSelect;
 export type InsertAppointment = z.infer<typeof insertAppointmentSchema>;
 export type Staff = typeof staff.$inferSelect;
 export type InsertStaff = z.infer<typeof insertStaffSchema>;
+export type Setting = typeof settings.$inferSelect;
+export type InsertSetting = z.infer<typeof insertSettingSchema>;

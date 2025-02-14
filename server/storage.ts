@@ -2,6 +2,14 @@ import { User, Customer, Appointment, Staff, InsertUser, InsertCustomer, InsertA
 import session from "express-session";
 import createMemoryStore from "memorystore";
 
+interface Setting {
+    id: number;
+    key: string;
+    value: string;
+    createdAt: Date;
+    updatedAt: Date;
+}
+
 const MemoryStore = createMemoryStore(session);
 
 export interface IStorage {
@@ -31,6 +39,10 @@ export interface IStorage {
   updateStaff(id: number, staff: Partial<InsertStaff>): Promise<Staff>;
   deleteStaff(id: number): Promise<void>;
 
+  // Settings operations
+  getSetting(key: string): Promise<Setting | undefined>;
+  getSettings(): Promise<Setting[]>;
+  setSetting(key: string, value: string): Promise<Setting>;
   sessionStore: session.Store;
 }
 
@@ -40,6 +52,7 @@ export class MemStorage implements IStorage {
   private appointments: Map<number, Appointment>;
   private staff: Map<number, Staff>;
   private currentId: number;
+  private settings: Map<string, Setting>;
   sessionStore: session.Store;
 
   constructor() {
@@ -47,6 +60,7 @@ export class MemStorage implements IStorage {
     this.customers = new Map();
     this.appointments = new Map();
     this.staff = new Map();
+    this.settings = new Map();
     this.currentId = 1;
     this.sessionStore = new MemoryStore({
       checkPeriod: 86400000,
@@ -82,7 +96,13 @@ export class MemStorage implements IStorage {
 
   async createCustomer(customer: InsertCustomer): Promise<Customer> {
     const id = this.currentId++;
-    const newCustomer: Customer = { ...customer, id, createdAt: new Date() };
+    const newCustomer: Customer = {
+      ...customer,
+      id,
+      email: customer.email || null,
+      notes: customer.notes || null,
+      createdAt: new Date()
+    };
     this.customers.set(id, newCustomer);
     return newCustomer;
   }
@@ -110,7 +130,12 @@ export class MemStorage implements IStorage {
 
   async createAppointment(appointment: InsertAppointment): Promise<Appointment> {
     const id = this.currentId++;
-    const newAppointment: Appointment = { ...appointment, id };
+    const newAppointment: Appointment = {
+      ...appointment,
+      id,
+      status: appointment.status || 'scheduled',
+      notes: appointment.notes || null
+    };
     this.appointments.set(id, newAppointment);
     return newAppointment;
   }
@@ -138,7 +163,13 @@ export class MemStorage implements IStorage {
 
   async createStaff(staff: InsertStaff): Promise<Staff> {
     const id = this.currentId++;
-    const newStaff: Staff = { ...staff, id };
+    const newStaff: Staff = {
+      ...staff,
+      id,
+      specialization: staff.specialization || null,
+      workDays: staff.workDays || null,
+      workHours: staff.workHours || null
+    };
     this.staff.set(id, newStaff);
     return newStaff;
   }
@@ -153,6 +184,27 @@ export class MemStorage implements IStorage {
 
   async deleteStaff(id: number): Promise<void> {
     this.staff.delete(id);
+  }
+
+  // Settings operations
+  async getSetting(key: string): Promise<Setting | undefined> {
+    return this.settings.get(key);
+  }
+
+  async getSettings(): Promise<Setting[]> {
+    return Array.from(this.settings.values());
+  }
+
+  async setSetting(key: string, value: string): Promise<Setting> {
+    const setting: Setting = {
+      id: this.currentId++,
+      key,
+      value,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.settings.set(key, setting);
+    return setting;
   }
 }
 

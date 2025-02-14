@@ -4,6 +4,7 @@ import {
   Users,
   Calendar,
   UserCog,
+  Settings,
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
@@ -28,6 +29,11 @@ const navItems = [
     title: "الموظفين",
     href: "/staff",
     icon: UserCog,
+  },
+  {
+    title: "الإعدادات",
+    href: "/settings",
+    icon: Settings,
   },
 ];
 

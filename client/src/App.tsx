@@ -7,6 +7,7 @@ import DashboardPage from "@/pages/dashboard-page";
 import CustomersPage from "@/pages/customers-page";
 import AppointmentsPage from "@/pages/appointments-page";
 import StaffPage from "@/pages/staff-page";
+import SettingsPage from "@/pages/settings-page";
 
 function Router() {
   return (
@@ -15,6 +16,7 @@ function Router() {
       <Route path="/customers" component={CustomersPage} />
       <Route path="/appointments" component={AppointmentsPage} />
       <Route path="/staff" component={StaffPage} />
+      <Route path="/settings" component={SettingsPage} />
       <Route component={NotFound} />
     </Switch>
   );

@@ -1,7 +1,8 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertCustomerSchema, insertAppointmentSchema, insertStaffSchema } from "@shared/schema";
+import { insertCustomerSchema, insertAppointmentSchema, insertStaffSchema, insertSettingSchema } from "@shared/schema";
+import { notificationService } from './services/notification-service';
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Customer routes
@@ -38,13 +39,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/appointments", async (req, res) => {
     const parsed = insertAppointmentSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json(parsed.error);
+
     const appointment = await storage.createAppointment(parsed.data);
+
+    // Get customer and staff details for notifications
+    const customer = await storage.getCustomer(appointment.customerId);
+    const staffMember = await storage.getStaffMember(appointment.staffId);
+
+    if (customer && staffMember) {
+      // Send notifications asynchronously
+      notificationService.handleAppointmentCreated(
+        appointment,
+        customer,
+        staffMember
+      ).catch(console.error);
+    }
+
     res.status(201).json(appointment);
   });
 
   app.patch("/api/appointments/:id", async (req, res) => {
     const id = parseInt(req.params.id);
     const appointment = await storage.updateAppointment(id, req.body);
+
+    // Get customer and staff details for notifications
+    const customer = await storage.getCustomer(appointment.customerId);
+    const staffMember = await storage.getStaffMember(appointment.staffId);
+
+    if (customer && staffMember) {
+      // Send notifications asynchronously
+      notificationService.handleAppointmentUpdated(
+        appointment,
+        customer,
+        staffMember
+      ).catch(console.error);
+    }
+
     res.json(appointment);
   });
 
@@ -77,6 +107,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const id = parseInt(req.params.id);
     await storage.deleteStaff(id);
     res.sendStatus(204);
+  });
+
+  // Settings routes
+  app.get("/api/settings", async (_req, res) => {
+    const settings = await storage.getSettings();
+    res.json(settings);
+  });
+
+  app.post("/api/settings", async (req, res) => {
+    const parsed = insertSettingSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json(parsed.error);
+
+    const setting = await storage.setSetting(parsed.data.key, parsed.data.value);
+    res.status(201).json(setting);
   });
 
   const httpServer = createServer(app);
