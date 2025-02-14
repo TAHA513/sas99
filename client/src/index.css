@@ -23,7 +23,7 @@
     --border: 220 13% 91%;
     --input: 220 13% 91%;
     --ring: var(--primary-hsl);
-    --radius: 0.5rem;
+    --radius: 0.75rem;
   }
 
   [data-theme="dark"] {
@@ -60,7 +60,13 @@
 
   body {
     @apply bg-background text-foreground font-tajawal;
-    font-size: var(--font-size, 1rem);
+    font-size: var(--font-size, 1.125rem);
+    line-height: 1.6;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-bold;
+    font-size: calc(var(--font-size, 1.125rem) * 1.2);
   }
 
   .font-cairo {
@@ -76,14 +82,14 @@
   }
 
   [data-font-size="small"] {
-    --font-size: 0.875rem;
-  }
-
-  [data-font-size="medium"] {
     --font-size: 1rem;
   }
 
-  [data-font-size="large"] {
+  [data-font-size="medium"] {
     --font-size: 1.125rem;
+  }
+
+  [data-font-size="large"] {
+    --font-size: 1.25rem;
   }
 }
