@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { useQuery } from "@tanstack/react-query";
 import { Product, StoreSetting } from "@shared/schema";
 import { useState, useEffect, useRef } from "react";
-import { MinusCircle, Receipt, Search, Save } from "lucide-react";
+import { MinusCircle, Receipt, Search } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
@@ -52,7 +52,6 @@ export default function InvoicesPage() {
       }
     };
 
-    // Focus on barcode input when clicking outside of other inputs
     document.addEventListener('click', focusInput);
 
     return () => {
@@ -124,50 +123,6 @@ export default function InvoicesPage() {
     product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     product.barcode.includes(searchQuery)
   );
-
-  // Update saveInvoice function
-  const saveInvoice = async () => {
-    try {
-      const invoiceData = {
-        customerName,
-        items: items.map(item => ({
-          productId: item.productId,
-          quantity: item.quantity,
-          price: item.price,
-          total: item.total
-        })),
-        subtotal,
-        discount,
-        discountAmount,
-        finalTotal,
-        note,
-        date: new Date().toISOString()
-      };
-
-      await apiRequest("POST", "/api/invoices", invoiceData);
-
-      // Reset form after successful save
-      setItems([]);
-      setCustomerName('');
-      setDiscount(0);
-      setNote('');
-      setBarcodeInput('');
-
-      // Invalidate queries to refresh data
-      queryClient.invalidateQueries({ queryKey: ['/api/invoices'] });
-
-      toast({
-        title: "تم حفظ الفاتورة",
-        description: "تم حفظ الفاتورة بنجاح في النظام",
-      });
-    } catch (error) {
-      toast({
-        title: "خطأ في حفظ الفاتورة",
-        description: "حدث خطأ أثناء محاولة حفظ الفاتورة. يرجى المحاولة مرة أخرى.",
-        variant: "destructive",
-      });
-    }
-  };
 
   // Update printInvoice function with improved styling
   const printInvoice = () => {
@@ -337,16 +292,13 @@ export default function InvoicesPage() {
             <p className="text-muted-foreground mt-1">{currentDateTime}</p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={saveInvoice}>
-              <Save className="h-4 w-4 ml-2" />
-              حفظ
-            </Button>
             <Button onClick={printInvoice}>
               <Receipt className="h-4 w-4 ml-2" />
               طباعة
             </Button>
           </div>
         </div>
+
         <div className="grid gap-4 flex-1 md:grid-cols-[1fr,400px]">
           {/* Main Content - Products List */}
           <Card>
@@ -355,11 +307,11 @@ export default function InvoicesPage() {
               <input
                 ref={barcodeInputRef}
                 type="text"
-                className="fixed top-[-100px] left-0 opacity-0 pointer-events-none z-50" // Added z-index
+                className="fixed top-[-100px] left-0 opacity-0 pointer-events-none z-50"
                 value={barcodeInput}
                 onChange={(e) => {
                   setBarcodeInput(e.target.value);
-                  if (e.target.value.length >= 8) { // Minimum barcode length
+                  if (e.target.value.length >= 8) {
                     handleBarcodeScan(e.target.value);
                   }
                 }}
@@ -501,12 +453,8 @@ export default function InvoicesPage() {
                 />
               </div>
 
-              {/* Save & Print Buttons */}
+              {/* Print Button */}
               <div className="grid gap-2">
-                <Button className="w-full" variant="outline" onClick={saveInvoice}>
-                  <Save className="h-4 w-4 ml-2" />
-                  حفظ الفاتورة
-                </Button>
                 <Button className="w-full" onClick={printInvoice}>
                   <Receipt className="h-4 w-4 ml-2" />
                   طباعة الفاتورة
