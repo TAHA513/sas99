@@ -79,17 +79,18 @@ export function DashboardNav() {
       <nav className="space-y-2 flex-1">
         {navItems.map((item) => (
           <Link key={item.href} href={item.href}>
-            <a
+            <Button
+              variant="ghost"
               className={cn(
-                "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
+                "w-full flex items-center justify-start gap-3 px-3 py-2 h-10",
                 location === item.href
-                  ? "bg-primary text-primary-foreground"
+                  ? "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground"
                   : "hover:bg-accent"
               )}
             >
               <item.icon className="h-4 w-4" />
               {item.title}
-            </a>
+            </Button>
           </Link>
         ))}
       </nav>

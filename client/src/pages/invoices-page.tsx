@@ -144,10 +144,7 @@ export default function InvoicesPage() {
         date: new Date().toISOString()
       };
 
-      await apiRequest('/api/invoices', {
-        method: 'POST',
-        body: JSON.stringify(invoiceData)
-      });
+      await apiRequest("POST", "/api/invoices", invoiceData);
 
       // Reset form after successful save
       setItems([]);
