@@ -10,6 +10,8 @@ import { MinusCircle, Receipt, Search, Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
+import { queryClient } from "@/lib/queryClient";
+import { apiRequest } from "@/lib/queryClient";
 
 type InvoiceItem = {
   productId: number;
@@ -123,7 +125,54 @@ export default function InvoicesPage() {
     product.barcode.includes(searchQuery)
   );
 
-  // Print invoice
+  // Update saveInvoice function
+  const saveInvoice = async () => {
+    try {
+      const invoiceData = {
+        customerName,
+        items: items.map(item => ({
+          productId: item.productId,
+          quantity: item.quantity,
+          price: item.price,
+          total: item.total
+        })),
+        subtotal,
+        discount,
+        discountAmount,
+        finalTotal,
+        note,
+        date: new Date().toISOString()
+      };
+
+      await apiRequest('/api/invoices', {
+        method: 'POST',
+        body: JSON.stringify(invoiceData)
+      });
+
+      // Reset form after successful save
+      setItems([]);
+      setCustomerName('');
+      setDiscount(0);
+      setNote('');
+      setBarcodeInput('');
+
+      // Invalidate queries to refresh data
+      queryClient.invalidateQueries({ queryKey: ['/api/invoices'] });
+
+      toast({
+        title: "تم حفظ الفاتورة",
+        description: "تم حفظ الفاتورة بنجاح في النظام",
+      });
+    } catch (error) {
+      toast({
+        title: "خطأ في حفظ الفاتورة",
+        description: "حدث خطأ أثناء محاولة حفظ الفاتورة. يرجى المحاولة مرة أخرى.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Update printInvoice function with improved styling
   const printInvoice = () => {
     const printWindow = window.open('', '', 'width=800,height=600');
     if (!printWindow) return;
@@ -133,19 +182,79 @@ export default function InvoicesPage() {
         <head>
           <title>فاتورة</title>
           <style>
-            @page { size: A4; margin: 1cm; }
-            body { font-family: Arial, sans-serif; padding: 20px; }
-            .header { text-align: center; margin-bottom: 30px; }
-            .logo { max-width: 200px; max-height: 200px; margin: 0 auto 20px; }
-            .store-name { font-size: 24px; font-weight: bold; margin-bottom: 10px; }
-            .info { margin-bottom: 20px; }
-            table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-            th, td { border: 1px solid #ddd; padding: 8px; text-align: right; }
-            th { background-color: #f8f9fa; }
-            .totals { margin-top: 30px; text-align: left; }
-            .footer { margin-top: 50px; text-align: center; font-size: 0.9em; }
+            @page { 
+              size: A4; 
+              margin: 1cm; 
+            }
+            body { 
+              font-family: Arial, sans-serif; 
+              padding: 20px;
+              line-height: 1.6;
+            }
+            .header { 
+              text-align: center; 
+              margin-bottom: 30px;
+              border-bottom: 2px solid #eee;
+              padding-bottom: 20px;
+            }
+            .logo { 
+              max-width: 200px; 
+              max-height: 200px; 
+              margin: 0 auto 20px;
+            }
+            .store-name { 
+              font-size: 24px; 
+              font-weight: bold; 
+              margin-bottom: 10px;
+            }
+            .invoice-details {
+              display: grid;
+              grid-template-columns: 1fr 1fr;
+              gap: 20px;
+              margin-bottom: 30px;
+            }
+            .info { 
+              margin-bottom: 20px;
+              padding: 15px;
+              background-color: #f8f9fa;
+              border-radius: 8px;
+            }
+            table { 
+              width: 100%; 
+              border-collapse: collapse; 
+              margin: 20px 0;
+              background-color: white;
+            }
+            th, td { 
+              border: 1px solid #ddd; 
+              padding: 12px; 
+              text-align: right;
+            }
+            th { 
+              background-color: #f8f9fa;
+              font-weight: bold;
+            }
+            .totals { 
+              margin-top: 30px;
+              text-align: left;
+              padding: 20px;
+              background-color: #f8f9fa;
+              border-radius: 8px;
+            }
+            .footer { 
+              margin-top: 50px;
+              text-align: center;
+              font-size: 0.9em;
+              color: #666;
+              border-top: 2px solid #eee;
+              padding-top: 20px;
+            }
             @media print {
               body { -webkit-print-color-adjust: exact; }
+              .info, .totals { 
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+              }
             }
           </style>
         </head>
@@ -157,11 +266,16 @@ export default function InvoicesPage() {
             ${storeSettings?.storeName ? `
               <div class="store-name">${storeSettings.storeName}</div>
             ` : ''}
-            <p>${currentDateTime}</p>
           </div>
 
-          <div class="info">
-            <p><strong>العميل:</strong> ${customerName || 'غير محدد'}</p>
+          <div class="invoice-details">
+            <div class="info">
+              <p><strong>رقم الفاتورة:</strong> ${new Date().getTime()}</p>
+              <p><strong>التاريخ:</strong> ${currentDateTime}</p>
+            </div>
+            <div class="info">
+              <p><strong>العميل:</strong> ${customerName || 'غير محدد'}</p>
+            </div>
           </div>
 
           <table>
@@ -187,8 +301,12 @@ export default function InvoicesPage() {
 
           <div class="totals">
             <p><strong>المجموع:</strong> ${subtotal.toFixed(2)} ريال</p>
-            ${discount > 0 ? `<p><strong>الخصم (${discount}%):</strong> ${discountAmount.toFixed(2)} ريال</p>` : ''}
-            <p><strong>الإجمالي النهائي:</strong> ${finalTotal.toFixed(2)} ريال</p>
+            ${discount > 0 ? `
+              <p><strong>الخصم (${discount}%):</strong> ${discountAmount.toFixed(2)} ريال</p>
+            ` : ''}
+            <p style="font-size: 1.2em; font-weight: bold;">
+              <strong>الإجمالي النهائي:</strong> ${finalTotal.toFixed(2)} ريال
+            </p>
           </div>
 
           ${note ? `
@@ -200,28 +318,23 @@ export default function InvoicesPage() {
           ${storeSettings?.storeName ? `
             <div class="footer">
               <p>شكراً لتسوقكم من ${storeSettings.storeName}</p>
+              ${storeSettings?.storeAddress ? `<p>${storeSettings.storeAddress}</p>` : ''}
+              ${storeSettings?.storePhone ? `<p>هاتف: ${storeSettings.storePhone}</p>` : ''}
             </div>
           ` : ''}
+
+          <script>
+            window.onload = () => {
+              window.print();
+              window.close();
+            };
+          </script>
         </body>
       </html>
     `;
 
     printWindow.document.write(content);
     printWindow.document.close();
-
-    // Wait for content to load then print
-    printWindow.onload = () => {
-      printWindow.print();
-      printWindow.close();
-    };
-  };
-
-  // Save invoice function
-  const saveInvoice = () => {
-    toast({
-      title: "تم حفظ الفاتورة",
-      description: "تم حفظ الفاتورة بنجاح",
-    });
   };
 
   return (
