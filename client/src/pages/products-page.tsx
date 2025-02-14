@@ -192,25 +192,34 @@ export default function ProductsPage() {
       <div className="space-y-8">
         <div className="flex justify-between items-center">
           <h1 className="text-3xl font-bold">المنتجات</h1>
-          <Dialog open={isDialogOpen} onOpenChange={(open) => {
-            setIsDialogOpen(open);
-            if (!open) {
+          <div className="flex gap-2">
+            <Dialog open={isDialogOpen} onOpenChange={(open) => {
+              setIsDialogOpen(open);
+              if (!open) {
+                setSelectedProduct(null);
+              }
+            }}>
+              <DialogTrigger asChild>
+                <Button>
+                  <Plus className="ml-2 h-4 w-4" />
+                  إضافة منتج جديد
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[600px]">
+                <DialogHeader>
+                  <DialogTitle>{selectedProduct ? "تعديل المنتج" : "إضافة منتج جديد"}</DialogTitle>
+                </DialogHeader>
+                <ProductForm groups={groups || []} product={selectedProduct || undefined} />
+              </DialogContent>
+            </Dialog>
+            <Button variant="outline" onClick={() => {
               setSelectedProduct(null);
-            }
-          }}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="ml-2 h-4 w-4" />
-                إضافة منتج جديد
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[600px]">
-              <DialogHeader>
-                <DialogTitle>{selectedProduct ? "تعديل المنتج" : "إضافة منتج جديد"}</DialogTitle>
-              </DialogHeader>
-              <ProductForm groups={groups || []} product={selectedProduct || undefined} />
-            </DialogContent>
-          </Dialog>
+              setIsDialogOpen(true);
+            }}>
+              <Plus className="ml-2 h-4 w-4" />
+              إضافة منتج سريع
+            </Button>
+          </div>
         </div>
 
         <div className="max-w-sm">
