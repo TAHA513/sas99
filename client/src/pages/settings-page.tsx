@@ -9,11 +9,13 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { MessageSquare } from "lucide-react";
+import { MessageSquare, Palette } from "lucide-react";
 import { SiGooglecalendar } from "react-icons/si";
 import { SiFacebook, SiInstagram, SiSnapchat } from "react-icons/si";
 import { Setting, User, Customer, SocialMediaAccount } from "@shared/schema";
 import { Plus } from 'lucide-react';
+import { Label } from "@/components/ui/label";
+import { Slider } from "@/components/ui/slider";
 import {
   Dialog,
   DialogContent,
@@ -24,7 +26,6 @@ import {
 } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-
 
 const whatsappSchema = z.object({
   WHATSAPP_API_TOKEN: z.string().min(1, "رمز الوصول مطلوب"),
@@ -341,6 +342,122 @@ export default function SettingsPage() {
                   </Button>
                 </form>
               </Form>
+            </CardContent>
+          </Card>
+
+          {/* قسم إعدادات الثيم */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center space-x-4">
+                <div className="flex gap-2">
+                  <Palette className="h-8 w-8 text-purple-500" />
+                </div>
+                <div>
+                  <CardTitle>إعدادات المظهر</CardTitle>
+                  <CardDescription>
+                    قم بتخصيص ألوان وشكل التطبيق
+                  </CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
+                <div className="grid gap-4">
+                  <div className="space-y-2">
+                    <Label>اللون الرئيسي</Label>
+                    <div className="grid grid-cols-6 gap-2">
+                      {[
+                        "#1d4ed8", // أزرق
+                        "#059669", // أخضر
+                        "#7c3aed", // بنفسجي
+                        "#db2777", // وردي
+                        "#ea580c", // برتقالي
+                        "#64748b", // رمادي
+                      ].map((color) => (
+                        <Button
+                          key={color}
+                          variant="outline"
+                          className="w-full h-8 rounded-md p-0 overflow-hidden"
+                          onClick={() => {
+                            fetch('/api/theme', {
+                              method: 'POST',
+                              headers: {
+                                'Content-Type': 'application/json',
+                              },
+                              body: JSON.stringify({
+                                primary: color,
+                                radius: 0.5,
+                                variant: "professional"
+                              }),
+                            }).then(() => {
+                              window.location.reload();
+                            });
+                          }}
+                        >
+                          <div
+                            className="w-full h-full"
+                            style={{ backgroundColor: color }}
+                          />
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>نمط التصميم</Label>
+                    <div className="grid grid-cols-3 gap-2">
+                      {[
+                        { label: "احترافي", value: "professional" },
+                        { label: "عصري", value: "tint" },
+                        { label: "حيوي", value: "vibrant" },
+                      ].map((style) => (
+                        <Button
+                          key={style.value}
+                          variant="outline"
+                          onClick={() => {
+                            fetch('/api/theme', {
+                              method: 'POST',
+                              headers: {
+                                'Content-Type': 'application/json',
+                              },
+                              body: JSON.stringify({
+                                variant: style.value,
+                                radius: 0.5,
+                              }),
+                            }).then(() => {
+                              window.location.reload();
+                            });
+                          }}
+                        >
+                          {style.label}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>حجم الزوايا</Label>
+                    <Slider
+                      defaultValue={[0.5]}
+                      max={1}
+                      step={0.1}
+                      onValueChange={([value]) => {
+                        fetch('/api/theme', {
+                          method: 'POST',
+                          headers: {
+                            'Content-Type': 'application/json',
+                          },
+                          body: JSON.stringify({
+                            radius: value,
+                          }),
+                        }).then(() => {
+                          window.location.reload();
+                        });
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
             </CardContent>
           </Card>
 
