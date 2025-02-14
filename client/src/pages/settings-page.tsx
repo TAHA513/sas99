@@ -9,7 +9,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { MessageSquare, Palette, Upload } from "lucide-react";
+import { MessageSquare, Upload } from "lucide-react";
 import { SiGooglecalendar } from "react-icons/si";
 import { SiFacebook, SiInstagram, SiSnapchat } from "react-icons/si";
 import { Setting, User, Customer, SocialMediaAccount, StoreSetting } from "@shared/schema";
@@ -214,24 +214,6 @@ export default function SettingsPage() {
     }
   };
 
-  const themeMutation = useMutation({
-    mutationFn: updateTheme,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/theme"] });
-      toast({
-        title: "تم تحديث المظهر",
-        description: "تم تحديث إعدادات المظهر بنجاح",
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "خطأ في تحديث المظهر",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
-
 
   return (
     <DashboardLayout>
@@ -337,7 +319,7 @@ export default function SettingsPage() {
               </div>
             </CardContent>
           </Card>
-          {/* WhatsApp Integration Settings */}
+
           <Card>
             <CardHeader>
               <div className="flex items-center space-x-4">
@@ -391,7 +373,6 @@ export default function SettingsPage() {
             </CardContent>
           </Card>
 
-          {/* Google Calendar Integration Settings */}
           <Card>
             <CardHeader>
               <div className="flex items-center space-x-4">
@@ -445,7 +426,6 @@ export default function SettingsPage() {
             </CardContent>
           </Card>
 
-          {/* Social Media Integration Settings */}
           <Card>
             <CardHeader>
               <div className="flex items-center space-x-4">
@@ -517,17 +497,18 @@ export default function SettingsPage() {
             </CardContent>
           </Card>
 
-          {/* قسم إعدادات الثيم */}
           <Card>
             <CardHeader>
               <div className="flex items-center space-x-4">
                 <div className="flex gap-2">
-                  <Palette className="h-8 w-8 text-purple-500" />
+                  <SiFacebook className="h-8 w-8 text-blue-600" />
+                  <SiInstagram className="h-8 w-8 text-pink-600" />
+                  <SiSnapchat className="h-8 w-8 text-yellow-500" />
                 </div>
                 <div>
-                  <CardTitle>إعدادات المظهر</CardTitle>
+                  <CardTitle>حسابات التواصل الاجتماعي</CardTitle>
                   <CardDescription>
-                    قم بتخصيص ألوان وشكل التطبيق
+                    قم بربط حسابات التواصل الاجتماعي لإدارة الحملات الإعلانية
                   </CardDescription>
                 </div>
               </div>
@@ -535,278 +516,99 @@ export default function SettingsPage() {
             <CardContent>
               <div className="space-y-6">
                 <div className="grid gap-4">
-                  <div className="space-y-2">
-                    <Label>اللون الرئيسي</Label>
-                    <div className="grid grid-cols-6 gap-2">
-                      {[
-                        "#1d4ed8", // أزرق
-                        "#059669", // أخضر
-                        "#7c3aed", // بنفسجي
-                        "#db2777", // وردي
-                        "#ea580c", // برتقالي
-                        "#64748b", // رمادي
-                      ].map((color) => (
-                        <Button
-                          key={color}
-                          variant="outline"
-                          className="w-full h-8 rounded-md p-0 overflow-hidden"
-                          onClick={() => {
-                            themeMutation.mutate({ primary: color });
-                          }}
-                        >
-                          <div
-                            className="w-full h-full"
-                            style={{ backgroundColor: color }}
-                          />
-                        </Button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>نمط التصميم</Label>
-                    <div className="grid grid-cols-3 gap-2">
-                      {[
-                        { label: "احترافي", value: "professional" },
-                        { label: "عصري", value: "tint" },
-                        { label: "حيوي", value: "vibrant" },
-                      ].map((style) => (
-                        <Button
-                          key={style.value}
-                          variant="outline"
-                          onClick={() => {
-                            themeMutation.mutate({ variant: style.value });
-                          }}
-                        >
-                          {style.label}
-                        </Button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>حجم الزوايا</Label>
-                    <Slider
-                      defaultValue={[0.5]}
-                      max={1}
-                      step={0.1}
-                      onValueChange={(value) => {
-                        themeMutation.mutate({ radius: value[0] });
-                      }}
-                    />
-                  </div>
-
-
-                  {/* Font Settings */}
-                  <div className="space-y-6">
-                    <div className="space-y-2">
-                      <Label>حجم الخط الأساسي</Label>
-                      <Form {...useForm()}>
-                        <FormField
-                          name="fontSize"
-                          render={({ field }) => (
-                            <FormItem>
-                              <Select
-                                defaultValue="medium"
-                                onValueChange={(value) => {
-                                  themeMutation.mutate({ fontSize: value });
-                                }}
-                              >
-                                <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="اختر حجم الخط" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  <SelectItem value="small">صغير</SelectItem>
-                                  <SelectItem value="medium">متوسط</SelectItem>
-                                  <SelectItem value="large">كبير</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </FormItem>
-                          )}
-                        />
-                      </Form>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label>حجم خط العناوين</Label>
-                      <Form {...useForm()}>
-                        <FormField
-                          name="headingSize"
-                          render={({ field }) => (
-                            <FormItem>
-                              <Select
-                                defaultValue="h2"
-                                onValueChange={(value) => {
-                                  themeMutation.mutate({ headingSize: value });
-                                }}
-                              >
-                                <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="اختر حجم العناوين" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  <SelectItem value="h1">كبير جداً</SelectItem>
-                                  <SelectItem value="h2">كبير</SelectItem>
-                                  <SelectItem value="h3">متوسط</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </FormItem>
-                          )}
-                        />
-                      </Form>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label>نوع الخط</Label>
-                      <Form {...useForm()}>
-                        <FormField
-                          name="fontFamily"
-                          render={({ field }) => (
-                            <FormItem>
-                              <Select
-                                defaultValue="cairo"
-                                onValueChange={(value) => {
-                                  themeMutation.mutate({ fontFamily: value });
-                                }}
-                              >
-                                <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="اختر نوع الخط" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  <SelectItem value="cairo">Cairo</SelectItem>
-                                  <SelectItem value="tajawal">Tajawal</SelectItem>
-                                  <SelectItem value="almarai">Almarai</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </FormItem>
-                          )}
-                        />
-                      </Form>
-                    </div>
-                  </div>
-
-                  {/* Social Media Accounts */}
-                  <Card>
-                    <CardHeader>
-                      <div className="flex items-center space-x-4">
-                        <div className="flex gap-2">
-                          <SiFacebook className="h-8 w-8 text-blue-600" />
-                          <SiInstagram className="h-8 w-8 text-pink-600" />
-                          <SiSnapchat className="h-8 w-8 text-yellow-500" />
-                        </div>
+                  {socialAccounts?.map((account) => (
+                    <div key={account.id} className="flex items-center justify-between p-4 border rounded-lg">
+                      <div className="flex items-center gap-4">
+                        {account.platform === 'facebook' && <SiFacebook className="h-6 w-6 text-blue-600" />}
+                        {account.platform === 'instagram' && <SiInstagram className="h-6 w-6 text-pink-600" />}
+                        {account.platform === 'snapchat' && <SiSnapchat className="h-6 w-6 text-yellow-500" />}
                         <div>
-                          <CardTitle>حسابات التواصل الاجتماعي</CardTitle>
-                          <CardDescription>
-                            قم بربط حسابات التواصل الاجتماعي لإدارة الحملات الإعلانية
-                          </CardDescription>
+                          <p className="font-medium">{account.accountName || account.accountId}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {account.platform === 'facebook' ? 'فيسبوك' :
+                              account.platform === 'instagram' ? 'انستغرام' : 'سناب شات'}
+                          </p>
                         </div>
                       </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-6">
-                        <div className="grid gap-4">
-                          {socialAccounts?.map((account) => (
-                            <div key={account.id} className="flex items-center justify-between p-4 border rounded-lg">
-                              <div className="flex items-center gap-4">
-                                {account.platform === 'facebook' && <SiFacebook className="h-6 w-6 text-blue-600" />}
-                                {account.platform === 'instagram' && <SiInstagram className="h-6 w-6 text-pink-600" />}
-                                {account.platform === 'snapchat' && <SiSnapchat className="h-6 w-6 text-yellow-500" />}
-                                <div>
-                                  <p className="font-medium">{account.accountName || account.accountId}</p>
-                                  <p className="text-sm text-muted-foreground">
-                                    {account.platform === 'facebook' ? 'فيسبوك' :
-                                      account.platform === 'instagram' ? 'انستغرام' : 'سناب شات'}
-                                  </p>
-                                </div>
-                              </div>
-                              <Badge variant={account.status === 'active' ? 'default' : 'secondary'}>
-                                {account.status === 'active' ? 'نشط' : 'غير نشط'}
-                              </Badge>
-                            </div>
-                          ))}
-                        </div>
-
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <Button>
-                              <Plus className="h-4 w-4 ml-2" />
-                              إضافة حساب جديد
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent>
-                            <DialogHeader>
-                              <DialogTitle>إضافة حساب تواصل اجتماعي</DialogTitle>
-                              <DialogDescription>
-                                قم بإدخال معلومات الحساب للربط مع النظام
-                              </DialogDescription>
-                            </DialogHeader>
-
-                            <Form {...form}>
-                              <form onSubmit={form.handleSubmit((data) => accountMutation.mutate(data))} className="space-y-4">
-                                <FormField
-                                  control={form.control}
-                                  name="platform"
-                                  render={({ field }) => (
-                                    <FormItem>
-                                      <FormLabel>المنصة</FormLabel>
-                                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                        <FormControl>
-                                          <SelectTrigger>
-                                            <SelectValue placeholder="اختر المنصة" />
-                                          </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                          <SelectItem value="facebook">فيسبوك</SelectItem>
-                                          <SelectItem value="instagram">انستغرام</SelectItem>
-                                          <SelectItem value="snapchat">سناب شات</SelectItem>
-                                        </SelectContent>
-                                      </Select>
-                                    </FormItem>
-                                  )}
-                                />
-
-                                <FormField
-                                  control={form.control}
-                                  name="username"
-                                  render={({ field }) => (
-                                    <FormItem>
-                                      <FormLabel>اسم المستخدم / رقم الهاتف</FormLabel>
-                                      <FormControl>
-                                        <Input {...field} />
-                                      </FormControl>
-                                    </FormItem>
-                                  )}
-                                />
-
-                                <FormField
-                                  control={form.control}
-                                  name="password"
-                                  render={({ field }) => (
-                                    <FormItem>
-                                      <FormLabel>كلمة المرور</FormLabel>
-                                      <FormControl>
-                                        <Input type="password" {...field} />
-                                      </FormControl>
-                                    </FormItem>
-                                  )}
-                                />
-
-                                <Button type="submit" disabled={accountMutation.isPending} className="w-full">
-                                  {accountMutation.isPending ? "جاري الحفظ..." : "حفظ الحساب"}
-                                </Button>
-                              </form>
-                            </Form>
-                          </DialogContent>
-                        </Dialog>
-                      </div>
-                    </CardContent>
-                  </Card>
+                      <Badge variant={account.status === 'active' ? 'default' : 'secondary'}>
+                        {account.status === 'active' ? 'نشط' : 'غير نشط'}
+                      </Badge>
+                    </div>
+                  ))}
                 </div>
+
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button>
+                      <Plus className="h-4 w-4 ml-2" />
+                      إضافة حساب جديد
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>إضافة حساب تواصل اجتماعي</DialogTitle>
+                      <DialogDescription>
+                        قم بإدخال معلومات الحساب للربط مع النظام
+                      </DialogDescription>
+                    </DialogHeader>
+
+                    <Form {...form}>
+                      <form onSubmit={form.handleSubmit((data) => accountMutation.mutate(data))} className="space-y-4">
+                        <FormField
+                          control={form.control}
+                          name="platform"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>المنصة</FormLabel>
+                              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="اختر المنصة" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="facebook">فيسبوك</SelectItem>
+                                  <SelectItem value="instagram">انستغرام</SelectItem>
+                                  <SelectItem value="snapchat">سناب شات</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="username"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>اسم المستخدم / رقم الهاتف</FormLabel>
+                              <FormControl>
+                                <Input {...field} />
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="password"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>كلمة المرور</FormLabel>
+                              <FormControl>
+                                <Input type="password" {...field} />
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+
+                        <Button type="submit" disabled={accountMutation.isPending} className="w-full">
+                          {accountMutation.isPending ? "جاري الحفظ..." : "حفظ الحساب"}
+                        </Button>
+                      </form>
+                    </Form>
+                  </DialogContent>
+                </Dialog>
               </div>
             </CardContent>
           </Card>
