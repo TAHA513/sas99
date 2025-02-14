@@ -1,4 +1,4 @@
-import { User, Customer, Appointment, Staff, InsertUser, InsertCustomer, InsertAppointment, InsertStaff, MarketingCampaign, InsertMarketingCampaign, Promotion, InsertPromotion, DiscountCode, InsertDiscountCode, SocialMediaAccount, InsertSocialMediaAccount } from "@shared/schema";
+import { User, Customer, Appointment, Staff, InsertUser, InsertCustomer, InsertAppointment, InsertStaff, MarketingCampaign, InsertMarketingCampaign, Promotion, InsertPromotion, DiscountCode, InsertDiscountCode, SocialMediaAccount, InsertSocialMediaAccount, Product, ProductGroup, InsertProduct, InsertProductGroup } from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
 
@@ -73,6 +73,21 @@ export interface IStorage {
   updateSocialMediaAccount(id: number, account: Partial<InsertSocialMediaAccount>): Promise<SocialMediaAccount>;
   deleteSocialMediaAccount(id: number): Promise<void>;
 
+  // Product Group operations
+  getProductGroups(): Promise<ProductGroup[]>;
+  getProductGroup(id: number): Promise<ProductGroup | undefined>;
+  createProductGroup(group: InsertProductGroup): Promise<ProductGroup>;
+  updateProductGroup(id: number, group: Partial<InsertProductGroup>): Promise<ProductGroup>;
+  deleteProductGroup(id: number): Promise<void>;
+
+  // Product operations
+  getProducts(): Promise<Product[]>;
+  getProduct(id: number): Promise<Product | undefined>;
+  getProductByBarcode(barcode: string): Promise<Product | undefined>;
+  createProduct(product: InsertProduct): Promise<Product>;
+  updateProduct(id: number, product: Partial<InsertProduct>): Promise<Product>;
+  deleteProduct(id: number): Promise<void>;
+
   sessionStore: session.Store;
 }
 
@@ -87,6 +102,8 @@ export class MemStorage implements IStorage {
   private promotions: Map<number, Promotion>;
   private discountCodes: Map<number, DiscountCode>;
   private socialMediaAccounts: Map<number, SocialMediaAccount>;
+  private products: Map<number, Product>;
+  private productGroups: Map<number, ProductGroup>;
   sessionStore: session.Store;
 
   constructor() {
@@ -99,6 +116,8 @@ export class MemStorage implements IStorage {
     this.promotions = new Map();
     this.discountCodes = new Map();
     this.socialMediaAccounts = new Map();
+    this.products = new Map();
+    this.productGroups = new Map();
     this.currentId = 1;
     this.sessionStore = new MemoryStore({
       checkPeriod: 86400000,
@@ -169,6 +188,21 @@ export class MemStorage implements IStorage {
       }),
       createdAt: new Date("2025-02-19"),
       updatedAt: new Date("2025-02-23")
+    });
+
+    // Add sample product groups
+    this.productGroups.set(1, {
+      id: 1,
+      name: "مواد غذائية",
+      description: "منتجات غذائية متنوعة",
+      createdAt: new Date(),
+    });
+
+    this.productGroups.set(2, {
+      id: 2,
+      name: "منظفات",
+      description: "مواد التنظيف",
+      createdAt: new Date(),
     });
   }
 
@@ -451,6 +485,78 @@ export class MemStorage implements IStorage {
 
   async deleteSocialMediaAccount(id: number): Promise<void> {
     this.socialMediaAccounts.delete(id);
+  }
+
+  // Product Group operations
+  async getProductGroups(): Promise<ProductGroup[]> {
+    return Array.from(this.productGroups.values());
+  }
+
+  async getProductGroup(id: number): Promise<ProductGroup | undefined> {
+    return this.productGroups.get(id);
+  }
+
+  async createProductGroup(group: InsertProductGroup): Promise<ProductGroup> {
+    const id = this.currentId++;
+    const newGroup: ProductGroup = {
+      ...group,
+      id,
+      createdAt: new Date(),
+    };
+    this.productGroups.set(id, newGroup);
+    return newGroup;
+  }
+
+  async updateProductGroup(id: number, updates: Partial<InsertProductGroup>): Promise<ProductGroup> {
+    const group = await this.getProductGroup(id);
+    if (!group) throw new Error("Product group not found");
+    const updatedGroup = { ...group, ...updates };
+    this.productGroups.set(id, updatedGroup);
+    return updatedGroup;
+  }
+
+  async deleteProductGroup(id: number): Promise<void> {
+    this.productGroups.delete(id);
+  }
+
+  // Product operations
+  async getProducts(): Promise<Product[]> {
+    return Array.from(this.products.values());
+  }
+
+  async getProduct(id: number): Promise<Product | undefined> {
+    return this.products.get(id);
+  }
+
+  async getProductByBarcode(barcode: string): Promise<Product | undefined> {
+    return Array.from(this.products.values()).find(
+      (product) => product.barcode === barcode
+    );
+  }
+
+  async createProduct(product: InsertProduct): Promise<Product> {
+    const id = this.currentId++;
+    const newProduct: Product = {
+      ...product,
+      id,
+      status: "active",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.products.set(id, newProduct);
+    return newProduct;
+  }
+
+  async updateProduct(id: number, updates: Partial<InsertProduct>): Promise<Product> {
+    const product = await this.getProduct(id);
+    if (!product) throw new Error("Product not found");
+    const updatedProduct = { ...product, ...updates, updatedAt: new Date() };
+    this.products.set(id, updatedProduct);
+    return updatedProduct;
+  }
+
+  async deleteProduct(id: number): Promise<void> {
+    this.products.delete(id);
   }
 }
 

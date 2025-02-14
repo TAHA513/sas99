@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertCustomerSchema, insertAppointmentSchema, insertStaffSchema, insertSettingSchema, insertMarketingCampaignSchema, insertPromotionSchema, insertDiscountCodeSchema } from "@shared/schema";
+import { insertCustomerSchema, insertAppointmentSchema, insertStaffSchema, insertSettingSchema, insertMarketingCampaignSchema, insertPromotionSchema, insertDiscountCodeSchema, insertProductSchema, insertProductGroupSchema } from "@shared/schema";
 import { notificationService } from './services/notification-service';
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -244,6 +244,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error('Error updating theme:', error);
       res.status(500).json({ error: 'Failed to update theme' });
     }
+  });
+
+  // Product Group routes
+  app.get("/api/product-groups", async (_req, res) => {
+    const groups = await storage.getProductGroups();
+    res.json(groups);
+  });
+
+  app.post("/api/product-groups", async (req, res) => {
+    const parsed = insertProductGroupSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json(parsed.error);
+    const group = await storage.createProductGroup(parsed.data);
+    res.status(201).json(group);
+  });
+
+  app.patch("/api/product-groups/:id", async (req, res) => {
+    const id = parseInt(req.params.id);
+    const group = await storage.updateProductGroup(id, req.body);
+    res.json(group);
+  });
+
+  app.delete("/api/product-groups/:id", async (req, res) => {
+    const id = parseInt(req.params.id);
+    await storage.deleteProductGroup(id);
+    res.sendStatus(204);
+  });
+
+  // Product routes
+  app.get("/api/products", async (_req, res) => {
+    const products = await storage.getProducts();
+    res.json(products);
+  });
+
+  app.get("/api/products/barcode/:barcode", async (req, res) => {
+    const product = await storage.getProductByBarcode(req.params.barcode);
+    if (!product) return res.status(404).json({ message: "Product not found" });
+    res.json(product);
+  });
+
+  app.post("/api/products", async (req, res) => {
+    const parsed = insertProductSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json(parsed.error);
+    const product = await storage.createProduct(parsed.data);
+    res.status(201).json(product);
+  });
+
+  app.patch("/api/products/:id", async (req, res) => {
+    const id = parseInt(req.params.id);
+    const product = await storage.updateProduct(id, req.body);
+    res.json(product);
+  });
+
+  app.delete("/api/products/:id", async (req, res) => {
+    const id = parseInt(req.params.id);
+    await storage.deleteProduct(id);
+    res.sendStatus(204);
   });
 
   const httpServer = createServer(app);

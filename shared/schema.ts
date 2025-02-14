@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, decimal } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -52,14 +52,14 @@ export const marketingCampaigns = pgTable("marketing_campaigns", {
   startDate: timestamp("start_date").notNull(),
   endDate: timestamp("end_date").notNull(),
   status: text("status").notNull().default("draft"),
-  type: text("type").notNull(), // email, sms, whatsapp, facebook, instagram, snapchat
+  type: text("type").notNull(), 
   content: text("content").notNull(),
-  platforms: text("platforms").array(), // Array of social media platforms
-  socialMediaSettings: text("social_media_settings"), // JSON string for platform-specific settings
-  targetAudience: text("target_audience"), // JSON string for targeting options
-  budget: integer("budget"), // Campaign budget in cents
-  messageCount: integer("message_count").notNull().default(0), // Number of messages/interactions received
-  adCreatives: text("ad_creatives").array(), // Array of ad creative URLs
+  platforms: text("platforms").array(), 
+  socialMediaSettings: text("social_media_settings"), 
+  targetAudience: text("target_audience"), 
+  budget: integer("budget"), 
+  messageCount: integer("message_count").notNull().default(0), 
+  adCreatives: text("ad_creatives").array(), 
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -68,7 +68,7 @@ export const promotions = pgTable("promotions", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
   description: text("description"),
-  discountType: text("discount_type").notNull(), // percentage, fixed
+  discountType: text("discount_type").notNull(), 
   discountValue: integer("discount_value").notNull(),
   startDate: timestamp("start_date").notNull(),
   endDate: timestamp("end_date").notNull(),
@@ -90,9 +90,31 @@ export const discountCodes = pgTable("discount_codes", {
 
 export const socialMediaAccounts = pgTable("social_media_accounts", {
   id: serial("id").primaryKey(),
-  platform: text("platform").notNull(), // facebook, instagram, snapchat
+  platform: text("platform").notNull(), 
   username: text("username").notNull(),
   password: text("password").notNull(),
+  status: text("status").notNull().default("active"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const productGroups = pgTable("product_groups", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const products = pgTable("products", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  barcode: text("barcode"),
+  type: text("type").notNull(), 
+  quantity: decimal("quantity").notNull().default("0"),
+  costPrice: decimal("cost_price").notNull(),
+  sellingPrice: decimal("selling_price").notNull(),
+  groupId: integer("group_id").notNull(),
+  isWeighted: boolean("is_weighted").notNull().default(false),
   status: text("status").notNull().default("active"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
@@ -126,6 +148,21 @@ export const insertSocialMediaAccountSchema = createInsertSchema(socialMediaAcco
   password: true,
 });
 
+export const insertProductGroupSchema = createInsertSchema(productGroups).pick({
+  name: true,
+  description: true,
+});
+
+export const insertProductSchema = createInsertSchema(products).extend({
+  barcode: z.string().optional(),
+  type: z.enum(["piece", "weight"]),
+  quantity: z.number().min(0),
+  costPrice: z.number().min(0),
+  sellingPrice: z.number().min(0),
+  groupId: z.number(),
+  isWeighted: z.boolean(),
+});
+
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type Customer = typeof customers.$inferSelect;
@@ -144,3 +181,7 @@ export type DiscountCode = typeof discountCodes.$inferSelect;
 export type InsertDiscountCode = z.infer<typeof insertDiscountCodeSchema>;
 export type SocialMediaAccount = typeof socialMediaAccounts.$inferSelect;
 export type InsertSocialMediaAccount = z.infer<typeof insertSocialMediaAccountSchema>;
+export type ProductGroup = typeof productGroups.$inferSelect;
+export type InsertProductGroup = z.infer<typeof insertProductGroupSchema>;
+export type Product = typeof products.$inferSelect;
+export type InsertProduct = z.infer<typeof insertProductSchema>;
