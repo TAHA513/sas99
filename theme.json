@@ -1,9 +1,9 @@
 {
   "variant": "tint",
-  "primary": "#ef4444",
+  "primary": "#8b5cf6",
   "appearance": "dark",
   "radius": 0.5,
-  "fontSize": "medium",
+  "fontSize": "large",
   "fontFamily": "tajawal",
   "headingSize": "h1"
 }
