@@ -1,7 +1,7 @@
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import { Button } from "@/components/ui/button";
 import { Card as CardComponent, CardContent, CardDescription, CardHeader, CardTitle, CardProps as CardComponentProps } from "@/components/ui/card";
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel } from "@/components/ui/form";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -26,8 +26,19 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useState } from "react";
 
-// إعداد مخططات التحقق (Validation Schemas)
+// تحسين مخطط التحقق للحسابات الاجتماعية
+const socialMediaAccountSchema = z.object({
+  platform: z.enum(['facebook', 'instagram', 'snapchat'], {
+    required_error: "يرجى اختيار المنصة"
+  }),
+  username: z.string().min(1, "اسم المستخدم مطلوب").max(50, "اسم المستخدم طويل جداً"),
+  password: z.string().min(6, "كلمة المرور يجب أن تكون 6 أحرف على الأقل").max(50, "كلمة المرور طويلة جداً"),
+});
+
+type SocialMediaAccountFormData = z.infer<typeof socialMediaAccountSchema>;
+
 const whatsappSchema = z.object({
   WHATSAPP_API_TOKEN: z.string().min(1, "رمز الوصول مطلوب"),
   WHATSAPP_BUSINESS_PHONE_NUMBER: z.string().min(1, "رقم الهاتف مطلوب"),
@@ -44,16 +55,10 @@ const socialMediaSchema = z.object({
   INSTAGRAM_ACCESS_TOKEN: z.string().min(1, "رمز الوصول مطلوب"),
 });
 
-const socialMediaAccountSchema = z.object({
-  platform: z.enum(['facebook', 'instagram', 'snapchat']),
-  username: z.string().min(1, "اسم المستخدم مطلوب"),
-  password: z.string().min(1, "كلمة المرور مطلوبة"),
-});
-
 type WhatsAppSettings = z.infer<typeof whatsappSchema>;
 type GoogleCalendarSettings = z.infer<typeof googleCalendarSchema>;
 type SocialMediaSettings = z.infer<typeof socialMediaSchema>;
-type SocialMediaAccountFormData = z.infer<typeof socialMediaAccountSchema>;
+
 
 const CustomCard = ({ className, ...props }: CardComponentProps) => (
   <CardComponent className={cn("w-full", className)} {...props} />
@@ -61,6 +66,7 @@ const CustomCard = ({ className, ...props }: CardComponentProps) => (
 
 export default function SettingsPage() {
   const { toast } = useToast();
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const { data: settings } = useQuery<Setting[]>({
     queryKey: ["/api/settings"],
@@ -157,19 +163,25 @@ export default function SettingsPage() {
 
   const accountMutation = useMutation({
     mutationFn: async (data: SocialMediaAccountFormData) => {
-      const res = await apiRequest("POST", "/api/social-accounts", data);
-      return res.json();
+      try {
+        const res = await apiRequest("POST", "/api/social-accounts", data);
+        return await res.json();
+      } catch (error) {
+        throw new Error("فشل في إضافة الحساب. يرجى المحاولة مرة أخرى.");
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/social-accounts"] });
       toast({
-        title: "تم حفظ الحساب",
-        description: "تم إضافة حساب التواصل الاجتماعي بنجاح",
+        title: "تم بنجاح",
+        description: "تم إضافة الحساب بنجاح",
       });
+      form.reset();
+      setIsDialogOpen(false);
     },
     onError: (error: Error) => {
       toast({
-        title: "خطأ في حفظ الحساب",
+        title: "خطأ",
         description: error.message,
         variant: "destructive",
       });
@@ -179,11 +191,15 @@ export default function SettingsPage() {
   const form = useForm<SocialMediaAccountFormData>({
     resolver: zodResolver(socialMediaAccountSchema),
     defaultValues: {
-      platform: 'facebook',
+      platform: undefined,
       username: '',
       password: '',
     },
   });
+
+  const onSubmit = (data: SocialMediaAccountFormData) => {
+    accountMutation.mutate(data);
+  };
 
   const onWhatsAppSubmit = async (data: WhatsAppSettings) => {
     for (const [key, value] of Object.entries(data)) {
@@ -212,7 +228,7 @@ export default function SettingsPage() {
             <p className="text-muted-foreground mt-2">إدارة إعدادات المتجر والتكاملات</p>
           </div>
 
-          <Dialog>
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Button>
                 <Plus className="h-4 w-4 ml-2" />
@@ -228,7 +244,7 @@ export default function SettingsPage() {
               </DialogHeader>
 
               <Form {...form}>
-                <form onSubmit={form.handleSubmit((data) => accountMutation.mutate(data))} className="space-y-4">
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                   <FormField
                     control={form.control}
                     name="platform"
@@ -247,6 +263,7 @@ export default function SettingsPage() {
                             <SelectItem value="snapchat">سناب شات</SelectItem>
                           </SelectContent>
                         </Select>
+                        <FormMessage />
                       </FormItem>
                     )}
                   />
@@ -256,10 +273,14 @@ export default function SettingsPage() {
                     name="username"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>اسم المستخدم</FormLabel>
+                        <FormLabel>اسم المستخدم / رقم الهاتف</FormLabel>
                         <FormControl>
-                          <Input {...field} />
+                          <Input {...field} placeholder="أدخل اسم المستخدم أو رقم الهاتف" />
                         </FormControl>
+                        <FormDescription>
+                          يمكنك إدخال اسم المستخدم أو رقم الهاتف الخاص بالحساب
+                        </FormDescription>
+                        <FormMessage />
                       </FormItem>
                     )}
                   />
@@ -271,13 +292,18 @@ export default function SettingsPage() {
                       <FormItem>
                         <FormLabel>كلمة المرور</FormLabel>
                         <FormControl>
-                          <Input type="password" {...field} />
+                          <Input type="password" {...field} placeholder="أدخل كلمة المرور" />
                         </FormControl>
+                        <FormMessage />
                       </FormItem>
                     )}
                   />
 
-                  <Button type="submit" disabled={accountMutation.isPending} className="w-full">
+                  <Button 
+                    type="submit" 
+                    disabled={accountMutation.isPending || !form.formState.isValid} 
+                    className="w-full"
+                  >
                     {accountMutation.isPending ? "جاري الحفظ..." : "حفظ الحساب"}
                   </Button>
                 </form>
