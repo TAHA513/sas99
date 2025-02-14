@@ -1,6 +1,6 @@
 {
   "variant": "vibrant",
-  "primary": "oklch(65% 0.15 250)",
+  "primary": "#0ea5e9",
   "appearance": "light",
   "radius": 0.75,
   "fontSize": "large",
