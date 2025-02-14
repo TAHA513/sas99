@@ -2,5 +2,7 @@
   "variant": "professional",
   "primary": "#db2777",
   "appearance": "light",
-  "radius": 0.5
+  "radius": 0.5,
+  "fontSize": "large",
+  "fontFamily": "tajawal"
 }
