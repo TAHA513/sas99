@@ -5,64 +5,128 @@ import { useState, useRef, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import JsBarcode from "jsbarcode";
-import { Printer, Download, RefreshCw } from "lucide-react";
+import { Printer, Download, RefreshCw, Sheet } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function BarcodesPage() {
   const { toast } = useToast();
   const [barcodeValue, setBarcodeValue] = useState("");
+  const [bulkBarcodes, setBulkBarcodes] = useState("");
   const [barcodeFormat, setBarcodeFormat] = useState("CODE128");
   const [barcodeWidth, setBarcodeWidth] = useState("2");
   const [barcodeHeight, setBarcodeHeight] = useState("100");
-  const svgRef = useRef<SVGSVGElement>(null);
+  const [copies, setCopies] = useState("1");
+  const singleBarcodeRef = useRef<SVGSVGElement>(null);
+  const bulkBarcodesRef = useRef<HTMLDivElement>(null);
 
-  const generateBarcode = () => {
-    if (!barcodeValue) {
+  const generateBarcode = (value: string, svgElement: SVGSVGElement) => {
+    if (!value) return false;
+
+    try {
+      JsBarcode(svgElement, value, {
+        format: barcodeFormat,
+        width: Number(barcodeWidth),
+        height: Number(barcodeHeight),
+        displayValue: true,
+        font: "Arial",
+        textAlign: "center",
+        textPosition: "bottom",
+        textMargin: 2,
+        fontSize: 20,
+        background: "#ffffff",
+        lineColor: "#000000",
+        margin: 10,
+      });
+      return true;
+    } catch (error) {
       toast({
-        title: "خطأ",
-        description: "الرجاء إدخال قيمة للباركود",
+        title: "خطأ في توليد الباركود",
+        description: "تأكد من صحة القيمة المدخلة",
         variant: "destructive",
       });
-      return;
-    }
-
-    if (svgRef.current) {
-      try {
-        JsBarcode(svgRef.current, barcodeValue, {
-          format: barcodeFormat,
-          width: Number(barcodeWidth),
-          height: Number(barcodeHeight),
-          displayValue: true,
-          font: "Arial",
-          textAlign: "center",
-          textPosition: "bottom",
-          textMargin: 2,
-          fontSize: 20,
-          background: "#ffffff",
-          lineColor: "#000000",
-          margin: 10,
-        });
-      } catch (error) {
-        toast({
-          title: "خطأ في توليد الباركود",
-          description: "تأكد من صحة القيمة المدخلة",
-          variant: "destructive",
-        });
-      }
+      return false;
     }
   };
 
   useEffect(() => {
-    if (barcodeValue) {
-      generateBarcode();
+    if (barcodeValue && singleBarcodeRef.current) {
+      generateBarcode(barcodeValue, singleBarcodeRef.current);
     }
   }, [barcodeValue, barcodeFormat, barcodeWidth, barcodeHeight]);
 
-  const downloadBarcode = () => {
-    if (!svgRef.current) return;
+  const generateBulkBarcodes = () => {
+    if (!bulkBarcodesRef.current) return;
 
-    const svgData = new XMLSerializer().serializeToString(svgRef.current);
+    // Clear previous content
+    bulkBarcodesRef.current.innerHTML = '';
+
+    const values = bulkBarcodes.split('\n').filter(v => v.trim());
+
+    values.forEach((value, index) => {
+      const container = document.createElement('div');
+      container.className = 'mb-4';
+
+      // Create copies based on the user input
+      for (let i = 0; i < Number(copies); i++) {
+        const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        if (generateBarcode(value, svg)) {
+          container.appendChild(svg);
+        }
+      }
+
+      bulkBarcodesRef.current?.appendChild(container);
+    });
+  };
+
+  useEffect(() => {
+    if (bulkBarcodes) {
+      generateBulkBarcodes();
+    }
+  }, [bulkBarcodes, barcodeFormat, barcodeWidth, barcodeHeight, copies]);
+
+  const printBarcodes = (thermal = false) => {
+    const printWindow = window.open("", "", "width=800,height=600");
+    if (!printWindow) return;
+
+    const content = thermal ? singleBarcodeRef.current?.outerHTML || bulkBarcodesRef.current?.innerHTML
+                          : `
+      <html dir="rtl">
+        <head>
+          <title>طباعة الباركود</title>
+          <style>
+            @page { size: 58mm 40mm; margin: 0; }
+            body { margin: 0; display: flex; justify-content: center; align-items: center; }
+            .container { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; padding: 10px; }
+            svg { max-width: 100%; height: auto; }
+            @media print {
+              body { -webkit-print-color-adjust: exact; }
+              .container { break-inside: avoid; page-break-inside: avoid; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            ${singleBarcodeRef.current?.outerHTML || bulkBarcodesRef.current?.innerHTML || ''}
+          </div>
+          <script>
+            window.onload = () => {
+              window.print();
+              window.close();
+            };
+          </script>
+        </body>
+      </html>
+    `;
+
+    printWindow.document.write(content);
+    printWindow.document.close();
+  };
+
+  const downloadBarcode = () => {
+    const svgData = new XMLSerializer().serializeToString(singleBarcodeRef.current!);
     const svgBlob = new Blob([svgData], { type: "image/svg+xml;charset=utf-8" });
     const svgUrl = URL.createObjectURL(svgBlob);
     const downloadLink = document.createElement("a");
@@ -74,120 +138,155 @@ export default function BarcodesPage() {
     URL.revokeObjectURL(svgUrl);
   };
 
-  const printBarcode = () => {
-    if (!svgRef.current) return;
-
-    const printWindow = window.open("", "", "width=800,height=600");
-    if (printWindow) {
-      const svgData = new XMLSerializer().serializeToString(svgRef.current);
-      printWindow.document.write(`
-        <html>
-          <head>
-            <title>طباعة الباركود</title>
-            <style>
-              body { margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; }
-              svg { max-width: 100%; height: auto; }
-              @media print {
-                body { -webkit-print-color-adjust: exact; }
-              }
-            </style>
-          </head>
-          <body>
-            ${svgData}
-            <script>
-              window.onload = () => {
-                window.print();
-                window.close();
-              };
-            </script>
-          </body>
-        </html>
-      `);
-      printWindow.document.close();
-    }
-  };
-
   return (
     <DashboardLayout>
       <div className="space-y-8">
         <h1 className="text-3xl font-bold">توليد الباركود</h1>
 
-        <div className="grid gap-8 md:grid-cols-2">
-          <Card>
-            <CardHeader>
-              <CardTitle>إعدادات الباركود</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label>قيمة الباركود</Label>
-                <Input
-                  value={barcodeValue}
-                  onChange={(e) => setBarcodeValue(e.target.value)}
-                  placeholder="أدخل النص أو الرقم"
-                />
-              </div>
+        <Tabs defaultValue="single">
+          <TabsList>
+            <TabsTrigger value="single">باركود واحد</TabsTrigger>
+            <TabsTrigger value="bulk">مجموعة باركودات</TabsTrigger>
+          </TabsList>
 
-              <div className="space-y-2">
-                <Label>نوع الباركود</Label>
-                <Select value={barcodeFormat} onValueChange={setBarcodeFormat}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="CODE128">Code 128</SelectItem>
-                    <SelectItem value="EAN13">EAN-13</SelectItem>
-                    <SelectItem value="EAN8">EAN-8</SelectItem>
-                    <SelectItem value="UPC">UPC</SelectItem>
-                    <SelectItem value="CODE39">Code 39</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+          <TabsContent value="single">
+            <div className="grid gap-8 md:grid-cols-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle>إعدادات الباركود</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>قيمة الباركود</Label>
+                    <Input
+                      value={barcodeValue}
+                      onChange={(e) => setBarcodeValue(e.target.value)}
+                      placeholder="أدخل النص أو الرقم"
+                    />
+                  </div>
 
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label>عرض الشريط</Label>
-                  <Input
-                    type="number"
-                    value={barcodeWidth}
-                    onChange={(e) => setBarcodeWidth(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>ارتفاع الشريط</Label>
-                  <Input
-                    type="number"
-                    value={barcodeHeight}
-                    onChange={(e) => setBarcodeHeight(e.target.value)}
-                  />
-                </div>
-              </div>
+                  <div className="space-y-2">
+                    <Label>نوع الباركود</Label>
+                    <Select value={barcodeFormat} onValueChange={setBarcodeFormat}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="CODE128">Code 128</SelectItem>
+                        <SelectItem value="EAN13">EAN-13</SelectItem>
+                        <SelectItem value="EAN8">EAN-8</SelectItem>
+                        <SelectItem value="UPC">UPC</SelectItem>
+                        <SelectItem value="CODE39">Code 39</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-              <div className="flex gap-2">
-                <Button onClick={() => generateBarcode()}>
-                  <RefreshCw className="h-4 w-4 ml-2" />
-                  تحديث الباركود
-                </Button>
-                <Button variant="outline" onClick={downloadBarcode}>
-                  <Download className="h-4 w-4 ml-2" />
-                  تحميل
-                </Button>
-                <Button variant="outline" onClick={printBarcode}>
-                  <Printer className="h-4 w-4 ml-2" />
-                  طباعة
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label>عرض الشريط</Label>
+                      <Input
+                        type="number"
+                        value={barcodeWidth}
+                        onChange={(e) => setBarcodeWidth(e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>ارتفاع الشريط</Label>
+                      <Input
+                        type="number"
+                        value={barcodeHeight}
+                        onChange={(e) => setBarcodeHeight(e.target.value)}
+                      />
+                    </div>
+                  </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>معاينة الباركود</CardTitle>
-            </CardHeader>
-            <CardContent className="flex items-center justify-center min-h-[300px] bg-white">
-              <svg ref={svgRef} />
-            </CardContent>
-          </Card>
-        </div>
+                  <div className="flex gap-2">
+                    <Button onClick={() => generateBarcode(barcodeValue, singleBarcodeRef.current!)}>
+                      <RefreshCw className="h-4 w-4 ml-2" />
+                      تحديث الباركود
+                    </Button>
+                    <Button variant="outline" onClick={downloadBarcode}>
+                      <Download className="h-4 w-4 ml-2" />
+                      تحميل
+                    </Button>
+                    <Button variant="outline" onClick={() => printBarcodes(false)}>
+                      <Printer className="h-4 w-4 ml-2" />
+                      طباعة عادية
+                    </Button>
+                    <Button variant="outline" onClick={() => printBarcodes(true)}>
+                      <Sheet className="h-4 w-4 ml-2" />
+                      طباعة حرارية
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>معاينة الباركود</CardTitle>
+                </CardHeader>
+                <CardContent className="flex items-center justify-center min-h-[300px] bg-white">
+                  <svg ref={singleBarcodeRef} />
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="bulk">
+            <div className="grid gap-8 md:grid-cols-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle>إعدادات الباركود المتعدد</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>قيم الباركود (كل سطر يمثل باركود)</Label>
+                    <Textarea
+                      value={bulkBarcodes}
+                      onChange={(e) => setBulkBarcodes(e.target.value)}
+                      placeholder="123456&#10;789012&#10;345678"
+                      className="h-32"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>عدد النسخ لكل باركود</Label>
+                    <Input
+                      type="number"
+                      value={copies}
+                      onChange={(e) => setCopies(e.target.value)}
+                      min="1"
+                    />
+                  </div>
+
+                  <div className="flex gap-2">
+                    <Button onClick={generateBulkBarcodes}>
+                      <RefreshCw className="h-4 w-4 ml-2" />
+                      توليد الباركودات
+                    </Button>
+                    <Button variant="outline" onClick={() => printBarcodes(false)}>
+                      <Printer className="h-4 w-4 ml-2" />
+                      طباعة عادية
+                    </Button>
+                    <Button variant="outline" onClick={() => printBarcodes(true)}>
+                      <Sheet className="h-4 w-4 ml-2" />
+                      طباعة حرارية
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>معاينة الباركودات</CardTitle>
+                </CardHeader>
+                <CardContent className="min-h-[300px] bg-white overflow-auto">
+                  <div ref={bulkBarcodesRef} className="space-y-4" />
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
     </DashboardLayout>
   );
