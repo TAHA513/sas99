@@ -28,42 +28,9 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     const fontFamily = validFonts.includes(theme.fontFamily?.toLowerCase()) ? theme.fontFamily.toLowerCase() : 'cairo';
     document.body.className = `font-${fontFamily}`;
 
-    // تطبيق اللون الرئيسي
+    // تطبيق اللون الرئيسي بطريقة مبسطة
     if (theme.primary) {
-      // تحويل اللون HEX إلى HSL
-      const root = document.documentElement;
-      const testDiv = document.createElement('div');
-      testDiv.style.color = theme.primary;
-      document.body.appendChild(testDiv);
-      const rgbColor = window.getComputedStyle(testDiv).color;
-      document.body.removeChild(testDiv);
-
-      // تحويل RGB إلى HSL
-      const rgb = rgbColor.match(/\d+/g)?.map(Number) || [0, 0, 0];
-      const r = rgb[0] / 255;
-      const g = rgb[1] / 255;
-      const b = rgb[2] / 255;
-
-      const max = Math.max(r, g, b);
-      const min = Math.min(r, g, b);
-      let h = 0, s = 0, l = (max + min) / 2;
-
-      if (max !== min) {
-        const d = max - min;
-        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-
-        switch (max) {
-          case r: h = (g - b) / d + (g < b ? 6 : 0); break;
-          case g: h = (b - r) / d + 2; break;
-          case b: h = (r - g) / d + 4; break;
-        }
-
-        h /= 6;
-      }
-
-      // تحويل إلى الصيغة المطلوبة
-      const hsl = `${Math.round(h * 360)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%`;
-      root.style.setProperty('--primary-hsl', hsl);
+      document.documentElement.style.setProperty('--primary-hsl', theme.primary);
     }
 
   }, [theme]);
