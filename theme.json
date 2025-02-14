@@ -2,8 +2,8 @@
   "variant": "tint",
   "primary": "#7c3aed",
   "appearance": "light",
-  "radius": 0.5,
+  "radius": 0.6,
   "fontSize": "small",
   "fontFamily": "tajawal",
-  "headingSize": "h3"
+  "headingSize": "h1"
 }

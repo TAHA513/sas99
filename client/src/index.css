@@ -58,20 +58,6 @@
   }
 
   body {
-    @apply bg-background text-foreground;
-    font-family: 'Cairo', sans-serif;
-  }
-
-  /* تعريف الخطوط العربية */
-  .font-cairo {
-    font-family: 'Cairo', sans-serif !important;
-  }
-
-  .font-tajawal {
-    font-family: 'Tajawal', sans-serif !important;
-  }
-
-  .font-almarai {
-    font-family: 'Almarai', sans-serif !important;
+    @apply bg-background text-foreground font-cairo;
   }
 }
