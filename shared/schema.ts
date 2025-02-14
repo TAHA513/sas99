@@ -45,6 +45,14 @@ export const settings = pgTable("settings", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
+export const storeSettings = pgTable("store_settings", {
+  id: serial("id").primaryKey(),
+  storeName: text("store_name").notNull(),
+  storeLogo: text("store_logo"), 
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
 export const marketingCampaigns = pgTable("marketing_campaigns", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
@@ -52,14 +60,14 @@ export const marketingCampaigns = pgTable("marketing_campaigns", {
   startDate: timestamp("start_date").notNull(),
   endDate: timestamp("end_date").notNull(),
   status: text("status").notNull().default("draft"),
-  type: text("type").notNull(), 
+  type: text("type").notNull(),
   content: text("content").notNull(),
-  platforms: text("platforms").array(), 
-  socialMediaSettings: text("social_media_settings"), 
-  targetAudience: text("target_audience"), 
-  budget: integer("budget"), 
-  messageCount: integer("message_count").notNull().default(0), 
-  adCreatives: text("ad_creatives").array(), 
+  platforms: text("platforms").array(),
+  socialMediaSettings: text("social_media_settings"),
+  targetAudience: text("target_audience"),
+  budget: integer("budget"),
+  messageCount: integer("message_count").notNull().default(0),
+  adCreatives: text("ad_creatives").array(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -68,7 +76,7 @@ export const promotions = pgTable("promotions", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
   description: text("description"),
-  discountType: text("discount_type").notNull(), 
+  discountType: text("discount_type").notNull(),
   discountValue: integer("discount_value").notNull(),
   startDate: timestamp("start_date").notNull(),
   endDate: timestamp("end_date").notNull(),
@@ -90,7 +98,7 @@ export const discountCodes = pgTable("discount_codes", {
 
 export const socialMediaAccounts = pgTable("social_media_accounts", {
   id: serial("id").primaryKey(),
-  platform: text("platform").notNull(), 
+  platform: text("platform").notNull(),
   username: text("username").notNull(),
   password: text("password").notNull(),
   status: text("status").notNull().default("active"),
@@ -109,7 +117,7 @@ export const products = pgTable("products", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
   barcode: text("barcode"),
-  type: text("type").notNull(), 
+  type: text("type").notNull(),
   quantity: decimal("quantity").notNull().default("0"),
   costPrice: decimal("cost_price").notNull(),
   sellingPrice: decimal("selling_price").notNull(),
@@ -132,6 +140,10 @@ export const insertStaffSchema = createInsertSchema(staff);
 export const insertSettingSchema = createInsertSchema(settings).pick({
   key: true,
   value: true,
+});
+export const insertStoreSettingsSchema = createInsertSchema(storeSettings).pick({
+  storeName: true,
+  storeLogo: true,
 });
 export const insertMarketingCampaignSchema = createInsertSchema(marketingCampaigns).extend({
   platforms: z.array(z.enum(['facebook', 'instagram', 'snapchat', 'whatsapp', 'email', 'sms'])).optional(),
@@ -173,6 +185,8 @@ export type Staff = typeof staff.$inferSelect;
 export type InsertStaff = z.infer<typeof insertStaffSchema>;
 export type Setting = typeof settings.$inferSelect;
 export type InsertSetting = z.infer<typeof insertSettingSchema>;
+export type StoreSetting = typeof storeSettings.$inferSelect;
+export type InsertStoreSetting = z.infer<typeof insertStoreSettingsSchema>;
 export type MarketingCampaign = typeof marketingCampaigns.$inferSelect;
 export type InsertMarketingCampaign = z.infer<typeof insertMarketingCampaignSchema>;
 export type Promotion = typeof promotions.$inferSelect;

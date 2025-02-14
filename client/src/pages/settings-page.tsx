@@ -9,10 +9,10 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { MessageSquare, Palette } from "lucide-react";
+import { MessageSquare, Palette, Upload } from "lucide-react";
 import { SiGooglecalendar } from "react-icons/si";
 import { SiFacebook, SiInstagram, SiSnapchat } from "react-icons/si";
-import { Setting, User, Customer, SocialMediaAccount } from "@shared/schema";
+import { Setting, User, Customer, SocialMediaAccount, StoreSetting } from "@shared/schema";
 import { Plus } from 'lucide-react';
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
@@ -61,6 +61,10 @@ export default function SettingsPage() {
     queryKey: ["/api/settings"],
   });
 
+  const { data: storeSettings } = useQuery<StoreSetting>({
+    queryKey: ["/api/store-settings"],
+  });
+
   const whatsappForm = useForm<WhatsAppSettings>({
     resolver: zodResolver(whatsappSchema),
     defaultValues: {
@@ -106,6 +110,41 @@ export default function SettingsPage() {
       });
     },
   });
+
+  const storeSettingsMutation = useMutation({
+    mutationFn: async (data: { storeName: string; storeLogo?: string }) => {
+      const res = await apiRequest("POST", "/api/store-settings", data);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/store-settings"] });
+      toast({
+        title: "تم حفظ إعدادات المتجر",
+        description: "تم تحديث معلومات المتجر بنجاح",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "خطأ في حفظ الإعدادات",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleLogoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        storeSettingsMutation.mutate({
+          storeName: storeSettings?.storeName || "",
+          storeLogo: reader.result as string,
+        });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const { data: socialAccounts } = useQuery<SocialMediaAccount[]>({
     queryKey: ["/api/social-accounts"],
@@ -165,6 +204,97 @@ export default function SettingsPage() {
         <h1 className="text-3xl font-bold">إعدادات النظام</h1>
 
         <div className="grid gap-6">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center space-x-4">
+                <div className="flex gap-2">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-8 w-8 text-primary"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                    <polyline points="9 22 9 12 15 12 15 22" />
+                  </svg>
+                </div>
+                <div>
+                  <CardTitle>إعدادات المتجر</CardTitle>
+                  <CardDescription>
+                    إدارة معلومات المتجر والشعار
+                  </CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label>اسم المتجر</Label>
+                <Input
+                  value={storeSettings?.storeName || ""}
+                  onChange={(e) =>
+                    storeSettingsMutation.mutate({
+                      storeName: e.target.value,
+                      storeLogo: storeSettings?.storeLogo,
+                    })
+                  }
+                  placeholder="أدخل اسم المتجر"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>شعار المتجر</Label>
+                <div className="flex flex-col items-center gap-4 p-4 border-2 border-dashed rounded-lg">
+                  {storeSettings?.storeLogo ? (
+                    <div className="relative">
+                      <img
+                        src={storeSettings.storeLogo}
+                        alt="شعار المتجر"
+                        className="max-w-[200px] max-h-[200px] object-contain"
+                      />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="absolute top-0 right-0 mt-2 mr-2"
+                        onClick={() =>
+                          storeSettingsMutation.mutate({
+                            storeName: storeSettings.storeName,
+                            storeLogo: "",
+                          })
+                        }
+                      >
+                        حذف
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="text-center">
+                      <Upload className="mx-auto h-12 w-12 text-muted-foreground" />
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        اسحب وأفلت الشعار هنا أو اضغط للتحميل
+                      </p>
+                    </div>
+                  )}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleLogoUpload}
+                    className="hidden"
+                    id="logo-upload"
+                  />
+                  <Button
+                    variant="outline"
+                    onClick={() =>
+                      document.getElementById("logo-upload")?.click()
+                    }
+                  >
+                    <Upload className="h-4 w-4 ml-2" />
+                    تحميل شعار جديد
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
           {/* WhatsApp Integration Settings */}
           <Card>
             <CardHeader>

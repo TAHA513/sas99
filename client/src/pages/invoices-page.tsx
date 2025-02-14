@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { useQuery } from "@tanstack/react-query";
-import { Product } from "@shared/schema";
+import { Product, StoreSetting } from "@shared/schema";
 import { useState, useEffect, useRef } from "react";
 import { MinusCircle, Receipt, Search, Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -36,12 +36,16 @@ export default function InvoicesPage() {
     queryKey: ["/api/products"],
   });
 
+  const { data: storeSettings } = useQuery<StoreSetting>({
+    queryKey: ["/api/store-settings"],
+  });
+
   // Focus management function
   useEffect(() => {
     const focusInput = () => {
-      if (barcodeInputRef.current && 
-          document.activeElement?.tagName !== 'INPUT' && 
-          document.activeElement?.tagName !== 'TEXTAREA') {
+      if (barcodeInputRef.current &&
+        document.activeElement?.tagName !== 'INPUT' &&
+        document.activeElement?.tagName !== 'TEXTAREA') {
         barcodeInputRef.current.focus();
       }
     };
@@ -77,10 +81,10 @@ export default function InvoicesPage() {
         return prevItems.map(item =>
           item.productId === product.id
             ? {
-                ...item,
-                quantity: item.quantity + 1,
-                total: (item.quantity + 1) * item.price
-              }
+              ...item,
+              quantity: item.quantity + 1,
+              total: (item.quantity + 1) * item.price
+            }
             : item
         );
       }
@@ -132,6 +136,8 @@ export default function InvoicesPage() {
             @page { size: A4; margin: 1cm; }
             body { font-family: Arial, sans-serif; padding: 20px; }
             .header { text-align: center; margin-bottom: 30px; }
+            .logo { max-width: 200px; max-height: 200px; margin: 0 auto 20px; }
+            .store-name { font-size: 24px; font-weight: bold; margin-bottom: 10px; }
             .info { margin-bottom: 20px; }
             table { width: 100%; border-collapse: collapse; margin: 20px 0; }
             th, td { border: 1px solid #ddd; padding: 8px; text-align: right; }
@@ -145,7 +151,12 @@ export default function InvoicesPage() {
         </head>
         <body>
           <div class="header">
-            <h1>فاتورة</h1>
+            ${storeSettings?.storeLogo ? `
+              <img src="${storeSettings.storeLogo}" class="logo" alt="شعار المتجر" />
+            ` : ''}
+            ${storeSettings?.storeName ? `
+              <div class="store-name">${storeSettings.storeName}</div>
+            ` : ''}
             <p>${currentDateTime}</p>
           </div>
 
@@ -183,6 +194,12 @@ export default function InvoicesPage() {
           ${note ? `
             <div class="footer">
               <p><strong>ملاحظات:</strong> ${note}</p>
+            </div>
+          ` : ''}
+
+          ${storeSettings?.storeName ? `
+            <div class="footer">
+              <p>شكراً لتسوقكم من ${storeSettings.storeName}</p>
             </div>
           ` : ''}
         </body>
