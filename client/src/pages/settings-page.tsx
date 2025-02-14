@@ -378,20 +378,30 @@ export default function SettingsPage() {
                           key={color}
                           variant="outline"
                           className="w-full h-8 rounded-md p-0 overflow-hidden"
-                          onClick={() => {
-                            fetch('/api/theme', {
-                              method: 'POST',
-                              headers: {
-                                'Content-Type': 'application/json',
-                              },
-                              body: JSON.stringify({
-                                primary: color,
-                                radius: 0.5,
-                                variant: "professional"
-                              }),
-                            }).then(() => {
+                          onClick={async () => {
+                            try {
+                              const response = await fetch('/api/theme', {
+                                method: 'POST',
+                                headers: {
+                                  'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify({
+                                  primary: color,
+                                }),
+                              });
+
+                              if (!response.ok) {
+                                throw new Error('Failed to update theme');
+                              }
+
                               window.location.reload();
-                            });
+                            } catch (error) {
+                              toast({
+                                title: "خطأ في تحديث المظهر",
+                                description: "حدث خطأ أثناء تحديث لون المظهر",
+                                variant: "destructive",
+                              });
+                            }
                           }}
                         >
                           <div
@@ -414,19 +424,30 @@ export default function SettingsPage() {
                         <Button
                           key={style.value}
                           variant="outline"
-                          onClick={() => {
-                            fetch('/api/theme', {
-                              method: 'POST',
-                              headers: {
-                                'Content-Type': 'application/json',
-                              },
-                              body: JSON.stringify({
-                                variant: style.value,
-                                radius: 0.5,
-                              }),
-                            }).then(() => {
+                          onClick={async () => {
+                            try {
+                              const response = await fetch('/api/theme', {
+                                method: 'POST',
+                                headers: {
+                                  'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify({
+                                  variant: style.value,
+                                }),
+                              });
+
+                              if (!response.ok) {
+                                throw new Error('Failed to update theme');
+                              }
+
                               window.location.reload();
-                            });
+                            } catch (error) {
+                              toast({
+                                title: "خطأ في تحديث المظهر",
+                                description: "حدث خطأ أثناء تحديث نمط التصميم",
+                                variant: "destructive",
+                              });
+                            }
                           }}
                         >
                           {style.label}
@@ -441,18 +462,30 @@ export default function SettingsPage() {
                       defaultValue={[0.5]}
                       max={1}
                       step={0.1}
-                      onValueChange={([value]) => {
-                        fetch('/api/theme', {
-                          method: 'POST',
-                          headers: {
-                            'Content-Type': 'application/json',
-                          },
-                          body: JSON.stringify({
-                            radius: value,
-                          }),
-                        }).then(() => {
+                      onValueChange={async ([value]) => {
+                        try {
+                          const response = await fetch('/api/theme', {
+                            method: 'POST',
+                            headers: {
+                              'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                              radius: value,
+                            }),
+                          });
+
+                          if (!response.ok) {
+                            throw new Error('Failed to update theme');
+                          }
+
                           window.location.reload();
-                        });
+                        } catch (error) {
+                          toast({
+                            title: "خطأ في تحديث المظهر",
+                            description: "حدث خطأ أثناء تحديث حجم الزوايا",
+                            variant: "destructive",
+                          });
+                        }
                       }}
                     />
                   </div>

@@ -217,6 +217,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(discountCode);
   });
 
+  // Theme routes
+  app.post("/api/theme", async (req, res) => {
+    const { primary, variant, radius } = req.body;
+    try {
+      const fs = require('fs/promises');
+      const path = require('path');
+
+      // Read current theme
+      const themePath = path.join(process.cwd(), 'theme.json');
+      const currentTheme = JSON.parse(await fs.readFile(themePath, 'utf8'));
+
+      // Update theme with new values while preserving other settings
+      const newTheme = {
+        ...currentTheme,
+        ...(primary && { primary }),
+        ...(variant && { variant }),
+        ...(radius && { radius }),
+      };
+
+      // Write updated theme
+      await fs.writeFile(themePath, JSON.stringify(newTheme, null, 2));
+
+      res.json(newTheme);
+    } catch (error) {
+      console.error('Error updating theme:', error);
+      res.status(500).json({ error: 'Failed to update theme' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
