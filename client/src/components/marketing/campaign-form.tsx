@@ -45,6 +45,12 @@ export function CampaignForm({ platform, onSuccess }: CampaignFormProps) {
       budget: 1000,
       startDate: new Date().toISOString().split('T')[0],
       endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      targetAudience: JSON.stringify({
+        age: "18-35",
+        gender: "all",
+        location: "المملكة العربية السعودية",
+        interests: []
+      })
     },
   });
 
@@ -54,6 +60,7 @@ export function CampaignForm({ platform, onSuccess }: CampaignFormProps) {
         ...data,
         startDate: new Date(data.startDate),
         endDate: new Date(data.endDate),
+        budget: budget * 100, // Convert to cents
       });
       return res.json();
     },
@@ -74,22 +81,9 @@ export function CampaignForm({ platform, onSuccess }: CampaignFormProps) {
     },
   });
 
-  const onSubmit = (data: CampaignFormData) => {
-    createCampaign.mutate({
-      ...data,
-      budget: budget * 100, // Convert to cents
-    });
-  };
-
-  const platformLabels = {
-    facebook: "فيسبوك",
-    instagram: "انستغرام",
-    snapchat: "سناب شات",
-  };
-
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={form.handleSubmit((data) => createCampaign.mutate(data))} className="space-y-6">
         <FormField
           control={form.control}
           name="name"
@@ -97,7 +91,7 @@ export function CampaignForm({ platform, onSuccess }: CampaignFormProps) {
             <FormItem>
               <FormLabel>اسم الحملة</FormLabel>
               <FormControl>
-                <Input {...field} placeholder={`حملة ${platformLabels[platform]} الجديدة`} />
+                <Input {...field} placeholder="أدخل اسماً مميزاً للحملة" />
               </FormControl>
             </FormItem>
           )}
@@ -167,6 +161,9 @@ export function CampaignForm({ platform, onSuccess }: CampaignFormProps) {
                   </div>
                 </div>
               </FormControl>
+              <FormDescription>
+                الحد الأدنى للميزانية 100 ريال
+              </FormDescription>
             </FormItem>
           )}
         />
@@ -181,8 +178,12 @@ export function CampaignForm({ platform, onSuccess }: CampaignFormProps) {
                 <Textarea
                   {...field}
                   placeholder="اكتب نص الإعلان هنا"
+                  className="h-32"
                 />
               </FormControl>
+              <FormDescription>
+                يمكنك كتابة نص الإعلان الذي سيظهر للجمهور المستهدف
+              </FormDescription>
             </FormItem>
           )}
         />

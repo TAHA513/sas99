@@ -103,6 +103,70 @@ export class MemStorage implements IStorage {
     this.sessionStore = new MemoryStore({
       checkPeriod: 86400000,
     });
+
+    // Add sample marketing campaigns
+    this.campaigns.set(1, {
+      id: 1,
+      name: "حملة الصيف على فيسبوك",
+      description: "عروض خاصة لموسم الصيف",
+      startDate: new Date("2025-06-01"),
+      endDate: new Date("2025-07-01"),
+      status: "active",
+      type: "facebook",
+      content: "اكتشف عروضنا المميزة لموسم الصيف! خصومات تصل إلى 50%",
+      platforms: ["facebook"],
+      budget: 50000, // 500 SAR
+      targetAudience: JSON.stringify({
+        age: "18-35",
+        gender: "all",
+        location: "الرياض",
+        interests: ["تسوق", "موضة"]
+      }),
+      createdAt: new Date(),
+      updatedAt: new Date()
+    });
+
+    this.campaigns.set(2, {
+      id: 2,
+      name: "حملة رمضان على انستغرام",
+      description: "عروض شهر رمضان المبارك",
+      startDate: new Date("2025-03-11"),
+      endDate: new Date("2025-04-09"),
+      status: "draft",
+      type: "instagram",
+      content: "استعد لشهر رمضان مع أفضل العروض والخصومات",
+      platforms: ["instagram"],
+      budget: 100000, // 1000 SAR
+      targetAudience: JSON.stringify({
+        age: "25-55",
+        gender: "all",
+        location: "المملكة العربية السعودية",
+        interests: ["طبخ", "تسوق", "ديكور"]
+      }),
+      createdAt: new Date(),
+      updatedAt: new Date()
+    });
+
+    this.campaigns.set(3, {
+      id: 3,
+      name: "حملة نهاية الأسبوع على سناب شات",
+      description: "عروض خاصة لنهاية الأسبوع",
+      startDate: new Date("2025-02-20"),
+      endDate: new Date("2025-02-23"),
+      status: "completed",
+      type: "snapchat",
+      content: "عروض حصرية لمتابعينا على سناب شات",
+      platforms: ["snapchat"],
+      budget: 30000, // 300 SAR
+      targetAudience: JSON.stringify({
+        age: "16-24",
+        gender: "all",
+        location: "جدة",
+        interests: ["ترفيه", "تسوق"]
+      }),
+      createdAt: new Date("2025-02-19"),
+      updatedAt: new Date("2025-02-23")
+    });
   }
 
   // User operations
