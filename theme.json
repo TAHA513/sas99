@@ -3,6 +3,6 @@
   "primary": "#db2777",
   "appearance": "light",
   "radius": 0.5,
-  "fontSize": "large",
+  "fontSize": "medium",
   "fontFamily": "tajawal"
 }

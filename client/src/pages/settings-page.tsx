@@ -632,16 +632,13 @@ export default function SettingsPage() {
                   <div className="space-y-6">
                     <div className="space-y-2">
                       <Label>حجم الخط الأساسي</Label>
-                      <Form {...useForm({
-                        defaultValues: {
-                          fontSize: "medium"
-                        }
-                      })}>
+                      <Form {...useForm()}>
                         <FormField
                           name="fontSize"
                           render={({ field }) => (
                             <FormItem>
                               <Select
+                                defaultValue="medium"
                                 onValueChange={async (value) => {
                                   try {
                                     const response = await fetch('/api/theme', {
@@ -687,16 +684,13 @@ export default function SettingsPage() {
 
                     <div className="space-y-2">
                       <Label>حجم خط العناوين</Label>
-                      <Form {...useForm({
-                        defaultValues: {
-                          headingSize: "h2"
-                        }
-                      })}>
+                      <Form {...useForm()}>
                         <FormField
                           name="headingSize"
                           render={({ field }) => (
                             <FormItem>
                               <Select
+                                defaultValue="h2"
                                 onValueChange={async (value) => {
                                   try {
                                     const response = await fetch('/api/theme', {
@@ -742,16 +736,13 @@ export default function SettingsPage() {
 
                     <div className="space-y-2">
                       <Label>نوع الخط</Label>
-                      <Form {...useForm({
-                        defaultValues: {
-                          fontFamily: "cairo"
-                        }
-                      })}>
+                      <Form {...useForm()}>
                         <FormField
                           name="fontFamily"
                           render={({ field }) => (
                             <FormItem>
                               <Select
+                                defaultValue="cairo"
                                 onValueChange={async (value) => {
                                   try {
                                     const response = await fetch('/api/theme', {
