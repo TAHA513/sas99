@@ -631,128 +631,134 @@ export default function SettingsPage() {
                   {/* Added Font Settings */}
                   <div className="space-y-2">
                     <Label>حجم الخط الأساسي</Label>
-                    <Select
-                      onValueChange={async (value) => {
-                        try {
-                          const response = await fetch('/api/theme', {
-                            method: 'POST',
-                            headers: {
-                              'Content-Type': 'application/json',
-                            },
-                            body: JSON.stringify({
-                              fontSize: value,
-                            }),
-                          });
+                    <Form>
+                      <form>
+                        <Select
+                          onValueChange={async (value) => {
+                            try {
+                              const response = await fetch('/api/theme', {
+                                method: 'POST',
+                                headers: {
+                                  'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify({
+                                  fontSize: value,
+                                }),
+                              });
 
-                          if (!response.ok) {
-                            throw new Error('Failed to update font size');
-                          }
+                              if (!response.ok) {
+                                throw new Error('Failed to update font size');
+                              }
 
-                          window.location.reload();
-                        } catch (error) {
-                          toast({
-                            title: "خطأ في تحديث حجم الخط",
-                            description: "حدث خطأ أثناء تحديث حجم الخط",
-                            variant: "destructive",
-                          });
-                        }
-                      }}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="اختر حجم الخط" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="small">صغير</SelectItem>
-                        <SelectItem value="medium">متوسط</SelectItem>
-                        <SelectItem value="large">كبير</SelectItem>
-                      </SelectContent>
-                    </Select>
+                              window.location.reload();
+                            } catch (error) {
+                              toast({
+                                title: "خطأ في تحديث حجم الخط",
+                                description: "حدث خطأ أثناء تحديث حجم الخط",
+                                variant: "destructive",
+                              });
+                            }
+                          }}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="اختر حجم الخط" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="small">صغير</SelectItem>
+                            <SelectItem value="medium">متوسط</SelectItem>
+                            <SelectItem value="large">كبير</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </form>
+                    </Form>
                   </div>
 
                   <div className="space-y-2">
                     <Label>حجم خط العناوين</Label>
-                    <Select
-                      onValueChange={async (value) => {
-                        try {
-                          const response = await fetch('/api/theme', {
-                            method: 'POST',
-                            headers: {
-                              'Content-Type': 'application/json',
-                            },
-                            body: JSON.stringify({
-                              headingSize: value,
-                            }),
-                          });
+                    <Form>
+                      <form>
+                        <Select
+                          onValueChange={async (value) => {
+                            try {
+                              const response = await fetch('/api/theme', {
+                                method: 'POST',
+                                headers: {
+                                  'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify({
+                                  headingSize: value,
+                                }),
+                              });
 
-                          if (!response.ok) {
-                            throw new Error('Failed to update heading size');
-                          }
+                              if (!response.ok) {
+                                throw new Error('Failed to update heading size');
+                              }
 
-                          window.location.reload();
-                        } catch (error) {
-                          toast({
-                            title: "خطأ في تحديث حجم العناوين",
-                            description: "حدث خطأ أثناء تحديث حجم العناوين",
-                            variant: "destructive",
-                          });
-                        }
-                      }}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="اختر حجم العناوين" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="h1">كبير جداً</SelectItem>
-                        <SelectItem value="h2">كبير</SelectItem>
-                        <SelectItem value="h3">متوسط</SelectItem>
-                      </SelectContent>
-                    </Select>
+                              window.location.reload();
+                            } catch (error) {
+                              toast({
+                                title: "خطأ في تحديث حجم العناوين",
+                                description: "حدث خطأ أثناء تحديث حجم العناوين",
+                                variant: "destructive",
+                              });
+                            }
+                          }}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="اختر حجم العناوين" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="h1">كبير جداً</SelectItem>
+                            <SelectItem value="h2">كبير</SelectItem>
+                            <SelectItem value="h3">متوسط</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </form>
+                    </Form>
                   </div>
 
                   <div className="space-y-2">
                     <Label>نوع الخط</Label>
-                    <Select
-                      onValueChange={async (value) => {
-                        try {
-                          const response = await fetch('/api/theme', {
-                            method: 'POST',
-                            headers: {
-                              'Content-Type': 'application/json',
-                            },
-                            body: JSON.stringify({
-                              fontFamily: value,
-                            }),
-                          });
+                    <Form>
+                      <form>
+                        <Select
+                          onValueChange={async (value) => {
+                            try {
+                              const response = await fetch('/api/theme', {
+                                method: 'POST',
+                                headers: {
+                                  'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify({
+                                  fontFamily: value,
+                                }),
+                              });
 
-                          if (!response.ok) {
-                            throw new Error('Failed to update font family');
-                          }
+                              if (!response.ok) {
+                                throw new Error('Failed to update font family');
+                              }
 
-                          window.location.reload();
-                        } catch (error) {
-                          toast({
-                            title: "خطأ في تحديث نوع الخط",
-                            description: "حدث خطأ أثناء تحديث نوع الخط",
-                            variant: "destructive",
-                          });
-                        }
-                      }}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="اختر نوع الخط" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="cairo">Cairo</SelectItem>
-                        <SelectItem value="tajawal">Tajawal</SelectItem>
-                        <SelectItem value="almarai">Almarai</SelectItem>
-                      </SelectContent>
-                    </Select>
+                              window.location.reload();
+                            } catch (error) {
+                              toast({
+                                title: "خطأ في تحديث نوع الخط",
+                                description: "حدث خطأ أثناء تحديث نوع الخط",
+                                variant: "destructive",
+                              });
+                            }
+                          }}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="اختر نوع الخط" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="cairo">Cairo</SelectItem>
+                            <SelectItem value="tajawal">Tajawal</SelectItem>
+                            <SelectItem value="almarai">Almarai</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </form>
+                    </Form>
                   </div>
                 </div>
               </div>
