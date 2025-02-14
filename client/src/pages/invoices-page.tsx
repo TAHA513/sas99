@@ -3,12 +3,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useQuery } from "@tanstack/react-query";
-import { Customer, Product } from "@shared/schema";
+import { Product } from "@shared/schema";
 import { useState, useEffect, useRef } from "react";
 import { MinusCircle, Receipt, Search } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { format } from "date-fns";
+import { ar } from "date-fns/locale";
 
 type InvoiceItem = {
   productId: number;
@@ -20,7 +21,7 @@ type InvoiceItem = {
 
 export default function InvoicesPage() {
   const { toast } = useToast();
-  const [customerId, setCustomerId] = useState<string>("");
+  const [customerName, setCustomerName] = useState("");
   const [items, setItems] = useState<InvoiceItem[]>([]);
   const [barcodeInput, setBarcodeInput] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
@@ -28,9 +29,8 @@ export default function InvoicesPage() {
   const [note, setNote] = useState("");
   const barcodeInputRef = useRef<HTMLInputElement>(null);
 
-  const { data: customers } = useQuery<Customer[]>({
-    queryKey: ["/api/customers"],
-  });
+  // Get current date/time in Arabic format
+  const currentDateTime = format(new Date(), 'dd MMMM yyyy - HH:mm', { locale: ar });
 
   const { data: products } = useQuery<Product[]>({
     queryKey: ["/api/products"],
@@ -73,10 +73,10 @@ export default function InvoicesPage() {
     setItems(prevItems => {
       const existingItem = prevItems.find(item => item.productId === product.id);
       if (existingItem) {
-        return prevItems.map(item => 
-          item.productId === product.id 
-            ? { 
-                ...item, 
+        return prevItems.map(item =>
+          item.productId === product.id
+            ? {
+                ...item,
                 quantity: item.quantity + 1,
                 total: (item.quantity + 1) * item.price
               }
@@ -95,8 +95,8 @@ export default function InvoicesPage() {
 
   // Update item quantity
   const updateQuantity = (index: number, quantity: number) => {
-    setItems(items.map((item, i) => 
-      i === index 
+    setItems(items.map((item, i) =>
+      i === index
         ? { ...item, quantity, total: quantity * item.price }
         : item
     ));
@@ -110,12 +110,10 @@ export default function InvoicesPage() {
   // Calculate totals
   const subtotal = items.reduce((sum, item) => sum + item.total, 0);
   const discountAmount = (subtotal * discount) / 100;
-  const total = subtotal - discountAmount;
-  const vat = total * 0.15; // 15% VAT
-  const finalTotal = total + vat;
+  const finalTotal = subtotal - discountAmount;
 
   // Filter products based on search query
-  const filteredProducts = products?.filter(product => 
+  const filteredProducts = products?.filter(product =>
     product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     product.barcode.includes(searchQuery)
   );
@@ -124,7 +122,10 @@ export default function InvoicesPage() {
     <DashboardLayout>
       <div className="flex flex-col h-[calc(100vh-4rem)]">
         <div className="flex justify-between items-center mb-4">
-          <h1 className="text-3xl font-bold">فاتورة جديدة</h1>
+          <div>
+            <h1 className="text-3xl font-bold">فاتورة جديدة</h1>
+            <p className="text-muted-foreground mt-1">{currentDateTime}</p>
+          </div>
           <Button>
             <Receipt className="h-4 w-4 ml-2" />
             حفظ وطباعة
@@ -235,21 +236,14 @@ export default function InvoicesPage() {
           {/* Sidebar - Invoice Details */}
           <Card>
             <CardContent className="p-4 space-y-4">
-              {/* Customer Selection */}
+              {/* Customer Name Input */}
               <div className="space-y-2">
-                <Label>العميل</Label>
-                <Select value={customerId} onValueChange={setCustomerId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="اختر العميل" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {customers?.map((customer) => (
-                      <SelectItem key={customer.id} value={String(customer.id)}>
-                        {customer.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Label>اسم العميل</Label>
+                <Input
+                  value={customerName}
+                  onChange={(e) => setCustomerName(e.target.value)}
+                  placeholder="أدخل اسم العميل"
+                />
               </div>
 
               {/* Discount */}
@@ -276,10 +270,6 @@ export default function InvoicesPage() {
                     <span>- {discountAmount.toFixed(2)} ريال</span>
                   </div>
                 )}
-                <div className="flex justify-between text-sm">
-                  <span>ضريبة القيمة المضافة (15%):</span>
-                  <span>{vat.toFixed(2)} ريال</span>
-                </div>
                 <div className="flex justify-between font-bold text-lg">
                   <span>الإجمالي النهائي:</span>
                   <span>{finalTotal.toFixed(2)} ريال</span>
