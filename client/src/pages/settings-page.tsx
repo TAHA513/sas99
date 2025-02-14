@@ -1,15 +1,26 @@
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import { Button } from "@/components/ui/button";
-import { Card as CardComponent, CardContent, CardDescription, CardHeader, CardTitle, CardProps as CardComponentProps } from "@/components/ui/card";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Card as CardComponent, CardContent, CardHeader, CardTitle, CardProps as CardComponentProps } from "@/components/ui/card";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { useToast } from "@/hooks/use-toast";
+import { useToast, toast } from "@/hooks/use-toast";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { MessageSquare, Upload, Plus, Building2, Settings as SettingsIcon } from "lucide-react";
+import { MessageSquare, Upload, Plus, Building2, Settings as SettingsIcon, RotateCcw } from "lucide-react";
 import { SiGooglecalendar } from "react-icons/si";
 import { SiFacebook, SiInstagram, SiSnapchat } from "react-icons/si";
 import { Setting, User, Customer, SocialMediaAccount, StoreSetting } from "@shared/schema";
@@ -27,6 +38,8 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+
 
 // تحسين مخطط التحقق للحسابات الاجتماعية
 const socialMediaAccountSchema = z.object({
@@ -67,6 +80,7 @@ const CustomCard = ({ className, ...props }: CardComponentProps) => (
 export default function SettingsPage() {
   const { toast } = useToast();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const queryClient = useQueryClient();
 
   const { data: settings } = useQuery<Setting[]>({
     queryKey: ["/api/settings"],
@@ -219,6 +233,29 @@ export default function SettingsPage() {
     }
   };
 
+  const resetSettingsMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("POST", "/api/settings/reset", {});
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/settings"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/store-settings"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/social-accounts"] });
+      toast({
+        title: "تم إعادة الضبط",
+        description: "تم إعادة ضبط جميع الإعدادات بنجاح",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "خطأ في إعادة الضبط",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   return (
     <DashboardLayout>
       <div className="space-y-8">
@@ -227,7 +264,6 @@ export default function SettingsPage() {
             <h1 className="text-3xl font-bold">إعدادات النظام</h1>
             <p className="text-muted-foreground mt-2">إدارة إعدادات المتجر والتكاملات</p>
           </div>
-
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Button>
@@ -361,9 +397,9 @@ export default function SettingsPage() {
                     )}
                   />
 
-                  <Button 
-                    type="submit" 
-                    disabled={accountMutation.isPending || !form.formState.isValid} 
+                  <Button
+                    type="submit"
+                    disabled={accountMutation.isPending || !form.formState.isValid}
                     className="w-full"
                   >
                     {accountMutation.isPending ? "جاري الحفظ..." : "حفظ الحساب"}
@@ -374,6 +410,52 @@ export default function SettingsPage() {
           </Dialog>
         </div>
 
+        <Card>
+          <CardHeader>
+            <CardTitle>إعادة ضبط النظام</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <p>
+                سيؤدي هذا الإجراء إلى إعادة ضبط جميع الإعدادات إلى حالتها الافتراضية، بما في ذلك:
+              </p>
+              <ul className="list-disc list-inside space-y-2 text-muted-foreground">
+                <li>معلومات المتجر (الاسم والشعار)</li>
+                <li>إعدادات WhatsApp Business</li>
+                <li>إعدادات تقويم Google</li>
+                <li>حسابات وسائل التواصل الاجتماعي المرتبطة</li>
+                <li>جميع رموز API وبيانات الاعتماد المحفوظة</li>
+              </ul>
+
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" className="mt-4">
+                    <RotateCcw className="h-4 w-4 ml-2" />
+                    إعادة ضبط جميع الإعدادات
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>هل أنت متأكد؟</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      سيؤدي هذا الإجراء إلى إعادة ضبط جميع إعدادات النظام إلى حالتها الافتراضية.
+                      لا يمكن التراجع عن هذا الإجراء.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>إلغاء</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() => resetSettingsMutation.mutate()}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      نعم، إعادة الضبط
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
+          </CardContent>
+        </Card>
         <Tabs defaultValue="store" className="space-y-6">
           <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4 gap-4">
             <TabsTrigger value="store" className="space-x-2">
