@@ -118,6 +118,86 @@ export default function InvoicesPage() {
     product.barcode.includes(searchQuery)
   );
 
+  // Print invoice
+  const printInvoice = () => {
+    const printWindow = window.open('', '', 'width=800,height=600');
+    if (!printWindow) return;
+
+    const content = `
+      <html dir="rtl">
+        <head>
+          <title>فاتورة</title>
+          <style>
+            @page { size: A4; margin: 1cm; }
+            body { font-family: Arial, sans-serif; padding: 20px; }
+            .header { text-align: center; margin-bottom: 30px; }
+            .info { margin-bottom: 20px; }
+            table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+            th, td { border: 1px solid #ddd; padding: 8px; text-align: right; }
+            th { background-color: #f8f9fa; }
+            .totals { margin-top: 30px; text-align: left; }
+            .footer { margin-top: 50px; text-align: center; font-size: 0.9em; }
+            @media print {
+              body { -webkit-print-color-adjust: exact; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>فاتورة</h1>
+            <p>${currentDateTime}</p>
+          </div>
+
+          <div class="info">
+            <p><strong>العميل:</strong> ${customerName || 'غير محدد'}</p>
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+                <th>المنتج</th>
+                <th>الكمية</th>
+                <th>السعر</th>
+                <th>الإجمالي</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${items.map(item => `
+                <tr>
+                  <td>${item.name}</td>
+                  <td>${item.quantity}</td>
+                  <td>${item.price.toFixed(2)} ريال</td>
+                  <td>${item.total.toFixed(2)} ريال</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+
+          <div class="totals">
+            <p><strong>المجموع:</strong> ${subtotal.toFixed(2)} ريال</p>
+            ${discount > 0 ? `<p><strong>الخصم (${discount}%):</strong> ${discountAmount.toFixed(2)} ريال</p>` : ''}
+            <p><strong>الإجمالي النهائي:</strong> ${finalTotal.toFixed(2)} ريال</p>
+          </div>
+
+          ${note ? `
+            <div class="footer">
+              <p><strong>ملاحظات:</strong> ${note}</p>
+            </div>
+          ` : ''}
+        </body>
+      </html>
+    `;
+
+    printWindow.document.write(content);
+    printWindow.document.close();
+
+    // Wait for content to load then print
+    printWindow.onload = () => {
+      printWindow.print();
+      printWindow.close();
+    };
+  };
+
   return (
     <DashboardLayout>
       <div className="flex flex-col h-[calc(100vh-4rem)]">
@@ -126,7 +206,7 @@ export default function InvoicesPage() {
             <h1 className="text-3xl font-bold">فاتورة جديدة</h1>
             <p className="text-muted-foreground mt-1">{currentDateTime}</p>
           </div>
-          <Button>
+          <Button onClick={printInvoice}>
             <Receipt className="h-4 w-4 ml-2" />
             حفظ وطباعة
           </Button>
@@ -136,11 +216,11 @@ export default function InvoicesPage() {
           {/* Main Content - Products List */}
           <Card>
             <CardContent className="p-4 space-y-4">
-              {/* Hidden Barcode Input */}
+              {/* Hidden Barcode Input - Positioned better */}
               <input
                 ref={barcodeInputRef}
                 type="text"
-                className="opacity-0 position-fixed"
+                className="fixed top-0 left-0 opacity-0 pointer-events-none"
                 value={barcodeInput}
                 onChange={(e) => {
                   setBarcodeInput(e.target.value);
@@ -287,7 +367,7 @@ export default function InvoicesPage() {
               </div>
 
               {/* Save & Print */}
-              <Button className="w-full">
+              <Button className="w-full" onClick={printInvoice}>
                 <Receipt className="h-4 w-4 ml-2" />
                 حفظ وطباعة الفاتورة
               </Button>
