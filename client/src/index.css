@@ -49,18 +49,18 @@
   }
 
   [data-theme-variant="professional"] {
-    --primary-muted: color-mix(in srgb, hsl(var(--primary)) 15%, white);
-    --primary-hover: color-mix(in srgb, hsl(var(--primary)) 90%, black);
+    --primary-hover: color-mix(in hsl, hsl(var(--primary)) 90%, black);
+    --primary-muted: color-mix(in hsl, hsl(var(--primary)) 15%, white);
   }
 
   [data-theme-variant="tint"] {
-    --primary-muted: color-mix(in srgb, hsl(var(--primary)) 25%, white);
-    --primary-hover: color-mix(in srgb, hsl(var(--primary)) 85%, white);
+    --primary-hover: color-mix(in hsl, hsl(var(--primary)) 85%, white);
+    --primary-muted: color-mix(in hsl, hsl(var(--primary)) 25%, white);
   }
 
   [data-theme-variant="vibrant"] {
-    --primary-muted: color-mix(in srgb, hsl(var(--primary)) 35%, white);
-    --primary-hover: color-mix(in srgb, hsl(var(--primary)) 75%, black);
+    --primary-hover: color-mix(in hsl, hsl(var(--primary)) 75%, black);
+    --primary-muted: color-mix(in hsl, hsl(var(--primary)) 35%, white);
   }
 
   * {

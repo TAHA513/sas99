@@ -1,17 +1,18 @@
 import type { Config } from "tailwindcss";
 
 export default {
-  darkMode: ["class"],
+  darkMode: ["class", '[data-theme="dark"]'],
   content: ["./client/index.html", "./client/src/**/*.{js,jsx,ts,tsx}"],
   theme: {
     extend: {
-      fontFamily: {
-        sans: ["var(--font-sans)"],
+      fontSize: {
+        base: "var(--font-size)",
+        heading: "var(--heading-size)",
       },
-      borderRadius: {
-        lg: "var(--radius)",
-        md: "calc(var(--radius) - 2px)",
-        sm: "calc(var(--radius) - 4px)",
+      fontFamily: {
+        cairo: ['Cairo', 'sans-serif'],
+        tajawal: ['Tajawal', 'sans-serif'],
+        almarai: ['Almarai', 'sans-serif'],
       },
       colors: {
         background: "hsl(var(--background))",
@@ -27,6 +28,8 @@ export default {
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
+          muted: "var(--primary-muted)",
+          hover: "var(--primary-hover)",
         },
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
@@ -48,24 +51,11 @@ export default {
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
       },
-      keyframes: {
-        "accordion-down": {
-          from: { height: "0" },
-          to: { height: "var(--radix-accordion-content-height)" },
-        },
-        "accordion-up": {
-          from: { height: "var(--radix-accordion-content-height)" },
-          to: { height: "0" },
-        },
+      borderRadius: {
+        lg: "var(--radius)",
+        md: "calc(var(--radius) - 2px)",
+        sm: "calc(var(--radius) - 4px)",
       },
-      animation: {
-        "accordion-down": "accordion-down 0.2s ease-out",
-        "accordion-up": "accordion-up 0.2s ease-out",
-      },
-    },
-    fontSize: {
-      base: "var(--font-size-base)",
-      heading: "var(--font-size-heading)",
     },
   },
   plugins: [require("tailwindcss-animate"), require("@tailwindcss/typography")],
