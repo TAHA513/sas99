@@ -40,6 +40,8 @@ export default function BarcodesPage() {
         lineColor: "#000000",
         margin: 10,
       });
+      // Add the barcode value as a data attribute for regeneration in print window
+      svgElement.setAttribute('data-value', value);
       return true;
     } catch (error) {
       toast({
@@ -88,19 +90,37 @@ export default function BarcodesPage() {
   }, [bulkBarcodes, barcodeFormat, barcodeWidth, barcodeHeight, copies]);
 
   const printBarcodes = (thermal = false) => {
-    const printWindow = window.open("", "", "width=800,height=600");
+    const printWindow = window.open('', '', 'width=800,height=600');
     if (!printWindow) return;
 
-    const content = thermal ? singleBarcodeRef.current?.outerHTML || bulkBarcodesRef.current?.innerHTML
-                          : `
+    const content = `
       <html dir="rtl">
         <head>
           <title>طباعة الباركود</title>
+          <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
           <style>
-            @page { size: 58mm 40mm; margin: 0; }
-            body { margin: 0; display: flex; justify-content: center; align-items: center; }
-            .container { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; padding: 10px; }
-            svg { max-width: 100%; height: auto; }
+            @page { 
+              size: ${thermal ? '58mm 40mm' : 'A4'}; 
+              margin: ${thermal ? '0' : '1cm'}; 
+            }
+            body { 
+              margin: 0; 
+              display: flex; 
+              justify-content: center; 
+              align-items: center;
+              font-family: Arial, sans-serif;
+            }
+            .container { 
+              display: flex; 
+              flex-wrap: wrap; 
+              justify-content: center; 
+              gap: 10px; 
+              padding: 10px; 
+            }
+            svg { 
+              max-width: 100%; 
+              height: auto; 
+            }
             @media print {
               body { -webkit-print-color-adjust: exact; }
               .container { break-inside: avoid; page-break-inside: avoid; }
@@ -113,8 +133,43 @@ export default function BarcodesPage() {
           </div>
           <script>
             window.onload = () => {
-              window.print();
-              window.close();
+              try {
+                // Make sure JsBarcode is loaded
+                if (typeof JsBarcode === 'undefined') {
+                  throw new Error('JsBarcode library not loaded');
+                }
+
+                // Regenerate barcodes in the print window
+                document.querySelectorAll('svg').forEach(svg => {
+                  const value = svg.getAttribute('data-value');
+                  if (value) {
+                    JsBarcode(svg, value, {
+                      format: "${barcodeFormat}",
+                      width: ${barcodeWidth},
+                      height: ${barcodeHeight},
+                      displayValue: true,
+                      font: "Arial",
+                      textAlign: "center",
+                      textPosition: "bottom",
+                      textMargin: 2,
+                      fontSize: 20,
+                      background: "#ffffff",
+                      lineColor: "#000000",
+                      margin: 10
+                    });
+                  }
+                });
+
+                // Short delay to ensure barcodes are rendered
+                setTimeout(() => {
+                  window.print();
+                  window.close();
+                }, 500);
+              } catch (error) {
+                console.error('Error generating barcodes:', error);
+                alert('حدث خطأ أثناء توليد الباركود. يرجى المحاولة مرة أخرى.');
+                window.close();
+              }
             };
           </script>
         </body>
