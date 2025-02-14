@@ -1,17 +1,16 @@
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useQuery } from "@tanstack/react-query";
 import { Product, StoreSetting } from "@shared/schema";
 import { useState, useEffect, useRef } from "react";
-import { MinusCircle, Receipt, Search } from "lucide-react";
+import { MinusCircle, Receipt, Search, Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
-import { queryClient } from "@/lib/queryClient";
-import { apiRequest } from "@/lib/queryClient";
+import { queryClient, apiRequest } from "@/lib/queryClient";
 
 type InvoiceItem = {
   productId: number;
@@ -283,6 +282,49 @@ export default function InvoicesPage() {
     printWindow.document.close();
   };
 
+  const saveInvoice = async () => {
+    try {
+      const invoiceData = {
+        customerName,
+        items: items.map(item => ({
+          productId: item.productId,
+          quantity: item.quantity,
+          price: item.price,
+          total: item.total
+        })),
+        subtotal,
+        discount,
+        discountAmount,
+        finalTotal,
+        note,
+        date: new Date().toISOString()
+      };
+
+      await apiRequest("POST", "/api/invoices", invoiceData);
+
+      // Reset form after successful save
+      setItems([]);
+      setCustomerName('');
+      setDiscount(0);
+      setNote('');
+      setBarcodeInput('');
+
+      // Invalidate queries to refresh data
+      queryClient.invalidateQueries({ queryKey: ['/api/invoices'] });
+
+      toast({
+        title: "تم حفظ الفاتورة",
+        description: "تم حفظ الفاتورة بنجاح في النظام",
+      });
+    } catch (error) {
+      toast({
+        title: "خطأ في حفظ الفاتورة",
+        description: "حدث خطأ أثناء محاولة حفظ الفاتورة. يرجى المحاولة مرة أخرى.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <DashboardLayout>
       <div className="flex flex-col h-[calc(100vh-4rem)]">
@@ -292,9 +334,21 @@ export default function InvoicesPage() {
             <p className="text-muted-foreground mt-1">{currentDateTime}</p>
           </div>
           <div className="flex gap-2">
-            <Button onClick={printInvoice}>
+            <Button variant="outline" onClick={saveInvoice}>
+              <Save className="h-4 w-4 ml-2" />
+              حفظ فقط
+            </Button>
+            <Button onClick={() => {
+              saveInvoice().then(() => {
+                printInvoice();
+              });
+            }}>
               <Receipt className="h-4 w-4 ml-2" />
-              طباعة
+              حفظ وطباعة
+            </Button>
+            <Button variant="secondary" onClick={printInvoice}>
+              <Receipt className="h-4 w-4 ml-2" />
+              طباعة فقط
             </Button>
           </div>
         </div>
@@ -453,11 +507,26 @@ export default function InvoicesPage() {
                 />
               </div>
 
-              {/* Print Button */}
+              {/* Action Buttons */}
               <div className="grid gap-2">
-                <Button className="w-full" onClick={printInvoice}>
+                <Button className="w-full" variant="outline" onClick={saveInvoice}>
+                  <Save className="h-4 w-4 ml-2" />
+                  حفظ الفاتورة فقط
+                </Button>
+                <Button
+                  className="w-full"
+                  onClick={() => {
+                    saveInvoice().then(() => {
+                      printInvoice();
+                    });
+                  }}
+                >
                   <Receipt className="h-4 w-4 ml-2" />
-                  طباعة الفاتورة
+                  حفظ وطباعة الفاتورة
+                </Button>
+                <Button className="w-full" variant="secondary" onClick={printInvoice}>
+                  <Receipt className="h-4 w-4 ml-2" />
+                  طباعة الفاتورة فقط
                 </Button>
               </div>
             </CardContent>
