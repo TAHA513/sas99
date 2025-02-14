@@ -36,16 +36,17 @@ export default function InvoicesPage() {
     queryKey: ["/api/products"],
   });
 
-  // Keep barcode input focused
+  // Focus management function
   useEffect(() => {
     const focusInput = () => {
-      if (barcodeInputRef.current) {
+      if (barcodeInputRef.current && 
+          document.activeElement?.tagName !== 'INPUT' && 
+          document.activeElement?.tagName !== 'TEXTAREA') {
         barcodeInputRef.current.focus();
       }
     };
 
-    focusInput();
-    // Focus on barcode input whenever it loses focus
+    // Focus on barcode input when clicking outside of other inputs
     document.addEventListener('click', focusInput);
 
     return () => {
@@ -234,7 +235,7 @@ export default function InvoicesPage() {
               <input
                 ref={barcodeInputRef}
                 type="text"
-                className="fixed top-0 left-0 opacity-0 pointer-events-none"
+                className="fixed top-[-100px] left-0 opacity-0 pointer-events-none z-50" // Added z-index
                 value={barcodeInput}
                 onChange={(e) => {
                   setBarcodeInput(e.target.value);
