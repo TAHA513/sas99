@@ -16,13 +16,12 @@ import { z } from "zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { insertMarketingCampaignSchema } from "@shared/schema";
-import { DatePicker } from "@/components/ui/date-picker";
 import { Slider } from "@/components/ui/slider";
 import { useState } from "react";
 
 const campaignFormSchema = insertMarketingCampaignSchema.extend({
-  startDate: z.date(),
-  endDate: z.date(),
+  startDate: z.string(),
+  endDate: z.string(),
 });
 
 type CampaignFormData = z.infer<typeof campaignFormSchema>;
@@ -44,12 +43,18 @@ export function CampaignForm({ platform, onSuccess }: CampaignFormProps) {
       platforms: [platform],
       status: 'draft',
       budget: 1000,
+      startDate: new Date().toISOString().split('T')[0],
+      endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     },
   });
 
   const createCampaign = useMutation({
     mutationFn: async (data: CampaignFormData) => {
-      const res = await apiRequest("POST", "/api/campaigns", data);
+      const res = await apiRequest("POST", "/api/campaigns", {
+        ...data,
+        startDate: new Date(data.startDate),
+        endDate: new Date(data.endDate),
+      });
       return res.json();
     },
     onSuccess: () => {
@@ -122,10 +127,7 @@ export function CampaignForm({ platform, onSuccess }: CampaignFormProps) {
               <FormItem>
                 <FormLabel>تاريخ البدء</FormLabel>
                 <FormControl>
-                  <DatePicker
-                    date={field.value}
-                    onChange={field.onChange}
-                  />
+                  <Input type="date" {...field} />
                 </FormControl>
               </FormItem>
             )}
@@ -138,10 +140,7 @@ export function CampaignForm({ platform, onSuccess }: CampaignFormProps) {
               <FormItem>
                 <FormLabel>تاريخ الانتهاء</FormLabel>
                 <FormControl>
-                  <DatePicker
-                    date={field.value}
-                    onChange={field.onChange}
-                  />
+                  <Input type="date" {...field} />
                 </FormControl>
               </FormItem>
             )}
