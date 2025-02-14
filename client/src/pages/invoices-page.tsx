@@ -180,78 +180,77 @@ export default function InvoicesPage() {
           <title>فاتورة</title>
           <style>
             @page { 
-              size: A4; 
-              margin: 1cm; 
+              size: 80mm 297mm; /* Thermal printer size */
+              margin: 0; 
+            }
+            @media print {
+              body { 
+                width: 80mm;
+                margin: 0;
+                padding: 5mm;
+              }
             }
             body { 
-              font-family: Arial, sans-serif; 
-              padding: 20px;
-              line-height: 1.6;
+              font-family: Arial, sans-serif;
+              font-size: 12px;
+              line-height: 1.4;
             }
             .header { 
               text-align: center; 
-              margin-bottom: 30px;
-              border-bottom: 2px solid #eee;
-              padding-bottom: 20px;
+              margin-bottom: 10px;
+              padding-bottom: 10px;
+              border-bottom: 1px dashed #000;
             }
             .logo { 
-              max-width: 200px; 
-              max-height: 200px; 
-              margin: 0 auto 20px;
+              max-width: 60mm; 
+              max-height: 60mm; 
+              margin: 0 auto 10px;
             }
             .store-name { 
-              font-size: 24px; 
+              font-size: 16px; 
               font-weight: bold; 
-              margin-bottom: 10px;
+              margin-bottom: 5px;
             }
             .invoice-details {
-              display: grid;
-              grid-template-columns: 1fr 1fr;
-              gap: 20px;
-              margin-bottom: 30px;
+              margin-bottom: 10px;
+              padding: 5px 0;
+              border-bottom: 1px dashed #000;
             }
-            .info { 
-              margin-bottom: 20px;
-              padding: 15px;
-              background-color: #f8f9fa;
-              border-radius: 8px;
+            .items { 
+              width: 100%;
+              border-collapse: collapse;
+              margin: 10px 0;
             }
-            table { 
-              width: 100%; 
-              border-collapse: collapse; 
-              margin: 20px 0;
-              background-color: white;
-            }
-            th, td { 
-              border: 1px solid #ddd; 
-              padding: 12px; 
+            .items th { 
+              border-bottom: 1px solid #000;
+              padding: 5px;
               text-align: right;
+              font-size: 11px;
             }
-            th { 
-              background-color: #f8f9fa;
-              font-weight: bold;
+            .items td { 
+              padding: 5px;
+              text-align: right;
+              font-size: 11px;
             }
             .totals { 
-              margin-top: 30px;
-              text-align: left;
-              padding: 20px;
-              background-color: #f8f9fa;
-              border-radius: 8px;
+              margin-top: 10px;
+              padding-top: 10px;
+              border-top: 1px dashed #000;
             }
             .footer { 
-              margin-top: 50px;
+              margin-top: 20px;
               text-align: center;
-              font-size: 0.9em;
-              color: #666;
-              border-top: 2px solid #eee;
-              padding-top: 20px;
+              font-size: 10px;
+              padding-top: 10px;
+              border-top: 1px dashed #000;
             }
-            @media print {
-              body { -webkit-print-color-adjust: exact; }
-              .info, .totals { 
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
-              }
+            .divider {
+              border-bottom: 1px dashed #000;
+              margin: 10px 0;
+            }
+            .qr-code {
+              text-align: center;
+              margin: 10px 0;
             }
           </style>
         </head>
@@ -266,22 +265,18 @@ export default function InvoicesPage() {
           </div>
 
           <div class="invoice-details">
-            <div class="info">
-              <p><strong>رقم الفاتورة:</strong> ${new Date().getTime()}</p>
-              <p><strong>التاريخ:</strong> ${currentDateTime}</p>
-            </div>
-            <div class="info">
-              <p><strong>العميل:</strong> ${customerName || 'غير محدد'}</p>
-            </div>
+            <div>رقم الفاتورة: ${new Date().getTime()}</div>
+            <div>التاريخ: ${currentDateTime}</div>
+            <div>العميل: ${customerName || 'عميل نقدي'}</div>
           </div>
 
-          <table>
+          <table class="items">
             <thead>
               <tr>
                 <th>المنتج</th>
                 <th>الكمية</th>
                 <th>السعر</th>
-                <th>الإجمالي</th>
+                <th>المجموع</th>
               </tr>
             </thead>
             <tbody>
@@ -289,36 +284,35 @@ export default function InvoicesPage() {
                 <tr>
                   <td>${item.name}</td>
                   <td>${item.quantity}</td>
-                  <td>${item.price.toFixed(2)} ريال</td>
-                  <td>${item.total.toFixed(2)} ريال</td>
+                  <td>${item.price.toFixed(2)}</td>
+                  <td>${item.total.toFixed(2)}</td>
                 </tr>
               `).join('')}
             </tbody>
           </table>
 
           <div class="totals">
-            <p><strong>المجموع:</strong> ${subtotal.toFixed(2)} ريال</p>
+            <div>المجموع: ${subtotal.toFixed(2)} ريال</div>
             ${discount > 0 ? `
-              <p><strong>الخصم (${discount}%):</strong> ${discountAmount.toFixed(2)} ريال</p>
+              <div>الخصم (${discount}%): ${discountAmount.toFixed(2)} ريال</div>
             ` : ''}
-            <p style="font-size: 1.2em; font-weight: bold;">
-              <strong>الإجمالي النهائي:</strong> ${finalTotal.toFixed(2)} ريال
-            </p>
+            <div style="font-weight: bold; margin-top: 5px;">
+              الإجمالي النهائي: ${finalTotal.toFixed(2)} ريال
+            </div>
           </div>
 
           ${note ? `
-            <div class="footer">
-              <p><strong>ملاحظات:</strong> ${note}</p>
-            </div>
+            <div class="divider"></div>
+            <div>ملاحظات: ${note}</div>
           ` : ''}
 
-          ${storeSettings?.storeName ? `
-            <div class="footer">
-              <p>شكراً لتسوقكم من ${storeSettings.storeName}</p>
-              ${storeSettings?.storeAddress ? `<p>${storeSettings.storeAddress}</p>` : ''}
-              ${storeSettings?.storePhone ? `<p>هاتف: ${storeSettings.storePhone}</p>` : ''}
-            </div>
-          ` : ''}
+          <div class="footer">
+            ${storeSettings?.storeName ? `
+              <div>شكراً لتسوقكم من ${storeSettings.storeName}</div>
+              ${storeSettings?.storeAddress ? `<div>${storeSettings.storeAddress}</div>` : ''}
+              ${storeSettings?.storePhone ? `<div>هاتف: ${storeSettings.storePhone}</div>` : ''}
+            ` : ''}
+          </div>
 
           <script>
             window.onload = () => {
@@ -353,7 +347,6 @@ export default function InvoicesPage() {
             </Button>
           </div>
         </div>
-
         <div className="grid gap-4 flex-1 md:grid-cols-[1fr,400px]">
           {/* Main Content - Products List */}
           <Card>
