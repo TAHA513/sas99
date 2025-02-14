@@ -44,9 +44,8 @@ const socialMediaSchema = z.object({
 
 const socialMediaAccountSchema = z.object({
   platform: z.enum(['facebook', 'instagram', 'snapchat']),
-  accountId: z.string().min(1, "معرف الحساب مطلوب"),
-  accessToken: z.string().min(1, "رمز الوصول مطلوب"),
-  accountName: z.string().optional(),
+  username: z.string().min(1, "اسم المستخدم مطلوب"),
+  password: z.string().min(1, "كلمة المرور مطلوبة"),
 });
 
 type WhatsAppSettings = z.infer<typeof whatsappSchema>;
@@ -136,12 +135,10 @@ export default function SettingsPage() {
     resolver: zodResolver(socialMediaAccountSchema),
     defaultValues: {
       platform: 'facebook',
-      accountId: '',
-      accessToken: '',
-      accountName: '',
+      username: '',
+      password: '',
     },
   });
-
 
   const onWhatsAppSubmit = async (data: WhatsAppSettings) => {
     for (const [key, value] of Object.entries(data)) {
@@ -429,10 +426,10 @@ export default function SettingsPage() {
 
                         <FormField
                           control={form.control}
-                          name="accountId"
+                          name="username"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>معرف الحساب</FormLabel>
+                              <FormLabel>اسم المستخدم / رقم الهاتف</FormLabel>
                               <FormControl>
                                 <Input {...field} />
                               </FormControl>
@@ -442,25 +439,12 @@ export default function SettingsPage() {
 
                         <FormField
                           control={form.control}
-                          name="accessToken"
+                          name="password"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>رمز الوصول</FormLabel>
+                              <FormLabel>كلمة المرور</FormLabel>
                               <FormControl>
                                 <Input type="password" {...field} />
-                              </FormControl>
-                            </FormItem>
-                          )}
-                        />
-
-                        <FormField
-                          control={form.control}
-                          name="accountName"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>اسم الحساب (اختياري)</FormLabel>
-                              <FormControl>
-                                <Input {...field} />
                               </FormControl>
                             </FormItem>
                           )}

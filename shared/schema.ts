@@ -90,9 +90,8 @@ export const discountCodes = pgTable("discount_codes", {
 export const socialMediaAccounts = pgTable("social_media_accounts", {
   id: serial("id").primaryKey(),
   platform: text("platform").notNull(), // facebook, instagram, snapchat
-  accountId: text("account_id").notNull(),
-  accessToken: text("access_token").notNull(),
-  accountName: text("account_name"),
+  username: text("username").notNull(),
+  password: text("password").notNull(),
   status: text("status").notNull().default("active"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
@@ -122,9 +121,8 @@ export const insertPromotionSchema = createInsertSchema(promotions);
 export const insertDiscountCodeSchema = createInsertSchema(discountCodes);
 export const insertSocialMediaAccountSchema = createInsertSchema(socialMediaAccounts).pick({
   platform: true,
-  accountId: true,
-  accessToken: true,
-  accountName: true,
+  username: true,
+  password: true,
 });
 
 export type User = typeof users.$inferSelect;
