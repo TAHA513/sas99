@@ -1,4 +1,4 @@
-import { User, Customer, Appointment, Staff, InsertUser, InsertCustomer, InsertAppointment, InsertStaff, MarketingCampaign, InsertMarketingCampaign, Promotion, InsertPromotion, DiscountCode, InsertDiscountCode } from "@shared/schema";
+import { User, Customer, Appointment, Staff, InsertUser, InsertCustomer, InsertAppointment, InsertStaff, MarketingCampaign, InsertMarketingCampaign, Promotion, InsertPromotion, DiscountCode, InsertDiscountCode, SocialMediaAccount, InsertSocialMediaAccount } from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
 
@@ -66,6 +66,13 @@ export interface IStorage {
   updateDiscountCode(id: number, code: Partial<InsertDiscountCode>): Promise<DiscountCode>;
   deleteDiscountCode(id: number): Promise<void>;
 
+  // Social Media Account operations
+  getSocialMediaAccounts(): Promise<SocialMediaAccount[]>;
+  getSocialMediaAccount(id: number): Promise<SocialMediaAccount | undefined>;
+  createSocialMediaAccount(account: InsertSocialMediaAccount): Promise<SocialMediaAccount>;
+  updateSocialMediaAccount(id: number, account: Partial<InsertSocialMediaAccount>): Promise<SocialMediaAccount>;
+  deleteSocialMediaAccount(id: number): Promise<void>;
+
   sessionStore: session.Store;
 }
 
@@ -79,6 +86,7 @@ export class MemStorage implements IStorage {
   private campaigns: Map<number, MarketingCampaign>;
   private promotions: Map<number, Promotion>;
   private discountCodes: Map<number, DiscountCode>;
+  private socialMediaAccounts: Map<number, SocialMediaAccount>;
   sessionStore: session.Store;
 
   constructor() {
@@ -90,6 +98,7 @@ export class MemStorage implements IStorage {
     this.campaigns = new Map();
     this.promotions = new Map();
     this.discountCodes = new Map();
+    this.socialMediaAccounts = new Map();
     this.currentId = 1;
     this.sessionStore = new MemoryStore({
       checkPeriod: 86400000,
@@ -341,6 +350,40 @@ export class MemStorage implements IStorage {
 
   async deleteDiscountCode(id: number): Promise<void> {
     this.discountCodes.delete(id);
+  }
+
+  // Social Media Account operations
+  async getSocialMediaAccounts(): Promise<SocialMediaAccount[]> {
+    return Array.from(this.socialMediaAccounts.values());
+  }
+
+  async getSocialMediaAccount(id: number): Promise<SocialMediaAccount | undefined> {
+    return this.socialMediaAccounts.get(id);
+  }
+
+  async createSocialMediaAccount(account: InsertSocialMediaAccount): Promise<SocialMediaAccount> {
+    const id = this.currentId++;
+    const newAccount: SocialMediaAccount = {
+      ...account,
+      id,
+      status: 'active',
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    this.socialMediaAccounts.set(id, newAccount);
+    return newAccount;
+  }
+
+  async updateSocialMediaAccount(id: number, updates: Partial<InsertSocialMediaAccount>): Promise<SocialMediaAccount> {
+    const account = await this.getSocialMediaAccount(id);
+    if (!account) throw new Error("Social media account not found");
+    const updatedAccount = { ...account, ...updates, updatedAt: new Date() };
+    this.socialMediaAccounts.set(id, updatedAccount);
+    return updatedAccount;
+  }
+
+  async deleteSocialMediaAccount(id: number): Promise<void> {
+    this.socialMediaAccounts.delete(id);
   }
 }
 

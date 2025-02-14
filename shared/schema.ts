@@ -87,6 +87,17 @@ export const discountCodes = pgTable("discount_codes", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+export const socialMediaAccounts = pgTable("social_media_accounts", {
+  id: serial("id").primaryKey(),
+  platform: text("platform").notNull(), // facebook, instagram, snapchat
+  accountId: text("account_id").notNull(),
+  accessToken: text("access_token").notNull(),
+  accountName: text("account_name"),
+  status: text("status").notNull().default("active"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
@@ -100,7 +111,6 @@ export const insertSettingSchema = createInsertSchema(settings).pick({
   key: true,
   value: true,
 });
-
 export const insertMarketingCampaignSchema = createInsertSchema(marketingCampaigns).extend({
   platforms: z.array(z.enum(['facebook', 'instagram', 'snapchat', 'whatsapp', 'email', 'sms'])).optional(),
   socialMediaSettings: z.string().optional(),
@@ -110,6 +120,12 @@ export const insertMarketingCampaignSchema = createInsertSchema(marketingCampaig
 });
 export const insertPromotionSchema = createInsertSchema(promotions);
 export const insertDiscountCodeSchema = createInsertSchema(discountCodes);
+export const insertSocialMediaAccountSchema = createInsertSchema(socialMediaAccounts).pick({
+  platform: true,
+  accountId: true,
+  accessToken: true,
+  accountName: true,
+});
 
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -127,3 +143,5 @@ export type Promotion = typeof promotions.$inferSelect;
 export type InsertPromotion = z.infer<typeof insertPromotionSchema>;
 export type DiscountCode = typeof discountCodes.$inferSelect;
 export type InsertDiscountCode = z.infer<typeof insertDiscountCodeSchema>;
+export type SocialMediaAccount = typeof socialMediaAccounts.$inferSelect;
+export type InsertSocialMediaAccount = z.infer<typeof insertSocialMediaAccountSchema>;
