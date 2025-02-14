@@ -3,11 +3,24 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --font-sans: 'Cairo', sans-serif;
+    --font-size-base: 1rem;
+    --font-size-heading: 1.875rem;
+  }
+
   * {
     @apply border-border;
   }
 
   body {
-    @apply font-sans antialiased bg-background text-foreground;
+    @apply bg-background text-foreground;
+    font-family: var(--font-sans);
+    font-size: var(--font-size-base);
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-size: var(--font-size-heading);
+    font-family: var(--font-sans);
   }
 }
