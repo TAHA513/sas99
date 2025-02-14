@@ -1,9 +1,9 @@
 {
-  "variant": "professional",
-  "primary": "#db2777",
+  "variant": "tint",
+  "primary": "#1d4ed8",
   "appearance": "light",
   "radius": 0.5,
-  "fontSize": "large",
+  "fontSize": "small",
   "fontFamily": "tajawal",
   "headingSize": "h3"
 }
