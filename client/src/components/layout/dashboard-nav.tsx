@@ -4,10 +4,8 @@ import {
   Users,
   Calendar,
   UserCog,
-  LogOut,
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
-import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
 
 const navItems = [
@@ -35,7 +33,6 @@ const navItems = [
 
 export function DashboardNav() {
   const [location] = useLocation();
-  const { logoutMutation, user } = useAuth();
 
   return (
     <div className="h-screen w-64 border-l bg-card p-4 flex flex-col">
@@ -60,23 +57,6 @@ export function DashboardNav() {
           </Link>
         ))}
       </nav>
-
-      <div className="border-t pt-4">
-        <div className="flex items-center gap-3 px-3 py-2 mb-4">
-          <div className="flex-1">
-            <p className="font-medium">{user?.name}</p>
-            <p className="text-sm text-muted-foreground">{user?.username}</p>
-          </div>
-        </div>
-        <Button
-          variant="outline"
-          className="w-full"
-          onClick={() => logoutMutation.mutate()}
-        >
-          <LogOut className="h-4 w-4 ml-2" />
-          تسجيل الخروج
-        </Button>
-      </div>
     </div>
   );
 }
