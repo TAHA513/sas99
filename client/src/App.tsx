@@ -10,6 +10,7 @@ import StaffPage from "@/pages/staff-page";
 import SettingsPage from "@/pages/settings-page";
 import MarketingPage from "@/pages/marketing-page";
 import PromotionsPage from "@/pages/promotions-page";
+import ProductsPage from "@/pages/products-page";
 
 function Router() {
   return (
@@ -20,6 +21,7 @@ function Router() {
       <Route path="/staff" component={StaffPage} />
       <Route path="/marketing" component={MarketingPage} />
       <Route path="/promotions" component={PromotionsPage} />
+      <Route path="/products" component={ProductsPage} />
       <Route path="/settings" component={SettingsPage} />
       <Route component={NotFound} />
     </Switch>
