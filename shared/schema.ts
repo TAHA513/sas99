@@ -52,10 +52,13 @@ export const marketingCampaigns = pgTable("marketing_campaigns", {
   startDate: timestamp("start_date").notNull(),
   endDate: timestamp("end_date").notNull(),
   status: text("status").notNull().default("draft"),
-  type: text("type").notNull(), // email, sms, whatsapp, facebook, instagram
+  type: text("type").notNull(), // email, sms, whatsapp, facebook, instagram, snapchat
   content: text("content").notNull(),
   platforms: text("platforms").array(), // Array of social media platforms
   socialMediaSettings: text("social_media_settings"), // JSON string for platform-specific settings
+  targetAudience: text("target_audience"), // JSON string for targeting options
+  budget: integer("budget"), // Campaign budget in cents
+  adCreatives: text("ad_creatives").array(), // Array of ad creative URLs
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -84,7 +87,6 @@ export const discountCodes = pgTable("discount_codes", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
-// Schema validation
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
@@ -100,13 +102,15 @@ export const insertSettingSchema = createInsertSchema(settings).pick({
 });
 
 export const insertMarketingCampaignSchema = createInsertSchema(marketingCampaigns).extend({
-  platforms: z.array(z.enum(['facebook', 'instagram', 'whatsapp', 'email', 'sms'])).optional(),
+  platforms: z.array(z.enum(['facebook', 'instagram', 'snapchat', 'whatsapp', 'email', 'sms'])).optional(),
   socialMediaSettings: z.string().optional(),
+  targetAudience: z.string().optional(),
+  adCreatives: z.array(z.string()).optional(),
+  budget: z.number().optional(),
 });
 export const insertPromotionSchema = createInsertSchema(promotions);
 export const insertDiscountCodeSchema = createInsertSchema(discountCodes);
 
-// Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type Customer = typeof customers.$inferSelect;

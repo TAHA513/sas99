@@ -16,11 +16,29 @@ import { SearchInput } from "@/components/ui/search-input";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
 import { useState } from "react";
-import { 
-  SiFacebook, 
-  SiInstagram, 
-  SiWhatsapp 
+import {
+  SiFacebook,
+  SiInstagram,
+  SiSnapchat,
+  SiWhatsapp
 } from "react-icons/si";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { CampaignForm } from "@/components/marketing/campaign-form";
 
 export default function MarketingPage() {
   const { data: campaigns } = useQuery<MarketingCampaign[]>({
@@ -50,6 +68,8 @@ export default function MarketingPage() {
               return <SiFacebook key="facebook" className="text-blue-600 h-4 w-4" />;
             case 'instagram':
               return <SiInstagram key="instagram" className="text-pink-600 h-4 w-4" />;
+            case 'snapchat':
+              return <SiSnapchat key="snapchat" className="text-yellow-500 h-4 w-4" />;
             case 'whatsapp':
               return <SiWhatsapp key="whatsapp" className="text-green-600 h-4 w-4" />;
             default:
@@ -76,10 +96,79 @@ export default function MarketingPage() {
       <div className="space-y-8">
         <div className="flex justify-between items-center">
           <h1 className="text-3xl font-bold">الحملات التسويقية</h1>
-          <Button>
-            <Megaphone className="h-4 w-4 ml-2" />
-            حملة جديدة
-          </Button>
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button>
+                <Megaphone className="h-4 w-4 ml-2" />
+                حملة جديدة
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-4xl">
+              <DialogHeader>
+                <DialogTitle>إنشاء حملة جديدة</DialogTitle>
+                <DialogDescription>
+                  اختر المنصة التي تريد إنشاء الحملة عليها
+                </DialogDescription>
+              </DialogHeader>
+              <Tabs defaultValue="facebook" className="mt-4">
+                <TabsList className="grid grid-cols-3 gap-4">
+                  <TabsTrigger value="facebook" className="text-center">
+                    <SiFacebook className="h-6 w-6 text-blue-600 mb-2" />
+                    فيسبوك
+                  </TabsTrigger>
+                  <TabsTrigger value="instagram" className="text-center">
+                    <SiInstagram className="h-6 w-6 text-pink-600 mb-2" />
+                    انستغرام
+                  </TabsTrigger>
+                  <TabsTrigger value="snapchat" className="text-center">
+                    <SiSnapchat className="h-6 w-6 text-yellow-500 mb-2" />
+                    سناب شات
+                  </TabsTrigger>
+                </TabsList>
+                <div className="mt-6">
+                  <TabsContent value="facebook">
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>حملة إعلانية على فيسبوك</CardTitle>
+                        <CardDescription>
+                          قم بإنشاء حملة إعلانية مستهدفة على فيسبوك
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <CampaignForm platform="facebook" />
+                      </CardContent>
+                    </Card>
+                  </TabsContent>
+                  <TabsContent value="instagram">
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>حملة إعلانية على انستغرام</CardTitle>
+                        <CardDescription>
+                          قم بإنشاء حملة إعلانية مستهدفة على انستغرام
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <CampaignForm platform="instagram" />
+                      </CardContent>
+                    </Card>
+                  </TabsContent>
+                  <TabsContent value="snapchat">
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>حملة إعلانية على سناب شات</CardTitle>
+                        <CardDescription>
+                          قم بإنشاء حملة إعلانية مستهدفة على سناب شات
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <CampaignForm platform="snapchat" />
+                      </CardContent>
+                    </Card>
+                  </TabsContent>
+                </div>
+              </Tabs>
+            </DialogContent>
+          </Dialog>
         </div>
 
         <div className="max-w-sm">
@@ -97,6 +186,7 @@ export default function MarketingPage() {
                 <TableHead>اسم الحملة</TableHead>
                 <TableHead>المنصات</TableHead>
                 <TableHead>النوع</TableHead>
+                <TableHead>الميزانية</TableHead>
                 <TableHead>تاريخ البدء</TableHead>
                 <TableHead>تاريخ الانتهاء</TableHead>
                 <TableHead>الحالة</TableHead>
@@ -118,8 +208,12 @@ export default function MarketingPage() {
                        campaign.type === "email" ? "بريد إلكتروني" :
                        campaign.type === "sms" ? "رسائل نصية" :
                        campaign.type === "facebook" ? "فيسبوك" :
-                       campaign.type === "instagram" ? "انستغرام" : campaign.type}
+                       campaign.type === "instagram" ? "انستغرام" :
+                       campaign.type === "snapchat" ? "سناب شات" : campaign.type}
                     </Badge>
+                  </TableCell>
+                  <TableCell>
+                    {campaign.budget ? `${(campaign.budget / 100).toFixed(2)} ريال` : "غير محدد"}
                   </TableCell>
                   <TableCell>
                     {format(new Date(campaign.startDate), 'dd MMMM yyyy', { locale: ar })}
@@ -136,7 +230,7 @@ export default function MarketingPage() {
               ))}
               {filteredCampaigns?.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                     لا توجد نتائج للبحث
                   </TableCell>
                 </TableRow>
