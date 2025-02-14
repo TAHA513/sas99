@@ -227,20 +227,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Read current theme
       const themePath = path.join(process.cwd(), 'theme.json');
-      const currentTheme = JSON.parse(await fs.readFile(themePath, 'utf8'));
+      let currentTheme = {};
+      try {
+        currentTheme = JSON.parse(await fs.readFile(themePath, 'utf8'));
+      } catch (error) {
+        console.error('Error reading theme file:', error);
+        // If file doesn't exist or is invalid, use defaults
+        currentTheme = {
+          variant: "tint",
+          primary: "#ef4444",
+          appearance: "light",
+          radius: 0.5,
+          fontSize: "medium",
+          fontFamily: "tajawal"
+        };
+      }
 
       // Update theme with new values while preserving other settings
       const newTheme = {
         ...currentTheme,
         ...(primary && { primary }),
         ...(variant && { variant }),
-        ...(radius && { radius }),
+        ...(radius !== undefined && { radius }),
         ...(appearance && { appearance }),
         ...(fontSize && { fontSize }),
         ...(fontFamily && { fontFamily }),
       };
 
-      // Write updated theme
+      // Ensure the theme.json is properly formatted
       await fs.writeFile(themePath, JSON.stringify(newTheme, null, 2));
 
       res.json(newTheme);

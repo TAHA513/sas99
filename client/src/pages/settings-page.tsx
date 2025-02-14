@@ -136,31 +136,52 @@ export default function SettingsPage() {
       fontSize?: string;
       fontFamily?: string;
     }) => {
-      // Update store settings
-      const res = await apiRequest("POST", "/api/store-settings", data);
-
-      // Update theme if appearance related settings are changed
-      if (data.primary || data.appearance || data.radius || data.fontSize || data.fontFamily) {
-        await apiRequest("POST", "/api/theme", {
-          primary: data.primary,
-          appearance: data.appearance,
-          radius: data.radius,
-          fontSize: data.fontSize,
-          fontFamily: data.fontFamily,
+      try {
+        // Update store settings first
+        const storeRes = await apiRequest("POST", "/api/store-settings", {
+          storeName: data.storeName,
+          storeLogo: data.storeLogo,
         });
-      }
+        await storeRes.json();
 
-      return res.json();
+        // Then update theme if appearance related settings are changed
+        if (data.primary || data.appearance || data.radius || data.fontSize || data.fontFamily) {
+          const themeRes = await apiRequest("POST", "/api/theme", {
+            primary: data.primary,
+            appearance: data.appearance,
+            radius: data.radius,
+            fontSize: data.fontSize,
+            fontFamily: data.fontFamily,
+            variant: "tint", // Keep the default variant
+          });
+
+          if (!themeRes.ok) {
+            throw new Error('فشل في تحديث المظهر');
+          }
+        }
+
+        return { success: true };
+      } catch (error) {
+        console.error('Error updating settings:', error);
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/store-settings"] });
-      // Reload the page to apply theme changes
-      window.location.reload();
+      toast({
+        title: "تم حفظ الإعدادات",
+        description: "تم تحديث الإعدادات بنجاح، جاري تحديث الصفحة",
+      });
+
+      // Add a small delay before reloading to ensure the toast is shown
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
     },
     onError: (error: Error) => {
       toast({
         title: "خطأ في حفظ الإعدادات",
-        description: error.message,
+        description: error.message || "حدث خطأ أثناء حفظ الإعدادات",
         variant: "destructive",
       });
     },
@@ -683,12 +704,11 @@ export default function SettingsPage() {
                         variant="outline"
                         className={cn(
                           "w-full h-12 rounded-md",
-                          storeSettings?.primary === color && "ring-2 ring-primary"
+                          color === storeSettings?.primary && "ring-2 ring-primary"
                         )}
                         style={{ backgroundColor: color }}
                         onClick={() => {
                           storeSettingsMutation.mutate({
-                            ...storeSettings,
                             primary: color
                           });
                         }}
@@ -711,7 +731,6 @@ export default function SettingsPage() {
                     checked={storeSettings?.appearance === 'dark'}
                     onCheckedChange={(checked) => {
                       storeSettingsMutation.mutate({
-                        ...storeSettings,
                         appearance: checked ? 'dark' : 'light'
                       });
                     }}
@@ -727,7 +746,6 @@ export default function SettingsPage() {
                     step={0.1}
                     onValueChange={([value]) => {
                       storeSettingsMutation.mutate({
-                        ...storeSettings,
                         radius: value
                       });
                     }}
@@ -741,7 +759,6 @@ export default function SettingsPage() {
                     value={storeSettings?.fontSize || 'medium'}
                     onValueChange={(value) => {
                       storeSettingsMutation.mutate({
-                        ...storeSettings,
                         fontSize: value
                       });
                     }}
@@ -761,10 +778,9 @@ export default function SettingsPage() {
                 <div className="space-y-4">
                   <Label>نوع الخط</Label>
                   <Select
-                    value={storeSettings?.fontFamily || 'cairo'}
+                    value={storeSettings?.fontFamily || 'tajawal'}
                     onValueChange={(value) => {
                       storeSettingsMutation.mutate({
-                        ...storeSettings,
                         fontFamily: value
                       });
                     }}
