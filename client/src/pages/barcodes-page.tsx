@@ -240,23 +240,58 @@ export default function BarcodesPage() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
-                    <Label>قيم الباركود (كل سطر يمثل باركود)</Label>
-                    <Textarea
-                      value={bulkBarcodes}
-                      onChange={(e) => setBulkBarcodes(e.target.value)}
-                      placeholder="123456&#10;789012&#10;345678"
-                      className="h-32"
-                    />
+                    <Label>قيم الباركود</Label>
+                    <div className="space-y-1">
+                      <p className="text-sm text-muted-foreground">
+                        اكتب كل باركود في سطر منفصل. يمكنك لصق البيانات مباشرة من Excel.
+                      </p>
+                      <div className="bg-muted/50 p-2 rounded-md mb-2">
+                        <code className="text-xs text-muted-foreground block">
+                          # مثال على التنسيق:<br />
+                          123456789 # منتج 1<br />
+                          987654321 # منتج 2<br />
+                          456789123 # منتج 3
+                        </code>
+                      </div>
+                      <Textarea
+                        value={bulkBarcodes}
+                        onChange={(e) => setBulkBarcodes(e.target.value)}
+                        placeholder="ضع قيم الباركود هنا..."
+                        className="h-48 font-mono text-base leading-relaxed"
+                        dir="ltr"
+                      />
+                    </div>
                   </div>
 
                   <div className="space-y-2">
-                    <Label>عدد النسخ لكل باركود</Label>
-                    <Input
-                      type="number"
-                      value={copies}
-                      onChange={(e) => setCopies(e.target.value)}
-                      min="1"
-                    />
+                    <Label>خيارات الطباعة</Label>
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div>
+                        <Label>عدد النسخ لكل باركود</Label>
+                        <Input
+                          type="number"
+                          value={copies}
+                          onChange={(e) => setCopies(e.target.value)}
+                          min="1"
+                          className="mt-1"
+                        />
+                      </div>
+                      <div>
+                        <Label>نوع الباركود</Label>
+                        <Select value={barcodeFormat} onValueChange={setBarcodeFormat}>
+                          <SelectTrigger className="mt-1">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="CODE128">Code 128</SelectItem>
+                            <SelectItem value="EAN13">EAN-13</SelectItem>
+                            <SelectItem value="EAN8">EAN-8</SelectItem>
+                            <SelectItem value="UPC">UPC</SelectItem>
+                            <SelectItem value="CODE39">Code 39</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
                   </div>
 
                   <div className="flex gap-2">
