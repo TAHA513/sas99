@@ -220,7 +220,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Theme routes
   app.post("/api/theme", async (req, res) => {
-    const { primary, variant, radius } = req.body;
+    const { primary, variant, radius, fontSize, headingSize, fontFamily } = req.body;
     try {
       const fs = await import('fs/promises');
       const path = await import('path');
@@ -235,6 +235,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ...(primary && { primary }),
         ...(variant && { variant }),
         ...(radius && { radius }),
+        ...(fontSize && { fontSize }),
+        ...(headingSize && { headingSize }),
+        ...(fontFamily && { fontFamily }),
       };
 
       // Write updated theme
