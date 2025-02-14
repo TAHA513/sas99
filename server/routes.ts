@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertCustomerSchema, insertAppointmentSchema, insertStaffSchema, insertSettingSchema } from "@shared/schema";
+import { insertCustomerSchema, insertAppointmentSchema, insertStaffSchema, insertSettingSchema, insertMarketingCampaignSchema, insertPromotionSchema, insertDiscountCodeSchema } from "@shared/schema";
 import { notificationService } from './services/notification-service';
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -121,6 +121,100 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     const setting = await storage.setSetting(parsed.data.key, parsed.data.value);
     res.status(201).json(setting);
+  });
+
+  // Marketing Campaign routes
+  app.get("/api/campaigns", async (_req, res) => {
+    const campaigns = await storage.getCampaigns();
+    res.json(campaigns);
+  });
+
+  app.post("/api/campaigns", async (req, res) => {
+    const parsed = insertMarketingCampaignSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json(parsed.error);
+    const campaign = await storage.createCampaign(parsed.data);
+    res.status(201).json(campaign);
+  });
+
+  app.patch("/api/campaigns/:id", async (req, res) => {
+    const id = parseInt(req.params.id);
+    const campaign = await storage.updateCampaign(id, req.body);
+    res.json(campaign);
+  });
+
+  app.delete("/api/campaigns/:id", async (req, res) => {
+    const id = parseInt(req.params.id);
+    await storage.deleteCampaign(id);
+    res.sendStatus(204);
+  });
+
+  // Promotion routes
+  app.get("/api/promotions", async (_req, res) => {
+    const promotions = await storage.getPromotions();
+    res.json(promotions);
+  });
+
+  app.post("/api/promotions", async (req, res) => {
+    const parsed = insertPromotionSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json(parsed.error);
+    const promotion = await storage.createPromotion(parsed.data);
+    res.status(201).json(promotion);
+  });
+
+  app.patch("/api/promotions/:id", async (req, res) => {
+    const id = parseInt(req.params.id);
+    const promotion = await storage.updatePromotion(id, req.body);
+    res.json(promotion);
+  });
+
+  app.delete("/api/promotions/:id", async (req, res) => {
+    const id = parseInt(req.params.id);
+    await storage.deletePromotion(id);
+    res.sendStatus(204);
+  });
+
+  // Discount Code routes
+  app.get("/api/discount-codes", async (_req, res) => {
+    const discountCodes = await storage.getDiscountCodes();
+    res.json(discountCodes);
+  });
+
+  app.post("/api/discount-codes", async (req, res) => {
+    const parsed = insertDiscountCodeSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json(parsed.error);
+    const discountCode = await storage.createDiscountCode(parsed.data);
+    res.status(201).json(discountCode);
+  });
+
+  app.patch("/api/discount-codes/:id", async (req, res) => {
+    const id = parseInt(req.params.id);
+    const discountCode = await storage.updateDiscountCode(id, req.body);
+    res.json(discountCode);
+  });
+
+  app.delete("/api/discount-codes/:id", async (req, res) => {
+    const id = parseInt(req.params.id);
+    await storage.deleteDiscountCode(id);
+    res.sendStatus(204);
+  });
+
+  app.get("/api/discount-codes/validate/:code", async (req, res) => {
+    const code = req.params.code;
+    const discountCode = await storage.getDiscountCodeByCode(code);
+
+    if (!discountCode) {
+      return res.status(404).json({ message: "Discount code not found" });
+    }
+
+    if (discountCode.expiresAt && new Date(discountCode.expiresAt) < new Date()) {
+      return res.status(400).json({ message: "Discount code has expired" });
+    }
+
+    if (discountCode.usageCount >= discountCode.usageLimit) {
+      return res.status(400).json({ message: "Discount code usage limit reached" });
+    }
+
+    res.json(discountCode);
   });
 
   const httpServer = createServer(app);

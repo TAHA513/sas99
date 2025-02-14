@@ -8,6 +8,8 @@ import CustomersPage from "@/pages/customers-page";
 import AppointmentsPage from "@/pages/appointments-page";
 import StaffPage from "@/pages/staff-page";
 import SettingsPage from "@/pages/settings-page";
+import MarketingPage from "@/pages/marketing-page";
+import PromotionsPage from "@/pages/promotions-page";
 
 function Router() {
   return (
@@ -16,6 +18,8 @@ function Router() {
       <Route path="/customers" component={CustomersPage} />
       <Route path="/appointments" component={AppointmentsPage} />
       <Route path="/staff" component={StaffPage} />
+      <Route path="/marketing" component={MarketingPage} />
+      <Route path="/promotions" component={PromotionsPage} />
       <Route path="/settings" component={SettingsPage} />
       <Route component={NotFound} />
     </Switch>
