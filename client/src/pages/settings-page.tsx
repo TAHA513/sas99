@@ -232,14 +232,15 @@ export default function SettingsPage() {
               <div className="space-y-2">
                 <Label>اسم المتجر</Label>
                 <Input
-                  value={storeSettings?.storeName || ""}
-                  onChange={(e) =>
-                    storeSettingsMutation.mutate({
-                      storeName: e.target.value,
-                      storeLogo: storeSettings?.storeLogo,
-                    })
-                  }
                   placeholder="أدخل اسم المتجر"
+                  defaultValue={storeSettings?.storeName || ""}
+                  onChange={(e) => {
+                    const newValue = e.target.value;
+                    storeSettingsMutation.mutate({
+                      storeName: newValue,
+                      storeLogo: storeSettings?.storeLogo || "",
+                    });
+                  }}
                 />
               </div>
 
@@ -257,12 +258,12 @@ export default function SettingsPage() {
                         variant="outline"
                         size="sm"
                         className="absolute top-0 right-0 mt-2 mr-2"
-                        onClick={() =>
+                        onClick={() => {
                           storeSettingsMutation.mutate({
-                            storeName: storeSettings.storeName,
+                            storeName: storeSettings.storeName || "",
                             storeLogo: "",
-                          })
-                        }
+                          });
+                        }}
                       >
                         حذف
                       </Button>
@@ -275,22 +276,28 @@ export default function SettingsPage() {
                       </p>
                     </div>
                   )}
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleLogoUpload}
-                    className="hidden"
-                    id="logo-upload"
-                  />
-                  <Button
-                    variant="outline"
-                    onClick={() =>
-                      document.getElementById("logo-upload")?.click()
-                    }
-                  >
-                    <Upload className="h-4 w-4 ml-2" />
-                    تحميل شعار جديد
-                  </Button>
+
+                  <div className="mt-4">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleLogoUpload}
+                      className="hidden"
+                      id="logo-upload"
+                    />
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        const input = document.getElementById("logo-upload") as HTMLInputElement;
+                        if (input) {
+                          input.click();
+                        }
+                      }}
+                    >
+                      <Upload className="h-4 w-4 ml-2" />
+                      تحميل شعار جديد
+                    </Button>
+                  </div>
                 </div>
               </div>
             </CardContent>
