@@ -16,6 +16,8 @@ import {
 import { ProductForm } from "@/components/products/product-form";
 import { SearchInput } from "@/components/ui/search-input";
 import { useState } from "react";
+import { AlertCircle } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 export default function ProductsPage() {
   const { toast } = useToast();
@@ -58,6 +60,28 @@ export default function ProductsPage() {
     );
   });
 
+  const getStockStatus = (product: Product) => {
+    if (!product.minimumQuantity) return null;
+
+    if (product.quantity <= 0) {
+      return {
+        label: "نفذ المخزون",
+        variant: "destructive" as const,
+        showWarning: true
+      };
+    }
+
+    if (product.quantity <= product.minimumQuantity) {
+      return {
+        label: "المخزون منخفض",
+        variant: "warning" as const,
+        showWarning: true
+      };
+    }
+
+    return null;
+  };
+
   return (
     <DashboardLayout>
       <div className="space-y-8">
@@ -90,10 +114,21 @@ export default function ProductsPage() {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {filteredProducts?.map((product) => {
             const group = groups?.find((g) => g.id === product.groupId);
+            const stockStatus = getStockStatus(product);
+
             return (
-              <Card key={product.id}>
+              <Card key={product.id} className={
+                stockStatus?.showWarning ? "border-yellow-500 dark:border-yellow-400" : ""
+              }>
                 <CardHeader className="space-y-0 pb-2">
-                  <CardTitle className="text-lg font-bold">{product.name}</CardTitle>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-lg font-bold">{product.name}</CardTitle>
+                    {stockStatus && (
+                      <Badge variant={stockStatus.variant}>
+                        {stockStatus.label}
+                      </Badge>
+                    )}
+                  </div>
                   <div className="text-sm text-muted-foreground">{group?.name}</div>
                 </CardHeader>
                 <CardContent>
@@ -110,7 +145,12 @@ export default function ProductsPage() {
                     </div>
                     <div className="flex justify-between text-sm">
                       <span>الكمية:</span>
-                      <span>{product.quantity}</span>
+                      <div className="flex items-center gap-2">
+                        <span>{product.quantity}</span>
+                        {stockStatus?.showWarning && (
+                          <AlertCircle className="h-4 w-4 text-yellow-500" />
+                        )}
+                      </div>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span>سعر التكلفة:</span>

@@ -44,6 +44,7 @@ export function ProductForm({ product, groups }: ProductFormProps) {
       barcode: "",
       type: "piece",
       quantity: 0,
+      minimumQuantity: 0, // Add minimum quantity
       costPrice: 0,
       sellingPrice: 0,
       groupId: groups[0]?.id,
@@ -213,6 +214,23 @@ export function ProductForm({ product, groups }: ProductFormProps) {
                 <FormControl>
                   <Input type="number" {...field} onChange={e => field.onChange(parseFloat(e.target.value))} />
                 </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="minimumQuantity"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>الحد الأدنى للكمية</FormLabel>
+                <FormControl>
+                  <Input type="number" {...field} onChange={e => field.onChange(parseFloat(e.target.value))} />
+                </FormControl>
+                <FormDescription>
+                  سيتم التنبيه عند اقتراب الكمية من هذا الحد
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
