@@ -1,4 +1,4 @@
-import { User, Customer, Appointment, Staff, InsertUser, InsertCustomer, InsertAppointment, InsertStaff, MarketingCampaign, InsertMarketingCampaign, Promotion, InsertPromotion, DiscountCode, InsertDiscountCode, SocialMediaAccount, InsertSocialMediaAccount, Product, ProductGroup, InsertProduct, InsertProductGroup } from "@shared/schema";
+import { User, Customer, Appointment, Staff, InsertUser, InsertCustomer, InsertAppointment, InsertStaff, MarketingCampaign, InsertMarketingCampaign, Promotion, InsertPromotion, DiscountCode, InsertDiscountCode, SocialMediaAccount, InsertSocialMediaAccount, Product, ProductGroup, InsertProduct, InsertProductGroup, Invoice, InsertInvoice } from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
 
@@ -96,6 +96,11 @@ export interface IStorage {
   updateProduct(id: number, product: Partial<InsertProduct>): Promise<Product>;
   deleteProduct(id: number): Promise<void>;
 
+  // Invoice operations
+  getInvoices(): Promise<Invoice[]>;
+  getInvoice(id: number): Promise<Invoice | undefined>;
+  createInvoice(invoice: InsertInvoice): Promise<Invoice>;
+
   sessionStore: session.Store;
     // Store Settings operations
     getStoreSettings(): Promise<StoreSetting | undefined>;
@@ -115,6 +120,7 @@ export class MemStorage implements IStorage {
   private socialMediaAccounts: Map<number, SocialMediaAccount>;
   private products: Map<number, Product>;
   private productGroups: Map<number, ProductGroup>;
+  private invoices: Map<number, Invoice>;
   private storeSettings: StoreSetting | undefined;
   sessionStore: session.Store;
 
@@ -130,6 +136,7 @@ export class MemStorage implements IStorage {
     this.socialMediaAccounts = new Map();
     this.products = new Map();
     this.productGroups = new Map();
+    this.invoices = new Map();
     this.currentId = 1;
     this.sessionStore = new MemoryStore({
       checkPeriod: 86400000,
@@ -569,6 +576,25 @@ export class MemStorage implements IStorage {
 
   async deleteProduct(id: number): Promise<void> {
     this.products.delete(id);
+  }
+
+  async getInvoices(): Promise<Invoice[]> {
+    return Array.from(this.invoices.values());
+  }
+
+  async getInvoice(id: number): Promise<Invoice | undefined> {
+    return this.invoices.get(id);
+  }
+
+  async createInvoice(invoice: InsertInvoice): Promise<Invoice> {
+    const id = this.currentId++;
+    const newInvoice: Invoice = {
+      ...invoice,
+      id,
+      createdAt: new Date(),
+    };
+    this.invoices.set(id, newInvoice);
+    return newInvoice;
   }
 
   async getStoreSettings(): Promise<StoreSetting | undefined> {

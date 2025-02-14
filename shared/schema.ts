@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, decimal } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, decimal, json } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -48,7 +48,7 @@ export const settings = pgTable("settings", {
 export const storeSettings = pgTable("store_settings", {
   id: serial("id").primaryKey(),
   storeName: text("store_name").notNull(),
-  storeLogo: text("store_logo"), 
+  storeLogo: text("store_logo"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -128,6 +128,24 @@ export const products = pgTable("products", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
+export const invoices = pgTable("invoices", {
+  id: serial("id").primaryKey(),
+  customerName: text("customer_name"),
+  items: json("items").$type<{
+    productId: number;
+    quantity: number;
+    price: number;
+    total: number;
+  }[]>().notNull(),
+  subtotal: decimal("subtotal").notNull(),
+  discount: decimal("discount").notNull().default("0"),
+  discountAmount: decimal("discount_amount").notNull().default("0"),
+  finalTotal: decimal("final_total").notNull(),
+  note: text("note"),
+  date: timestamp("date").notNull().defaultNow(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
@@ -175,6 +193,20 @@ export const insertProductSchema = createInsertSchema(products).extend({
   isWeighted: z.boolean(),
 });
 
+export const insertInvoiceSchema = createInsertSchema(invoices).extend({
+  items: z.array(z.object({
+    productId: z.number(),
+    quantity: z.number(),
+    price: z.number(),
+    total: z.number()
+  })),
+  subtotal: z.number(),
+  discount: z.number(),
+  discountAmount: z.number(),
+  finalTotal: z.number(),
+  note: z.string().optional(),
+});
+
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type Customer = typeof customers.$inferSelect;
@@ -199,3 +231,5 @@ export type ProductGroup = typeof productGroups.$inferSelect;
 export type InsertProductGroup = z.infer<typeof insertProductGroupSchema>;
 export type Product = typeof products.$inferSelect;
 export type InsertProduct = z.infer<typeof insertProductSchema>;
+export type Invoice = typeof invoices.$inferSelect;
+export type InsertInvoice = z.infer<typeof insertInvoiceSchema>;
