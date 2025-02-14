@@ -10,6 +10,14 @@ interface Setting {
     updatedAt: Date;
 }
 
+interface StoreSetting {
+    id: number;
+    storeName: string;
+    storeLogo: string | null;
+    createdAt: Date;
+    updatedAt: Date;
+}
+
 const MemoryStore = createMemoryStore(session);
 
 export interface IStorage {
@@ -89,6 +97,9 @@ export interface IStorage {
   deleteProduct(id: number): Promise<void>;
 
   sessionStore: session.Store;
+    // Store Settings operations
+    getStoreSettings(): Promise<StoreSetting | undefined>;
+    updateStoreSettings(settings: { storeName: string; storeLogo?: string }): Promise<StoreSetting>;
 }
 
 export class MemStorage implements IStorage {
@@ -104,6 +115,7 @@ export class MemStorage implements IStorage {
   private socialMediaAccounts: Map<number, SocialMediaAccount>;
   private products: Map<number, Product>;
   private productGroups: Map<number, ProductGroup>;
+  private storeSettings: StoreSetting | undefined;
   sessionStore: session.Store;
 
   constructor() {
@@ -557,6 +569,22 @@ export class MemStorage implements IStorage {
 
   async deleteProduct(id: number): Promise<void> {
     this.products.delete(id);
+  }
+
+  async getStoreSettings(): Promise<StoreSetting | undefined> {
+    return this.storeSettings;
+  }
+
+  async updateStoreSettings(settings: { storeName: string; storeLogo?: string }): Promise<StoreSetting> {
+    const newSettings: StoreSetting = {
+      id: 1,
+      storeName: settings.storeName,
+      storeLogo: settings.storeLogo || null,
+      createdAt: this.storeSettings?.createdAt || new Date(),
+      updatedAt: new Date(),
+    };
+    this.storeSettings = newSettings;
+    return newSettings;
   }
 }
 

@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertCustomerSchema, insertAppointmentSchema, insertStaffSchema, insertSettingSchema, insertMarketingCampaignSchema, insertPromotionSchema, insertDiscountCodeSchema, insertProductSchema, insertProductGroupSchema } from "@shared/schema";
 import { notificationService } from './services/notification-service';
+import express from 'express';
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Customer routes
@@ -300,6 +301,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const id = parseInt(req.params.id);
     await storage.deleteProduct(id);
     res.sendStatus(204);
+  });
+
+  // Store Settings routes
+  app.get("/api/store-settings", async (_req, res) => {
+    const settings = await storage.getStoreSettings();
+    res.json(settings);
+  });
+
+  app.post("/api/store-settings", express.json({limit: '50mb'}), async (req, res) => {
+    const settings = await storage.updateStoreSettings({
+      storeName: req.body.storeName,
+      storeLogo: req.body.storeLogo,
+    });
+    res.json(settings);
   });
 
   const httpServer = createServer(app);
