@@ -429,168 +429,114 @@ export default function SettingsPage() {
                   <div className="flex gap-2">
                     <SiFacebook className="h-8 w-8 text-blue-600" />
                     <SiInstagram className="h-8 w-8 text-pink-600" />
+                    <SiSnapchat className="h-8 w-8 text-yellow-500" />
                   </div>
                   <div>
-                    <CardTitle>إعدادات وسائل التواصل الاجتماعي</CardTitle>
+                    <CardTitle>الحسابات المرتبطة</CardTitle>
                     <CardDescription>
-                      قم بإعداد التكامل مع فيسبوك وانستغرام لإدارة الحملات التسويقية
+                      إدارة حسابات التواصل الاجتماعي المرتبطة بالنظام
                     </CardDescription>
                   </div>
                 </div>
               </CardHeader>
               <CardContent>
                 <div className="space-y-6">
-                  <Form {...socialMediaForm}>
-                    <form onSubmit={socialMediaForm.handleSubmit(onSocialMediaSubmit)} className="space-y-4">
-                      <FormField
-                        control={socialMediaForm.control}
-                        name="FACEBOOK_APP_ID"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>معرف تطبيق فيسبوك (App ID)</FormLabel>
-                            <FormControl>
-                              <Input {...field} />
-                            </FormControl>
-                            <FormDescription>
-                              معرف التطبيق من Facebook Developers Console
-                            </FormDescription>
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={socialMediaForm.control}
-                        name="FACEBOOK_APP_SECRET"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>الرمز السري لتطبيق فيسبوك (App Secret)</FormLabel>
-                            <FormControl>
-                              <Input type="password" {...field} />
-                            </FormControl>
-                            <FormDescription>
-                              الرمز السري للتطبيق من Facebook Developers Console
-                            </FormDescription>
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={socialMediaForm.control}
-                        name="INSTAGRAM_ACCESS_TOKEN"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>رمز وصول انستغرام (Access Token)</FormLabel>
-                            <FormControl>
-                              <Input type="password" {...field} />
-                            </FormControl>
-                            <FormDescription>
-                              رمز الوصول لحساب انستغرام التجاري
-                            </FormDescription>
-                          </FormItem>
-                        )}
-                      />
-                      <Button type="submit" disabled={saveSettingsMutation.isPending}>
-                        {saveSettingsMutation.isPending ? "جاري الحفظ..." : "حفظ الإعدادات"}
-                      </Button>
-                    </form>
-                  </Form>
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-medium">الحسابات النشطة</h3>
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button>
+                          <Plus className="h-4 w-4 ml-2" />
+                          إضافة حساب جديد
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>إضافة حساب تواصل اجتماعي</DialogTitle>
+                          <DialogDescription>
+                            قم بإدخال معلومات الحساب للربط مع النظام
+                          </DialogDescription>
+                        </DialogHeader>
 
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-lg font-medium">الحسابات المرتبطة</h3>
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button>
-                            <Plus className="h-4 w-4 ml-2" />
-                            إضافة حساب جديد
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                          <DialogHeader>
-                            <DialogTitle>إضافة حساب تواصل اجتماعي</DialogTitle>
-                            <DialogDescription>
-                              قم بإدخال معلومات الحساب للربط مع النظام
-                            </DialogDescription>
-                          </DialogHeader>
-
-                          <Form {...form}>
-                            <form onSubmit={form.handleSubmit((data) => accountMutation.mutate(data))} className="space-y-4">
-                              <FormField
-                                control={form.control}
-                                name="platform"
-                                render={({ field }) => (
-                                  <FormItem>
-                                    <FormLabel>المنصة</FormLabel>
-                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                      <FormControl>
-                                        <SelectTrigger>
-                                          <SelectValue placeholder="اختر المنصة" />
-                                        </SelectTrigger>
-                                      </FormControl>
-                                      <SelectContent>
-                                        <SelectItem value="facebook">فيسبوك</SelectItem>
-                                        <SelectItem value="instagram">انستغرام</SelectItem>
-                                        <SelectItem value="snapchat">سناب شات</SelectItem>
-                                      </SelectContent>
-                                    </Select>
-                                  </FormItem>
-                                )}
-                              />
-
-                              <FormField
-                                control={form.control}
-                                name="username"
-                                render={({ field }) => (
-                                  <FormItem>
-                                    <FormLabel>اسم المستخدم / رقم الهاتف</FormLabel>
+                        <Form {...form}>
+                          <form onSubmit={form.handleSubmit((data) => accountMutation.mutate(data))} className="space-y-4">
+                            <FormField
+                              control={form.control}
+                              name="platform"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>المنصة</FormLabel>
+                                  <Select onValueChange={field.onChange} defaultValue={field.value}>
                                     <FormControl>
-                                      <Input {...field} />
+                                      <SelectTrigger>
+                                        <SelectValue placeholder="اختر المنصة" />
+                                      </SelectTrigger>
                                     </FormControl>
-                                  </FormItem>
-                                )}
-                              />
+                                    <SelectContent>
+                                      <SelectItem value="facebook">فيسبوك</SelectItem>
+                                      <SelectItem value="instagram">انستغرام</SelectItem>
+                                      <SelectItem value="snapchat">سناب شات</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </FormItem>
+                              )}
+                            />
 
-                              <FormField
-                                control={form.control}
-                                name="password"
-                                render={({ field }) => (
-                                  <FormItem>
-                                    <FormLabel>كلمة المرور</FormLabel>
-                                    <FormControl>
-                                      <Input type="password" {...field} />
-                                    </FormControl>
-                                  </FormItem>
-                                )}
-                              />
+                            <FormField
+                              control={form.control}
+                              name="username"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>اسم المستخدم</FormLabel>
+                                  <FormControl>
+                                    <Input {...field} />
+                                  </FormControl>
+                                </FormItem>
+                              )}
+                            />
 
-                              <Button type="submit" disabled={accountMutation.isPending} className="w-full">
-                                {accountMutation.isPending ? "جاري الحفظ..." : "حفظ الحساب"}
-                              </Button>
-                            </form>
-                          </Form>
-                        </DialogContent>
-                      </Dialog>
-                    </div>
+                            <FormField
+                              control={form.control}
+                              name="password"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>كلمة المرور</FormLabel>
+                                  <FormControl>
+                                    <Input type="password" {...field} />
+                                  </FormControl>
+                                </FormItem>
+                              )}
+                            />
 
-                    <div className="grid gap-4">
-                      {socialAccounts?.map((account) => (
-                        <div key={account.id} className="flex items-center justify-between p-4 border rounded-lg">
-                          <div className="flex items-center gap-4">
-                            {account.platform === 'facebook' && <SiFacebook className="h-6 w-6 text-blue-600" />}
-                            {account.platform === 'instagram' && <SiInstagram className="h-6 w-6 text-pink-600" />}
-                            {account.platform === 'snapchat' && <SiSnapchat className="h-6 w-6 text-yellow-500" />}
-                            <div>
-                              <p className="font-medium">{account.username}</p>
-                              <p className="text-sm text-muted-foreground">
-                                {account.platform === 'facebook' ? 'فيسبوك' :
-                                  account.platform === 'instagram' ? 'انستغرام' : 'سناب شات'}
-                              </p>
-                            </div>
+                            <Button type="submit" disabled={accountMutation.isPending} className="w-full">
+                              {accountMutation.isPending ? "جاري الحفظ..." : "حفظ الحساب"}
+                            </Button>
+                          </form>
+                        </Form>
+                      </DialogContent>
+                    </Dialog>
+                  </div>
+
+                  <div className="grid gap-4">
+                    {socialAccounts?.map((account) => (
+                      <div key={account.id} className="flex items-center justify-between p-4 border rounded-lg">
+                        <div className="flex items-center gap-4">
+                          {account.platform === 'facebook' && <SiFacebook className="h-6 w-6 text-blue-600" />}
+                          {account.platform === 'instagram' && <SiInstagram className="h-6 w-6 text-pink-600" />}
+                          {account.platform === 'snapchat' && <SiSnapchat className="h-6 w-6 text-yellow-500" />}
+                          <div>
+                            <p className="font-medium">{account.username}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {account.platform === 'facebook' ? 'فيسبوك' :
+                                account.platform === 'instagram' ? 'انستغرام' : 'سناب شات'}
+                            </p>
                           </div>
-                          <Badge variant={account.status === 'active' ? 'default' : 'secondary'}>
-                            {account.status === 'active' ? 'نشط' : 'غير نشط'}
-                          </Badge>
                         </div>
-                      ))}
-                    </div>
+                        <Badge variant={account.status === 'active' ? 'default' : 'secondary'}>
+                          {account.status === 'active' ? 'نشط' : 'غير نشط'}
+                        </Badge>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </CardContent>
