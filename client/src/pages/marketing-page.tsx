@@ -16,6 +16,11 @@ import { SearchInput } from "@/components/ui/search-input";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
 import { useState } from "react";
+import { 
+  SiFacebook, 
+  SiInstagram, 
+  SiWhatsapp 
+} from "react-icons/si";
 
 export default function MarketingPage() {
   const { data: campaigns } = useQuery<MarketingCampaign[]>({
@@ -33,6 +38,27 @@ export default function MarketingPage() {
       campaign.status.toLowerCase().includes(searchLower)
     );
   });
+
+  const getPlatformIcons = (platforms?: string[]) => {
+    if (!platforms) return null;
+
+    return (
+      <div className="flex gap-2">
+        {platforms.map(platform => {
+          switch (platform) {
+            case 'facebook':
+              return <SiFacebook key="facebook" className="text-blue-600 h-4 w-4" />;
+            case 'instagram':
+              return <SiInstagram key="instagram" className="text-pink-600 h-4 w-4" />;
+            case 'whatsapp':
+              return <SiWhatsapp key="whatsapp" className="text-green-600 h-4 w-4" />;
+            default:
+              return null;
+          }
+        })}
+      </div>
+    );
+  };
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { label: string; color: string }> = {
@@ -69,6 +95,7 @@ export default function MarketingPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>اسم الحملة</TableHead>
+                <TableHead>المنصات</TableHead>
                 <TableHead>النوع</TableHead>
                 <TableHead>تاريخ البدء</TableHead>
                 <TableHead>تاريخ الانتهاء</TableHead>
@@ -84,11 +111,14 @@ export default function MarketingPage() {
                       <p className="text-sm text-muted-foreground">{campaign.description}</p>
                     )}
                   </TableCell>
+                  <TableCell>{getPlatformIcons(campaign.platforms)}</TableCell>
                   <TableCell>
                     <Badge variant="outline">
                       {campaign.type === "whatsapp" ? "واتساب" :
                        campaign.type === "email" ? "بريد إلكتروني" :
-                       campaign.type === "sms" ? "رسائل نصية" : campaign.type}
+                       campaign.type === "sms" ? "رسائل نصية" :
+                       campaign.type === "facebook" ? "فيسبوك" :
+                       campaign.type === "instagram" ? "انستغرام" : campaign.type}
                     </Badge>
                   </TableCell>
                   <TableCell>
@@ -106,7 +136,7 @@ export default function MarketingPage() {
               ))}
               {filteredCampaigns?.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                     لا توجد نتائج للبحث
                   </TableCell>
                 </TableRow>

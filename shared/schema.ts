@@ -52,8 +52,10 @@ export const marketingCampaigns = pgTable("marketing_campaigns", {
   startDate: timestamp("start_date").notNull(),
   endDate: timestamp("end_date").notNull(),
   status: text("status").notNull().default("draft"),
-  type: text("type").notNull(), // email, sms, whatsapp
+  type: text("type").notNull(), // email, sms, whatsapp, facebook, instagram
   content: text("content").notNull(),
+  platforms: text("platforms").array(), // Array of social media platforms
+  socialMediaSettings: text("social_media_settings"), // JSON string for platform-specific settings
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -97,7 +99,10 @@ export const insertSettingSchema = createInsertSchema(settings).pick({
   value: true,
 });
 
-export const insertMarketingCampaignSchema = createInsertSchema(marketingCampaigns);
+export const insertMarketingCampaignSchema = createInsertSchema(marketingCampaigns).extend({
+  platforms: z.array(z.enum(['facebook', 'instagram', 'whatsapp', 'email', 'sms'])).optional(),
+  socialMediaSettings: z.string().optional(),
+});
 export const insertPromotionSchema = createInsertSchema(promotions);
 export const insertDiscountCodeSchema = createInsertSchema(discountCodes);
 
