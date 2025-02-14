@@ -39,6 +39,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { CampaignForm } from "@/components/marketing/campaign-form";
+import { CampaignStats } from "@/components/marketing/campaign-stats";
 
 export default function MarketingPage() {
   const { data: campaigns } = useQuery<MarketingCampaign[]>({
@@ -170,6 +171,9 @@ export default function MarketingPage() {
             </DialogContent>
           </Dialog>
         </div>
+
+        {/* إضافة مكون الإحصائيات */}
+        <CampaignStats campaigns={campaigns || []} />
 
         <div className="max-w-sm">
           <SearchInput
