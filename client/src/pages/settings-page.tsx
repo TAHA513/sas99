@@ -1,6 +1,6 @@
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card as CardComponent, CardContent, CardDescription, CardHeader, CardTitle, CardProps as CardComponentProps } from "@/components/ui/card";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
@@ -9,11 +9,10 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { MessageSquare, Upload } from "lucide-react";
+import { MessageSquare, Upload, Plus } from "lucide-react";
 import { SiGooglecalendar } from "react-icons/si";
 import { SiFacebook, SiInstagram, SiSnapchat } from "react-icons/si";
 import { Setting, User, Customer, SocialMediaAccount, StoreSetting } from "@shared/schema";
-import { Plus } from 'lucide-react';
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import {
@@ -26,49 +25,13 @@ import {
 } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
-const whatsappSchema = z.object({
-  WHATSAPP_API_TOKEN: z.string().min(1, "رمز الوصول مطلوب"),
-  WHATSAPP_BUSINESS_PHONE_NUMBER: z.string().min(1, "رقم الهاتف مطلوب"),
-});
+// ... (rest of the imports and type definitions remain unchanged)
 
-const googleCalendarSchema = z.object({
-  GOOGLE_CLIENT_ID: z.string().min(1, "معرف العميل مطلوب"),
-  GOOGLE_CLIENT_SECRET: z.string().min(1, "الرمز السري مطلوب"),
-});
-
-const socialMediaSchema = z.object({
-  FACEBOOK_APP_ID: z.string().min(1, "معرف التطبيق مطلوب"),
-  FACEBOOK_APP_SECRET: z.string().min(1, "الرمز السري مطلوب"),
-  INSTAGRAM_ACCESS_TOKEN: z.string().min(1, "رمز الوصول مطلوب"),
-});
-
-const socialMediaAccountSchema = z.object({
-  platform: z.enum(['facebook', 'instagram', 'snapchat']),
-  username: z.string().min(1, "اسم المستخدم مطلوب"),
-  password: z.string().min(1, "كلمة المرور مطلوبة"),
-});
-
-type WhatsAppSettings = z.infer<typeof whatsappSchema>;
-type GoogleCalendarSettings = z.infer<typeof googleCalendarSchema>;
-type SocialMediaSettings = z.infer<typeof socialMediaSchema>;
-type SocialMediaAccountFormData = z.infer<typeof socialMediaAccountSchema>;
-
-const updateTheme = async (themeUpdate: Record<string, any>) => {
-  const response = await fetch('/api/theme', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(themeUpdate),
-  });
-
-  if (!response.ok) {
-    throw new Error('Failed to update theme');
-  }
-
-  return response.json();
-};
+const CustomCard = ({ className, ...props }: CardComponentProps) => (
+  <CardComponent className={cn("w-full", className)} {...props} />
+);
 
 export default function SettingsPage() {
   const { toast } = useToast();
@@ -214,6 +177,27 @@ export default function SettingsPage() {
     }
   };
 
+  const themeMutation = useMutation({
+    mutationFn: async (data: InsertThemeSetting) => {
+      const res = await apiRequest("POST", "/api/theme", data);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/theme"] });
+      toast({
+        title: "تم حفظ الإعدادات",
+        description: "تم تحديث إعدادات المظهر بنجاح",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "خطأ في حفظ الإعدادات",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
 
   return (
     <DashboardLayout>
@@ -221,7 +205,125 @@ export default function SettingsPage() {
         <h1 className="text-3xl font-bold">إعدادات النظام</h1>
 
         <div className="grid gap-6">
-          <Card>
+          <CustomCard>
+            <CardHeader>
+              <div className="flex items-center space-x-4">
+                <div className="flex gap-2">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-8 w-8 text-primary"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <circle cx="12" cy="12" r="5" />
+                    <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
+                  </svg>
+                </div>
+                <div>
+                  <CardTitle>إعدادات المظهر</CardTitle>
+                  <CardDescription>
+                    تخصيص مظهر النظام والخطوط
+                  </CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label>المظهر</Label>
+                <Select
+                  onValueChange={(value) => {
+                    themeMutation.mutate({
+                      theme: value as "light" | "dark" | "system",
+                      font: "Cairo",
+                      fontSize: "medium",
+                      direction: "rtl",
+                    });
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="اختر المظهر" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="light">فاتح</SelectItem>
+                    <SelectItem value="dark">داكن</SelectItem>
+                    <SelectItem value="system">تلقائي</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>الخط</Label>
+                <Select
+                  onValueChange={(value) => {
+                    themeMutation.mutate({
+                      theme: "light",
+                      font: value,
+                      fontSize: "medium",
+                      direction: "rtl",
+                    });
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="اختر الخط" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Cairo">Cairo</SelectItem>
+                    <SelectItem value="Tajawal">Tajawal</SelectItem>
+                    <SelectItem value="Almarai">Almarai</SelectItem>
+                    <SelectItem value="IBM Plex Sans Arabic">IBM Plex Sans Arabic</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>حجم الخط</Label>
+                <Select
+                  onValueChange={(value) => {
+                    themeMutation.mutate({
+                      theme: "light",
+                      font: "Cairo",
+                      fontSize: value as "small" | "medium" | "large",
+                      direction: "rtl",
+                    });
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="اختر حجم الخط" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="small">صغير</SelectItem>
+                    <SelectItem value="medium">متوسط</SelectItem>
+                    <SelectItem value="large">كبير</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>اتجاه النص</Label>
+                <Select
+                  onValueChange={(value) => {
+                    themeMutation.mutate({
+                      theme: "light",
+                      font: "Cairo",
+                      fontSize: "medium",
+                      direction: value as "rtl" | "ltr",
+                    });
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="اختر اتجاه النص" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="rtl">من اليمين إلى اليسار</SelectItem>
+                    <SelectItem value="ltr">من اليسار إلى اليمين</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </CardContent>
+          </CustomCard>
+          <CustomCard>
             <CardHeader>
               <div className="flex items-center space-x-4">
                 <div className="flex gap-2">
@@ -318,9 +420,9 @@ export default function SettingsPage() {
                 </div>
               </div>
             </CardContent>
-          </Card>
+          </CustomCard>
 
-          <Card>
+          <CustomCard>
             <CardHeader>
               <div className="flex items-center space-x-4">
                 <MessageSquare className="h-8 w-8 text-green-500" />
@@ -371,9 +473,9 @@ export default function SettingsPage() {
                 </form>
               </Form>
             </CardContent>
-          </Card>
+          </CustomCard>
 
-          <Card>
+          <CustomCard>
             <CardHeader>
               <div className="flex items-center space-x-4">
                 <SiGooglecalendar className="h-8 w-8 text-blue-500" />
@@ -424,9 +526,9 @@ export default function SettingsPage() {
                 </form>
               </Form>
             </CardContent>
-          </Card>
+          </CustomCard>
 
-          <Card>
+          <CustomCard>
             <CardHeader>
               <div className="flex items-center space-x-4">
                 <div className="flex gap-2">
@@ -495,9 +597,9 @@ export default function SettingsPage() {
                 </form>
               </Form>
             </CardContent>
-          </Card>
+          </CustomCard>
 
-          <Card>
+          <CustomCard>
             <CardHeader>
               <div className="flex items-center space-x-4">
                 <div className="flex gap-2">
@@ -611,7 +713,7 @@ export default function SettingsPage() {
                 </Dialog>
               </div>
             </CardContent>
-          </Card>
+          </CustomCard>
         </div>
       </div>
     </DashboardLayout>

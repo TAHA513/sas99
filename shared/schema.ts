@@ -45,6 +45,16 @@ export const settings = pgTable("settings", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
+export const themeSettings = pgTable("theme_settings", {
+  id: serial("id").primaryKey(),
+  theme: text("theme").notNull().default("light"),
+  font: text("font").notNull().default("Cairo"),
+  fontSize: text("font_size").notNull().default("medium"),
+  direction: text("direction").notNull().default("rtl"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
 export const storeSettings = pgTable("store_settings", {
   id: serial("id").primaryKey(),
   storeName: text("store_name").notNull(),
@@ -175,6 +185,13 @@ export const insertProductSchema = createInsertSchema(products).extend({
   isWeighted: z.boolean(),
 });
 
+export const insertThemeSettingsSchema = createInsertSchema(themeSettings).extend({
+  theme: z.enum(["light", "dark", "system"]),
+  font: z.enum(["Cairo", "Tajawal", "Almarai", "IBM Plex Sans Arabic"]),
+  fontSize: z.enum(["small", "medium", "large"]),
+  direction: z.enum(["rtl", "ltr"]),
+});
+
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type Customer = typeof customers.$inferSelect;
@@ -199,3 +216,5 @@ export type ProductGroup = typeof productGroups.$inferSelect;
 export type InsertProductGroup = z.infer<typeof insertProductGroupSchema>;
 export type Product = typeof products.$inferSelect;
 export type InsertProduct = z.infer<typeof insertProductSchema>;
+export type ThemeSetting = typeof themeSettings.$inferSelect;
+export type InsertThemeSetting = z.infer<typeof insertThemeSettingsSchema>;

@@ -5,6 +5,8 @@ import { useEffect } from "react";
 interface Theme {
   appearance: 'light' | 'dark' | 'system';
   fontFamily: string;
+  fontSize: string;
+  direction: string;
 }
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -19,9 +21,9 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     document.documentElement.setAttribute('data-theme', theme.appearance === 'dark' ? 'dark' : 'light');
 
     // تطبيق الخط
-    const validFonts = ['cairo', 'tajawal', 'almarai'];
+    const validFonts = ['cairo', 'tajawal', 'almarai', 'ibm-plex-sans-arabic'];
     const fontFamily = validFonts.includes(theme.fontFamily?.toLowerCase()) ? theme.fontFamily.toLowerCase() : 'cairo';
-    document.body.className = `font-${fontFamily}`;
+    document.body.className = `font-${fontFamily} text-${theme.fontSize} ${theme.direction}`;
 
   }, [theme]);
 
