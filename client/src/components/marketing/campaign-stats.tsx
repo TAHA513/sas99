@@ -65,25 +65,31 @@ export function CampaignStats({ campaigns }: CampaignStatsProps) {
         </CardHeader>
         <CardContent>
           <div className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={pieData}
-                  dataKey="value"
-                  nameKey="name"
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={80}
-                  fill="#8884d8"
-                  label={({ name, value }) => `${name}: ${value.toLocaleString()} ريال`}
-                >
-                  {pieData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
+            {pieData.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={pieData}
+                    dataKey="value"
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={80}
+                    fill="#8884d8"
+                    label={({ name, value }) => `${name}: ${value.toLocaleString()} ريال`}
+                  >
+                    {pieData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-full text-muted-foreground">
+                لا توجد حملات نشطة حالياً
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -96,15 +102,21 @@ export function CampaignStats({ campaigns }: CampaignStatsProps) {
         </CardHeader>
         <CardContent>
           <div className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={campaignPerformance}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip formatter={(value) => `${value} ريال`} />
-                <Bar dataKey="budget" fill="#8884d8" />
-              </BarChart>
-            </ResponsiveContainer>
+            {campaignPerformance.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={campaignPerformance}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis />
+                  <Tooltip formatter={(value) => `${value} ريال`} />
+                  <Bar dataKey="budget" fill="#8884d8" />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-full text-muted-foreground">
+                لا توجد حملات نشطة حالياً
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
