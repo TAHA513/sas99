@@ -413,7 +413,7 @@ export default function SettingsPage() {
           </Dialog>
         </div>
 
-        <Card>
+        <CustomCard>
           <CardHeader>
             <CardTitle>إعادة ضبط النظام</CardTitle>
           </CardHeader>
@@ -458,7 +458,7 @@ export default function SettingsPage() {
               </AlertDialog>
             </div>
           </CardContent>
-        </Card>
+        </CustomCard>
         <Tabs defaultValue="store" className="space-y-6">
           <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4 gap-4">
             <TabsTrigger value="store" className="space-x-2">
