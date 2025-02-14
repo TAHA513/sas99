@@ -59,7 +59,8 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-tajawal;
+    font-size: var(--font-size, 1rem);
   }
 
   .font-cairo {
@@ -72,5 +73,17 @@
 
   .font-almarai {
     font-family: 'Almarai', sans-serif;
+  }
+
+  [data-font-size="small"] {
+    --font-size: 0.875rem;
+  }
+
+  [data-font-size="medium"] {
+    --font-size: 1rem;
+  }
+
+  [data-font-size="large"] {
+    --font-size: 1.125rem;
   }
 }

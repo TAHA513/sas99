@@ -127,16 +127,35 @@ export default function SettingsPage() {
   });
 
   const storeSettingsMutation = useMutation({
-    mutationFn: async (data: { storeName: string; storeLogo?: string }) => {
+    mutationFn: async (data: { 
+      storeName?: string; 
+      storeLogo?: string;
+      primary?: string;
+      appearance?: 'light' | 'dark';
+      radius?: number;
+      fontSize?: string;
+      fontFamily?: string;
+    }) => {
+      // Update store settings
       const res = await apiRequest("POST", "/api/store-settings", data);
+
+      // Update theme if appearance related settings are changed
+      if (data.primary || data.appearance || data.radius || data.fontSize || data.fontFamily) {
+        await apiRequest("POST", "/api/theme", {
+          primary: data.primary,
+          appearance: data.appearance,
+          radius: data.radius,
+          fontSize: data.fontSize,
+          fontFamily: data.fontFamily,
+        });
+      }
+
       return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/store-settings"] });
-      toast({
-        title: "تم حفظ إعدادات المتجر",
-        description: "تم تحديث معلومات المتجر بنجاح",
-      });
+      // Reload the page to apply theme changes
+      window.location.reload();
     },
     onError: (error: Error) => {
       toast({
@@ -222,7 +241,6 @@ export default function SettingsPage() {
       await saveSettingsMutation.mutateAsync({ key, value });
     }
   };
-
 
   return (
     <DashboardLayout>
