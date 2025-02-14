@@ -235,16 +235,78 @@ export default function SettingsPage() {
                 إضافة حساب جديد
               </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="sm:max-w-[500px]">
               <DialogHeader>
-                <DialogTitle>إضافة حساب تواصل اجتماعي</DialogTitle>
+                <DialogTitle>ربط حسابات التواصل الاجتماعي</DialogTitle>
                 <DialogDescription>
-                  قم بإدخال معلومات الحساب للربط مع النظام
+                  اختر إحدى المنصات التالية للربط مع حسابك
                 </DialogDescription>
               </DialogHeader>
 
+              <div className="grid gap-4 py-4">
+                <Button
+                  variant="outline"
+                  className="w-full flex items-center justify-start gap-3 h-14"
+                  onClick={() => {
+                    // سيتم إضافة منطق تسجيل الدخول لفيسبوك
+                    toast({
+                      title: "قريباً",
+                      description: "سيتم إضافة خيار تسجيل الدخول بفيسبوك قريباً",
+                    });
+                  }}
+                >
+                  <SiFacebook className="h-6 w-6 text-blue-600" />
+                  <div className="flex flex-col items-start">
+                    <span className="font-semibold">تسجيل الدخول بفيسبوك</span>
+                    <span className="text-sm text-muted-foreground">ربط حساب فيسبوك الخاص بك</span>
+                  </div>
+                </Button>
+
+                <Button
+                  variant="outline"
+                  className="w-full flex items-center justify-start gap-3 h-14"
+                  onClick={() => {
+                    // سيتم إضافة منطق تسجيل الدخول لانستغرام
+                    toast({
+                      title: "قريباً",
+                      description: "سيتم إضافة خيار تسجيل الدخول بانستغرام قريباً",
+                    });
+                  }}
+                >
+                  <SiInstagram className="h-6 w-6 text-pink-600" />
+                  <div className="flex flex-col items-start">
+                    <span className="font-semibold">تسجيل الدخول بانستغرام</span>
+                    <span className="text-sm text-muted-foreground">ربط حساب انستغرام الخاص بك</span>
+                  </div>
+                </Button>
+
+                <Button
+                  variant="outline"
+                  className="w-full flex items-center justify-start gap-3 h-14"
+                  onClick={() => {
+                    // سيتم إضافة منطق تسجيل الدخول لسناب شات
+                    toast({
+                      title: "قريباً",
+                      description: "سيتم إضافة خيار تسجيل الدخول بسناب شات قريباً",
+                    });
+                  }}
+                >
+                  <SiSnapchat className="h-6 w-6 text-yellow-500" />
+                  <div className="flex flex-col items-start">
+                    <span className="font-semibold">تسجيل الدخول بسناب شات</span>
+                    <span className="text-sm text-muted-foreground">ربط حساب سناب شات الخاص بك</span>
+                  </div>
+                </Button>
+              </div>
+
+              <div className="mt-4 text-center">
+                <p className="text-sm text-muted-foreground">
+                  أو يمكنك إدخال بيانات الحساب يدوياً
+                </p>
+              </div>
+
               <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 mt-4">
                   <FormField
                     control={form.control}
                     name="platform"
