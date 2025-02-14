@@ -7,6 +7,7 @@ import {
   Settings,
   Megaphone,
   Ticket,
+  Package,
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
@@ -31,6 +32,11 @@ const navItems = [
     title: "الموظفين",
     href: "/staff",
     icon: UserCog,
+  },
+  {
+    title: "المنتجات",
+    href: "/products",
+    icon: Package,
   },
   {
     title: "التسويق",
