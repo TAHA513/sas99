@@ -12,6 +12,8 @@ import { useQuery } from "@tanstack/react-query";
 import { Staff, User } from "@shared/schema";
 import { UserPlus2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { SearchInput } from "@/components/ui/search-input";
+import { useState } from "react";
 
 export default function StaffPage() {
   const { data: staff } = useQuery<Staff[]>({
@@ -21,6 +23,8 @@ export default function StaffPage() {
   const { data: users } = useQuery<User[]>({
     queryKey: ["/api/users"],
   });
+
+  const [searchTerm, setSearchTerm] = useState("");
 
   // Helper function to get user details
   const getUserDetails = (userId: number) => {
@@ -46,6 +50,20 @@ export default function StaffPage() {
     return hours.join("، ");
   };
 
+  const filteredStaff = staff?.filter((staffMember) => {
+    const searchLower = searchTerm.toLowerCase();
+    const user = getUserDetails(staffMember.userId);
+    const userName = user?.name.toLowerCase() || '';
+    const specialization = (staffMember.specialization || '').toLowerCase();
+    const workDays = staffMember.workDays ? formatWorkDays(staffMember.workDays).toLowerCase() : '';
+
+    return (
+      userName.includes(searchLower) ||
+      specialization.includes(searchLower) ||
+      workDays.includes(searchLower)
+    );
+  });
+
   return (
     <DashboardLayout>
       <div className="space-y-8">
@@ -55,6 +73,14 @@ export default function StaffPage() {
             <UserPlus2 className="h-4 w-4 ml-2" />
             إضافة موظف
           </Button>
+        </div>
+
+        <div className="max-w-sm">
+          <SearchInput
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="البحث عن موظف..."
+          />
         </div>
 
         <div className="border rounded-lg">
@@ -69,7 +95,7 @@ export default function StaffPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {staff?.map((staffMember) => {
+              {filteredStaff?.map((staffMember) => {
                 const user = getUserDetails(staffMember.userId);
                 return (
                   <TableRow key={staffMember.id}>
@@ -93,6 +119,13 @@ export default function StaffPage() {
                   </TableRow>
                 );
               })}
+              {filteredStaff?.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                    لا توجد نتائج للبحث
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </div>

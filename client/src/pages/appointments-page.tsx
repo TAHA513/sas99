@@ -14,6 +14,8 @@ import { CalendarPlus } from "lucide-react";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
 import { Badge } from "@/components/ui/badge";
+import { SearchInput } from "@/components/ui/search-input";
+import { useState } from "react";
 
 const statusMap = {
   scheduled: { label: "مجدول", color: "bg-blue-100 text-blue-800" },
@@ -34,6 +36,8 @@ export default function AppointmentsPage() {
     queryKey: ["/api/staff"],
   });
 
+  const [searchTerm, setSearchTerm] = useState("");
+
   // Helper function to get customer name
   const getCustomerName = (customerId: number) => {
     return customers?.find(c => c.id === customerId)?.name || 'غير معروف';
@@ -46,6 +50,21 @@ export default function AppointmentsPage() {
     return staffMember.specialization || 'غير محدد';
   };
 
+  const filteredAppointments = appointments?.filter((appointment) => {
+    const searchLower = searchTerm.toLowerCase();
+    const customerName = getCustomerName(appointment.customerId).toLowerCase();
+    const staffName = getStaffName(appointment.staffId).toLowerCase();
+    const date = format(new Date(appointment.startTime), 'dd MMMM yyyy', { locale: ar }).toLowerCase();
+
+    return (
+      customerName.includes(searchLower) ||
+      staffName.includes(searchLower) ||
+      date.includes(searchLower) ||
+      appointment.status.toLowerCase().includes(searchLower) ||
+      (appointment.notes?.toLowerCase().includes(searchLower) ?? false)
+    );
+  });
+
   return (
     <DashboardLayout>
       <div className="space-y-8">
@@ -55,6 +74,14 @@ export default function AppointmentsPage() {
             <CalendarPlus className="h-4 w-4 ml-2" />
             موعد جديد
           </Button>
+        </div>
+
+        <div className="max-w-sm">
+          <SearchInput
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="البحث في المواعيد..."
+          />
         </div>
 
         <div className="border rounded-lg">
@@ -70,7 +97,7 @@ export default function AppointmentsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {appointments?.map((appointment) => (
+              {filteredAppointments?.map((appointment) => (
                 <TableRow key={appointment.id}>
                   <TableCell>{getCustomerName(appointment.customerId)}</TableCell>
                   <TableCell>{getStaffName(appointment.staffId)}</TableCell>
@@ -90,6 +117,13 @@ export default function AppointmentsPage() {
                   <TableCell>{appointment.notes}</TableCell>
                 </TableRow>
               ))}
+              {filteredAppointments?.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                    لا توجد نتائج للبحث
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </div>

@@ -11,10 +11,24 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { Customer } from "@shared/schema";
 import { UserPlus } from "lucide-react";
+import { SearchInput } from "@/components/ui/search-input";
+import { useState } from "react";
 
 export default function CustomersPage() {
   const { data: customers } = useQuery<Customer[]>({
     queryKey: ["/api/customers"],
+  });
+
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const filteredCustomers = customers?.filter((customer) => {
+    const searchLower = searchTerm.toLowerCase();
+    return (
+      customer.name.toLowerCase().includes(searchLower) ||
+      customer.phone.toLowerCase().includes(searchLower) ||
+      (customer.email?.toLowerCase().includes(searchLower) ?? false) ||
+      (customer.notes?.toLowerCase().includes(searchLower) ?? false)
+    );
   });
 
   return (
@@ -28,6 +42,14 @@ export default function CustomersPage() {
           </Button>
         </div>
 
+        <div className="max-w-sm">
+          <SearchInput
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="البحث عن عميل..."
+          />
+        </div>
+
         <div className="border rounded-lg">
           <Table>
             <TableHeader>
@@ -39,7 +61,7 @@ export default function CustomersPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {customers?.map((customer) => (
+              {filteredCustomers?.map((customer) => (
                 <TableRow key={customer.id}>
                   <TableCell>{customer.name}</TableCell>
                   <TableCell>{customer.phone}</TableCell>
@@ -47,6 +69,13 @@ export default function CustomersPage() {
                   <TableCell>{customer.notes}</TableCell>
                 </TableRow>
               ))}
+              {filteredCustomers?.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
+                    لا توجد نتائج للبحث
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </div>
