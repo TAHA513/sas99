@@ -24,6 +24,7 @@ export default function ProductsPage() {
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
   const { data: products } = useQuery<Product[]>({
     queryKey: ["/api/products"],
@@ -149,20 +150,17 @@ export default function ProductsPage() {
                   </div>
                 )}
                 <div className="flex justify-end space-x-2 pt-4">
-                  <Dialog>
-                    <DialogTrigger asChild>
-                      <Button variant="outline" size="sm">
-                        <Edit className="h-4 w-4 ml-2" />
-                        تعديل
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="sm:max-w-[600px]">
-                      <DialogHeader>
-                        <DialogTitle>تعديل المنتج</DialogTitle>
-                      </DialogHeader>
-                      <ProductForm groups={groups || []} product={product} />
-                    </DialogContent>
-                  </Dialog>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => {
+                      setSelectedProduct(product);
+                      setIsDialogOpen(true);
+                    }}
+                  >
+                    <Edit className="h-4 w-4 ml-2" />
+                    تعديل
+                  </Button>
                   <Button
                     variant="destructive"
                     size="sm"
@@ -194,7 +192,12 @@ export default function ProductsPage() {
       <div className="space-y-8">
         <div className="flex justify-between items-center">
           <h1 className="text-3xl font-bold">المنتجات</h1>
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <Dialog open={isDialogOpen} onOpenChange={(open) => {
+            setIsDialogOpen(open);
+            if (!open) {
+              setSelectedProduct(null);
+            }
+          }}>
             <DialogTrigger asChild>
               <Button>
                 <Plus className="ml-2 h-4 w-4" />
@@ -203,9 +206,9 @@ export default function ProductsPage() {
             </DialogTrigger>
             <DialogContent className="sm:max-w-[600px]">
               <DialogHeader>
-                <DialogTitle>إضافة منتج جديد</DialogTitle>
+                <DialogTitle>{selectedProduct ? "تعديل المنتج" : "إضافة منتج جديد"}</DialogTitle>
               </DialogHeader>
-              <ProductForm groups={groups || []} />
+              <ProductForm groups={groups || []} product={selectedProduct || undefined} />
             </DialogContent>
           </Dialog>
         </div>
