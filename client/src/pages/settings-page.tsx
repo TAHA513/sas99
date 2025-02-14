@@ -11,7 +11,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Card as CardComponent, CardContent, CardHeader, CardTitle, CardProps as CardComponentProps } from "@/components/ui/card";
+import { Card as CardComponent, CardContent, CardHeader, CardTitle, CardProps as CardComponentProps, CardDescription } from "@/components/ui/card";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useToast, toast } from "@/hooks/use-toast";
@@ -39,6 +39,9 @@ import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { Paintbrush, Sun, Moon, CircleDot } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Slider } from "@/components/ui/slider";
 
 
 // تحسين مخطط التحقق للحسابات الاجتماعية
@@ -466,6 +469,10 @@ export default function SettingsPage() {
               <SettingsIcon className="h-4 w-4" />
               <span>التكاملات</span>
             </TabsTrigger>
+            <TabsTrigger value="appearance" className="space-x-2">
+              <Paintbrush className="h-4 w-4" />
+              <span>المظهر</span>
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="store" className="space-y-6">
@@ -705,6 +712,135 @@ export default function SettingsPage() {
                       </div>
                     ))}
                   </div>
+                </div>
+              </CardContent>
+            </CustomCard>
+          </TabsContent>
+          <TabsContent value="appearance" className="space-y-6">
+            <CustomCard>
+              <CardHeader>
+                <div className="flex items-center space-x-4">
+                  <Paintbrush className="h-8 w-8 text-primary" />
+                  <div>
+                    <CardTitle>مظهر التطبيق</CardTitle>
+                    <CardDescription>
+                      تخصيص مظهر التطبيق والألوان والخطوط
+                    </CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Theme Color */}
+                <div className="space-y-4">
+                  <Label>لون النظام الأساسي</Label>
+                  <div className="grid grid-cols-5 gap-2">
+                    {[
+                      { color: "#0ea5e9", name: "أزرق" },
+                      { color: "#10b981", name: "أخضر" },
+                      { color: "#8b5cf6", name: "بنفسجي" },
+                      { color: "#ef4444", name: "أحمر" },
+                      { color: "#f59e0b", name: "برتقالي" }
+                    ].map(({ color, name }) => (
+                      <Button
+                        key={color}
+                        variant="outline"
+                        className={cn(
+                          "w-full h-12 rounded-md",
+                          storeSettings?.primary === color && "ring-2 ring-primary"
+                        )}
+                        style={{ backgroundColor: color }}
+                        onClick={() => {
+                          storeSettingsMutation.mutate({
+                            ...storeSettings,
+                            primary: color
+                          });
+                        }}
+                      >
+                        <span className="sr-only">{name}</span>
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Dark Mode Toggle */}
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label>الوضع الداكن</Label>
+                    <div className="text-sm text-muted-foreground">
+                      تبديل بين الوضع الفاتح والداكن
+                    </div>
+                  </div>
+                  <Switch
+                    checked={storeSettings?.appearance === 'dark'}
+                    onCheckedChange={(checked) => {
+                      storeSettingsMutation.mutate({
+                        ...storeSettings,
+                        appearance: checked ? 'dark' : 'light'
+                      });
+                    }}
+                  />
+                </div>
+
+                {/* Border Radius */}
+                <div className="space-y-4">
+                  <Label>نصف قطر الحواف</Label>
+                  <Slider
+                    defaultValue={[storeSettings?.radius || 0.5]}
+                    max={1.5}
+                    step={0.1}
+                    onValueChange={([value]) => {
+                      storeSettingsMutation.mutate({
+                        ...storeSettings,
+                        radius: value
+                      });
+                    }}
+                  />
+                </div>
+
+                {/* Font Size */}
+                <div className="space-y-4">
+                  <Label>حجم الخط</Label>
+                  <Select
+                    value={storeSettings?.fontSize || 'medium'}
+                    onValueChange={(value) => {
+                      storeSettingsMutation.mutate({
+                        ...storeSettings,
+                        fontSize: value
+                      });
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="اختر حجم الخط" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="small">صغير</SelectItem>
+                      <SelectItem value="medium">متوسط</SelectItem>
+                      <SelectItem value="large">كبير</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Font Family */}
+                <div className="space-y-4">
+                  <Label>نوع الخط</Label>
+                  <Select
+                    value={storeSettings?.fontFamily || 'cairo'}
+                    onValueChange={(value) => {
+                      storeSettingsMutation.mutate({
+                        ...storeSettings,
+                        fontFamily: value
+                      });
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="اختر نوع الخط" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="cairo">Cairo</SelectItem>
+                      <SelectItem value="tajawal">Tajawal</SelectItem>
+                      <SelectItem value="almarai">Almarai</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </CardContent>
             </CustomCard>
