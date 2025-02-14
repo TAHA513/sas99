@@ -124,29 +124,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.status(201).json(setting);
   });
 
-  app.post("/api/settings/reset", async (_req, res) => {
-    try {
-      // Reset all settings to default
-      await storage.clearSettings();
-
-      // Reset store settings
-      await storage.updateStoreSettings({
-        storeName: "",
-        storeLogo: "",
-      });
-
-      // Clear social media accounts
-      await storage.clearSocialAccounts();
-
-      res.json({ message: "تم إعادة ضبط جميع الإعدادات بنجاح" });
-    } catch (error) {
-      res.status(500).json({ 
-        message: "حدث خطأ أثناء إعادة ضبط الإعدادات",
-        error: error instanceof Error ? error.message : "خطأ غير معروف"
-      });
-    }
-  });
-
   // Marketing Campaign routes
   app.get("/api/campaigns", async (_req, res) => {
     const campaigns = await storage.getCampaigns();
