@@ -62,7 +62,11 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     // تطبيق اللون الرئيسي
     if (theme.primary) {
       const hslColor = hexToHSL(theme.primary);
+      console.log('Original Color:', theme.primary);
+      console.log('Converted HSL:', hslColor);
       document.documentElement.style.setProperty('--primary-hsl', hslColor);
+      // التحقق من القيمة المطبقة
+      console.log('Applied HSL:', document.documentElement.style.getPropertyValue('--primary-hsl'));
     }
 
   }, [theme]);
