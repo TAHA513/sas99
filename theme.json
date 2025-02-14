@@ -1,9 +1,8 @@
 {
-  "variant": "tint",
-  "primary": "#8b5cf6",
-  "appearance": "dark",
-  "radius": 0.5,
+  "variant": "vibrant",
+  "primary": "oklch(65% 0.15 250)",
+  "appearance": "light",
+  "radius": 0.75,
   "fontSize": "large",
-  "fontFamily": "tajawal",
-  "headingSize": "h1"
+  "fontFamily": "tajawal"
 }
