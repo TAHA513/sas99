@@ -26,6 +26,7 @@
     --radius: 0.5rem;
   }
 
+  .dark,
   [data-theme="dark"] {
     --background: 224 71.4% 4.1%;
     --foreground: 210 20% 98%;
@@ -48,21 +49,6 @@
     --ring: 216 12.2% 83.9%;
   }
 
-  [data-theme-variant="professional"] {
-    --primary-hover: color-mix(in hsl, hsl(var(--primary)) 90%, black);
-    --primary-muted: color-mix(in hsl, hsl(var(--primary)) 15%, white);
-  }
-
-  [data-theme-variant="tint"] {
-    --primary-hover: color-mix(in hsl, hsl(var(--primary)) 85%, white);
-    --primary-muted: color-mix(in hsl, hsl(var(--primary)) 25%, white);
-  }
-
-  [data-theme-variant="vibrant"] {
-    --primary-hover: color-mix(in hsl, hsl(var(--primary)) 75%, black);
-    --primary-muted: color-mix(in hsl, hsl(var(--primary)) 35%, white);
-  }
-
   * {
     @apply border-border;
   }
@@ -73,6 +59,7 @@
 
   body {
     @apply bg-background text-foreground;
+    font-family: 'Cairo', sans-serif;
   }
 
   /* تعريف الخطوط العربية */
@@ -86,10 +73,5 @@
 
   .font-almarai {
     font-family: 'Almarai', sans-serif !important;
-  }
-
-  /* تطبيق الخط الافتراضي */
-  body, html {
-    font-family: 'Cairo', sans-serif;
   }
 }

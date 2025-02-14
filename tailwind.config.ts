@@ -6,7 +6,7 @@ export default {
   theme: {
     extend: {
       fontSize: {
-        base: "var(--font-size)",
+        base: "var(--base-font-size)",
         heading: "var(--heading-size)",
       },
       fontFamily: {
@@ -26,10 +26,8 @@ export default {
           foreground: "hsl(var(--popover-foreground))",
         },
         primary: {
-          DEFAULT: "hsl(var(--primary))",
+          DEFAULT: "var(--primary)",
           foreground: "hsl(var(--primary-foreground))",
-          muted: "var(--primary-muted)",
-          hover: "var(--primary-hover)",
         },
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
