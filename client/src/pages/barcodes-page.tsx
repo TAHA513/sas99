@@ -7,9 +7,14 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import JsBarcode from "jsbarcode";
-import { Printer, Download, RefreshCw, Sheet } from "lucide-react";
+import { Printer, Download, RefreshCw, Sheet, Paintbrush } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Switch } from "@/components/ui/switch";
+import { Slider } from "@/components/ui/slider";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+import { cn } from "@/lib/utils";
 
 export default function BarcodesPage() {
   const { toast } = useToast();
@@ -193,15 +198,69 @@ export default function BarcodesPage() {
     URL.revokeObjectURL(svgUrl);
   };
 
+  const { data: storeSettings } = useQuery({
+    queryKey: ["/api/store-settings"],
+  });
+
+  const storeSettingsMutation = useMutation({
+    mutationFn: async (data: { 
+      primary?: string;
+      appearance?: 'light' | 'dark';
+      radius?: number;
+      fontSize?: string;
+      fontFamily?: string;
+    }) => {
+      try {
+        const themeRes = await apiRequest("POST", "/api/theme", {
+          primary: data.primary,
+          appearance: data.appearance,
+          radius: data.radius,
+          fontSize: data.fontSize,
+          fontFamily: data.fontFamily,
+          variant: "tint",
+        });
+
+        if (!themeRes.ok) {
+          throw new Error('فشل في تحديث المظهر');
+        }
+
+        return { success: true };
+      } catch (error) {
+        console.error('Error updating theme:', error);
+        throw error;
+      }
+    },
+    onSuccess: () => {
+      toast({
+        title: "تم حفظ الإعدادات",
+        description: "تم تحديث الإعدادات بنجاح، جاري تحديث الصفحة",
+      });
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "خطأ في حفظ الإعدادات",
+        description: error.message || "حدث خطأ أثناء حفظ الإعدادات",
+        variant: "destructive",
+      });
+    },
+  });
+
   return (
     <DashboardLayout>
       <div className="space-y-8">
         <h1 className="text-3xl font-bold">توليد الباركود</h1>
 
         <Tabs defaultValue="single">
-          <TabsList>
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="single">باركود واحد</TabsTrigger>
             <TabsTrigger value="bulk">مجموعة باركودات</TabsTrigger>
+            <TabsTrigger value="appearance" className="space-x-2">
+              <Paintbrush className="h-4 w-4" />
+              <span>المظهر</span>
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="single">
@@ -375,6 +434,128 @@ export default function BarcodesPage() {
                 </CardContent>
               </Card>
             </div>
+          </TabsContent>
+
+          <TabsContent value="appearance" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center space-x-4">
+                  <Paintbrush className="h-8 w-8 text-primary" />
+                  <div>
+                    <CardTitle>مظهر التطبيق</CardTitle>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Theme Color */}
+                <div className="space-y-4">
+                  <Label>لون النظام الأساسي</Label>
+                  <div className="grid grid-cols-5 gap-2">
+                    {[
+                      { color: "#0ea5e9", name: "أزرق" },
+                      { color: "#10b981", name: "أخضر" },
+                      { color: "#8b5cf6", name: "بنفسجي" },
+                      { color: "#ef4444", name: "أحمر" },
+                      { color: "#f59e0b", name: "برتقالي" }
+                    ].map(({ color, name }) => (
+                      <Button
+                        key={color}
+                        variant="outline"
+                        className={cn(
+                          "w-full h-12 rounded-md",
+                          color === storeSettings?.primary && "ring-2 ring-primary"
+                        )}
+                        style={{ backgroundColor: color }}
+                        onClick={() => {
+                          storeSettingsMutation.mutate({
+                            primary: color
+                          });
+                        }}
+                      >
+                        <span className="sr-only">{name}</span>
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Dark Mode Toggle */}
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label>الوضع الداكن</Label>
+                    <div className="text-sm text-muted-foreground">
+                      تبديل بين الوضع الفاتح والداكن
+                    </div>
+                  </div>
+                  <Switch
+                    checked={storeSettings?.appearance === 'dark'}
+                    onCheckedChange={(checked) => {
+                      storeSettingsMutation.mutate({
+                        appearance: checked ? 'dark' : 'light'
+                      });
+                    }}
+                  />
+                </div>
+
+                {/* Border Radius */}
+                <div className="space-y-4">
+                  <Label>نصف قطر الحواف</Label>
+                  <Slider
+                    defaultValue={[storeSettings?.radius || 0.5]}
+                    max={1.5}
+                    step={0.1}
+                    onValueChange={([value]) => {
+                      storeSettingsMutation.mutate({
+                        radius: value
+                      });
+                    }}
+                  />
+                </div>
+
+                {/* Font Size */}
+                <div className="space-y-4">
+                  <Label>حجم الخط</Label>
+                  <Select
+                    value={storeSettings?.fontSize || 'medium'}
+                    onValueChange={(value) => {
+                      storeSettingsMutation.mutate({
+                        fontSize: value
+                      });
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="اختر حجم الخط" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="small">صغير</SelectItem>
+                      <SelectItem value="medium">متوسط</SelectItem>
+                      <SelectItem value="large">كبير</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Font Family */}
+                <div className="space-y-4">
+                  <Label>نوع الخط</Label>
+                  <Select
+                    value={storeSettings?.fontFamily || 'tajawal'}
+                    onValueChange={(value) => {
+                      storeSettingsMutation.mutate({
+                        fontFamily: value
+                      });
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="اختر نوع الخط" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="tajawal">Tajawal</SelectItem>
+                      <SelectItem value="cairo">Cairo</SelectItem>
+                      <SelectItem value="almarai">Almarai</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </div>
