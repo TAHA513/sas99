@@ -629,271 +629,290 @@ export default function SettingsPage() {
 
 
                   {/* Font Settings */}
-                  <div className="space-y-2">
-                    <Label>حجم الخط الأساسي</Label>
-                    <Form>
-                      <form>
+                  <div className="space-y-6">
+                    <div className="space-y-2">
+                      <Label>حجم الخط الأساسي</Label>
+                      <Form {...useForm({
+                        defaultValues: {
+                          fontSize: "medium"
+                        }
+                      })}>
                         <FormField
                           name="fontSize"
                           render={({ field }) => (
-                            <Select
-                              onValueChange={async (value) => {
-                                try {
-                                  const response = await fetch('/api/theme', {
-                                    method: 'POST',
-                                    headers: {
-                                      'Content-Type': 'application/json',
-                                    },
-                                    body: JSON.stringify({
-                                      fontSize: value,
-                                    }),
-                                  });
-
-                                  if (!response.ok) {
-                                    throw new Error('Failed to update font size');
-                                  }
-
-                                  window.location.reload();
-                                } catch (error) {
-                                  toast({
-                                    title: "خطأ في تحديث حجم الخط",
-                                    description: "حدث خطأ أثناء تحديث حجم الخط",
-                                    variant: "destructive",
-                                  });
-                                }
-                              }}
-                            >
-                              <SelectTrigger>
-                                <SelectValue placeholder="اختر حجم الخط" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="small">صغير</SelectItem>
-                                <SelectItem value="medium">متوسط</SelectItem>
-                                <SelectItem value="large">كبير</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          )}
-                        />
-                      </form>
-                    </Form>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>حجم خط العناوين</Label>
-                    <Form>
-                      <form>
-                        <FormField
-                          name="headingSize"
-                          render={({ field }) => (
-                            <Select
-                              onValueChange={async (value) => {
-                                try {
-                                  const response = await fetch('/api/theme', {
-                                    method: 'POST',
-                                    headers: {
-                                      'Content-Type': 'application/json',
-                                    },
-                                    body: JSON.stringify({
-                                      headingSize: value,
-                                    }),
-                                  });
-
-                                  if (!response.ok) {
-                                    throw new Error('Failed to update heading size');
-                                  }
-
-                                  window.location.reload();
-                                } catch (error) {
-                                  toast({
-                                    title: "خطأ في تحديث حجم العناوين",
-                                    description: "حدث خطأ أثناء تحديث حجم العناوين",
-                                    variant: "destructive",
-                                  });
-                                }
-                              }}
-                            >
-                              <SelectTrigger>
-                                <SelectValue placeholder="اختر حجم العناوين" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="h1">كبير جداً</SelectItem>
-                                <SelectItem value="h2">كبير</SelectItem>
-                                <SelectItem value="h3">متوسط</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          )}
-                        />
-                      </form>
-                    </Form>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>نوع الخط</Label>
-                    <Form>
-                      <form>
-                        <FormField
-                          name="fontFamily"
-                          render={({ field }) => (
-                            <Select
-                              onValueChange={async (value) => {
-                                try {
-                                  const response = await fetch('/api/theme', {
-                                    method: 'POST',
-                                    headers: {
-                                      'Content-Type': 'application/json',
-                                    },
-                                    body: JSON.stringify({
-                                      fontFamily: value,
-                                    }),
-                                  });
-
-                                  if (!response.ok) {
-                                    throw new Error('Failed to update font family');
-                                  }
-
-                                  window.location.reload();
-                                } catch (error) {
-                                  toast({
-                                    title: "خطأ في تحديث نوع الخط",
-                                    description: "حدث خطأ أثناء تحديث نوع الخط",
-                                    variant: "destructive",
-                                  });
-                                }
-                              }}
-                            >
-                              <SelectTrigger>
-                                <SelectValue placeholder="اختر نوع الخط" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="cairo">Cairo</SelectItem>
-                                <SelectItem value="tajawal">Tajawal</SelectItem>
-                                <SelectItem value="almarai">Almarai</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          )}
-                        />
-                      </form>
-                    </Form>
-                  </div>
-
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Social Media Accounts */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center space-x-4">
-                <div className="flex gap-2">
-                  <SiFacebook className="h-8 w-8 text-blue-600" />
-                  <SiInstagram className="h-8 w-8 text-pink-600" />
-                  <SiSnapchat className="h-8 w-8 text-yellow-500" />
-                </div>
-                <div>
-                  <CardTitle>حسابات التواصل الاجتماعي</CardTitle>
-                  <CardDescription>
-                    قم بربط حسابات التواصل الاجتماعي لإدارة الحملات الإعلانية
-                  </CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-6">
-                <div className="grid gap-4">
-                  {socialAccounts?.map((account) => (
-                    <div key={account.id} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div className="flex items-center gap-4">
-                        {account.platform === 'facebook' && <SiFacebook className="h-6 w-6 text-blue-600" />}
-                        {account.platform === 'instagram' && <SiInstagram className="h-6 w-6 text-pink-600" />}
-                        {account.platform === 'snapchat' && <SiSnapchat className="h-6 w-6 text-yellow-500" />}
-                        <div>
-                          <p className="font-medium">{account.accountName || account.accountId}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {account.platform === 'facebook' ? 'فيسبوك' :
-                              account.platform === 'instagram' ? 'انستغرام' : 'سناب شات'}
-                          </p>
-                        </div>
-                      </div>
-                      <Badge variant={account.status === 'active' ? 'default' : 'secondary'}>
-                        {account.status === 'active' ? 'نشط' : 'غير نشط'}
-                      </Badge>
-                    </div>
-                  ))}
-                </div>
-
-                <Dialog>
-                  <DialogTrigger asChild>
-                    <Button>
-                      <Plus className="h-4 w-4 ml-2" />
-                      إضافة حساب جديد
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>إضافة حساب تواصل اجتماعي</DialogTitle>
-                      <DialogDescription>
-                        قم بإدخال معلومات الحساب للربط مع النظام
-                      </DialogDescription>
-                    </DialogHeader>
-
-                    <Form {...form}>
-                      <form onSubmit={form.handleSubmit((data) => accountMutation.mutate(data))} className="space-y-4">
-                        <FormField
-                          control={form.control}
-                          name="platform"
-                          render={({ field }) => (
                             <FormItem>
-                              <FormLabel>المنصة</FormLabel>
-                              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <Select
+                                onValueChange={async (value) => {
+                                  try {
+                                    const response = await fetch('/api/theme', {
+                                      method: 'POST',
+                                      headers: {
+                                        'Content-Type': 'application/json',
+                                      },
+                                      body: JSON.stringify({
+                                        fontSize: value,
+                                      }),
+                                    });
+
+                                    if (!response.ok) {
+                                      throw new Error('Failed to update font size');
+                                    }
+
+                                    window.location.reload();
+                                  } catch (error) {
+                                    toast({
+                                      title: "خطأ في تحديث حجم الخط",
+                                      description: "حدث خطأ أثناء تحديث حجم الخط",
+                                      variant: "destructive",
+                                    });
+                                  }
+                                }}
+                              >
                                 <FormControl>
                                   <SelectTrigger>
-                                    <SelectValue placeholder="اختر المنصة" />
+                                    <SelectValue placeholder="اختر حجم الخط" />
                                   </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
-                                  <SelectItem value="facebook">فيسبوك</SelectItem>
-                                  <SelectItem value="instagram">انستغرام</SelectItem>
-                                  <SelectItem value="snapchat">سناب شات</SelectItem>
+                                  <SelectItem value="small">صغير</SelectItem>
+                                  <SelectItem value="medium">متوسط</SelectItem>
+                                  <SelectItem value="large">كبير</SelectItem>
                                 </SelectContent>
                               </Select>
                             </FormItem>
                           )}
                         />
+                      </Form>
+                    </div>
 
+                    <div className="space-y-2">
+                      <Label>حجم خط العناوين</Label>
+                      <Form {...useForm({
+                        defaultValues: {
+                          headingSize: "h2"
+                        }
+                      })}>
                         <FormField
-                          control={form.control}
-                          name="username"
+                          name="headingSize"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>اسم المستخدم / رقم الهاتف</FormLabel>
-                              <FormControl>
-                                <Input {...field} />
-                              </FormControl>
+                              <Select
+                                onValueChange={async (value) => {
+                                  try {
+                                    const response = await fetch('/api/theme', {
+                                      method: 'POST',
+                                      headers: {
+                                        'Content-Type': 'application/json',
+                                      },
+                                      body: JSON.stringify({
+                                        headingSize: value,
+                                      }),
+                                    });
+
+                                    if (!response.ok) {
+                                      throw new Error('Failed to update heading size');
+                                    }
+
+                                    window.location.reload();
+                                  } catch (error) {
+                                    toast({
+                                      title: "خطأ في تحديث حجم العناوين",
+                                      description: "حدث خطأ أثناء تحديث حجم العناوين",
+                                      variant: "destructive",
+                                    });
+                                  }
+                                }}
+                              >
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="اختر حجم العناوين" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="h1">كبير جداً</SelectItem>
+                                  <SelectItem value="h2">كبير</SelectItem>
+                                  <SelectItem value="h3">متوسط</SelectItem>
+                                </SelectContent>
+                              </Select>
                             </FormItem>
                           )}
                         />
+                      </Form>
+                    </div>
 
+                    <div className="space-y-2">
+                      <Label>نوع الخط</Label>
+                      <Form {...useForm({
+                        defaultValues: {
+                          fontFamily: "cairo"
+                        }
+                      })}>
                         <FormField
-                          control={form.control}
-                          name="password"
+                          name="fontFamily"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>كلمة المرور</FormLabel>
-                              <FormControl>
-                                <Input type="password" {...field} />
-                              </FormControl>
+                              <Select
+                                onValueChange={async (value) => {
+                                  try {
+                                    const response = await fetch('/api/theme', {
+                                      method: 'POST',
+                                      headers: {
+                                        'Content-Type': 'application/json',
+                                      },
+                                      body: JSON.stringify({
+                                        fontFamily: value,
+                                      }),
+                                    });
+
+                                    if (!response.ok) {
+                                      throw new Error('Failed to update font family');
+                                    }
+
+                                    window.location.reload();
+                                  } catch (error) {
+                                    toast({
+                                      title: "خطأ في تحديث نوع الخط",
+                                      description: "حدث خطأ أثناء تحديث نوع الخط",
+                                      variant: "destructive",
+                                    });
+                                  }
+                                }}
+                              >
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="اختر نوع الخط" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="cairo">Cairo</SelectItem>
+                                  <SelectItem value="tajawal">Tajawal</SelectItem>
+                                  <SelectItem value="almarai">Almarai</SelectItem>
+                                </SelectContent>
+                              </Select>
                             </FormItem>
                           )}
                         />
+                      </Form>
+                    </div>
+                  </div>
 
-                        <Button type="submit" disabled={accountMutation.isPending} className="w-full">
-                          {accountMutation.isPending ? "جاري الحفظ..." : "حفظ الحساب"}
-                        </Button>
-                      </form>
-                    </Form>
-                  </DialogContent>
-                </Dialog>
+                  {/* Social Media Accounts */}
+                  <Card>
+                    <CardHeader>
+                      <div className="flex items-center space-x-4">
+                        <div className="flex gap-2">
+                          <SiFacebook className="h-8 w-8 text-blue-600" />
+                          <SiInstagram className="h-8 w-8 text-pink-600" />
+                          <SiSnapchat className="h-8 w-8 text-yellow-500" />
+                        </div>
+                        <div>
+                          <CardTitle>حسابات التواصل الاجتماعي</CardTitle>
+                          <CardDescription>
+                            قم بربط حسابات التواصل الاجتماعي لإدارة الحملات الإعلانية
+                          </CardDescription>
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-6">
+                        <div className="grid gap-4">
+                          {socialAccounts?.map((account) => (
+                            <div key={account.id} className="flex items-center justify-between p-4 border rounded-lg">
+                              <div className="flex items-center gap-4">
+                                {account.platform === 'facebook' && <SiFacebook className="h-6 w-6 text-blue-600" />}
+                                {account.platform === 'instagram' && <SiInstagram className="h-6 w-6 text-pink-600" />}
+                                {account.platform === 'snapchat' && <SiSnapchat className="h-6 w-6 text-yellow-500" />}
+                                <div>
+                                  <p className="font-medium">{account.accountName || account.accountId}</p>
+                                  <p className="text-sm text-muted-foreground">
+                                    {account.platform === 'facebook' ? 'فيسبوك' :
+                                      account.platform === 'instagram' ? 'انستغرام' : 'سناب شات'}
+                                  </p>
+                                </div>
+                              </div>
+                              <Badge variant={account.status === 'active' ? 'default' : 'secondary'}>
+                                {account.status === 'active' ? 'نشط' : 'غير نشط'}
+                              </Badge>
+                            </div>
+                          ))}
+                        </div>
+
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button>
+                              <Plus className="h-4 w-4 ml-2" />
+                              إضافة حساب جديد
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent>
+                            <DialogHeader>
+                              <DialogTitle>إضافة حساب تواصل اجتماعي</DialogTitle>
+                              <DialogDescription>
+                                قم بإدخال معلومات الحساب للربط مع النظام
+                              </DialogDescription>
+                            </DialogHeader>
+
+                            <Form {...form}>
+                              <form onSubmit={form.handleSubmit((data) => accountMutation.mutate(data))} className="space-y-4">
+                                <FormField
+                                  control={form.control}
+                                  name="platform"
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormLabel>المنصة</FormLabel>
+                                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                        <FormControl>
+                                          <SelectTrigger>
+                                            <SelectValue placeholder="اختر المنصة" />
+                                          </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                          <SelectItem value="facebook">فيسبوك</SelectItem>
+                                          <SelectItem value="instagram">انستغرام</SelectItem>
+                                          <SelectItem value="snapchat">سناب شات</SelectItem>
+                                        </SelectContent>
+                                      </Select>
+                                    </FormItem>
+                                  )}
+                                />
+
+                                <FormField
+                                  control={form.control}
+                                  name="username"
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormLabel>اسم المستخدم / رقم الهاتف</FormLabel>
+                                      <FormControl>
+                                        <Input {...field} />
+                                      </FormControl>
+                                    </FormItem>
+                                  )}
+                                />
+
+                                <FormField
+                                  control={form.control}
+                                  name="password"
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormLabel>كلمة المرور</FormLabel>
+                                      <FormControl>
+                                        <Input type="password" {...field} />
+                                      </FormControl>
+                                    </FormItem>
+                                  )}
+                                />
+
+                                <Button type="submit" disabled={accountMutation.isPending} className="w-full">
+                                  {accountMutation.isPending ? "جاري الحفظ..." : "حفظ الحساب"}
+                                </Button>
+                              </form>
+                            </Form>
+                          </DialogContent>
+                        </Dialog>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
               </div>
             </CardContent>
           </Card>
