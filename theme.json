@@ -3,6 +3,7 @@
   "primary": "#db2777",
   "appearance": "light",
   "radius": 0.5,
-  "fontSize": "medium",
-  "fontFamily": "tajawal"
+  "fontSize": "large",
+  "fontFamily": "tajawal",
+  "headingSize": "h3"
 }

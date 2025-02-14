@@ -54,6 +54,22 @@ type GoogleCalendarSettings = z.infer<typeof googleCalendarSchema>;
 type SocialMediaSettings = z.infer<typeof socialMediaSchema>;
 type SocialMediaAccountFormData = z.infer<typeof socialMediaAccountSchema>;
 
+const updateTheme = async (themeUpdate: Record<string, any>) => {
+  const response = await fetch('/api/theme', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(themeUpdate),
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to update theme');
+  }
+
+  return response.json();
+};
+
 export default function SettingsPage() {
   const { toast } = useToast();
 
@@ -197,6 +213,25 @@ export default function SettingsPage() {
       await saveSettingsMutation.mutateAsync({ key, value });
     }
   };
+
+  const themeMutation = useMutation({
+    mutationFn: updateTheme,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/theme"] });
+      toast({
+        title: "تم تحديث المظهر",
+        description: "تم تحديث إعدادات المظهر بنجاح",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "خطأ في تحديث المظهر",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
 
   return (
     <DashboardLayout>
@@ -515,30 +550,8 @@ export default function SettingsPage() {
                           key={color}
                           variant="outline"
                           className="w-full h-8 rounded-md p-0 overflow-hidden"
-                          onClick={async () => {
-                            try {
-                              const response = await fetch('/api/theme', {
-                                method: 'POST',
-                                headers: {
-                                  'Content-Type': 'application/json',
-                                },
-                                body: JSON.stringify({
-                                  primary: color,
-                                }),
-                              });
-
-                              if (!response.ok) {
-                                throw new Error('Failed to update theme');
-                              }
-
-                              window.location.reload();
-                            } catch (error) {
-                              toast({
-                                title: "خطأ في تحديث المظهر",
-                                description: "حدث خطأ أثناء تحديث لون المظهر",
-                                variant: "destructive",
-                              });
-                            }
+                          onClick={() => {
+                            themeMutation.mutate({ primary: color });
                           }}
                         >
                           <div
@@ -561,30 +574,8 @@ export default function SettingsPage() {
                         <Button
                           key={style.value}
                           variant="outline"
-                          onClick={async () => {
-                            try {
-                              const response = await fetch('/api/theme', {
-                                method: 'POST',
-                                headers: {
-                                  'Content-Type': 'application/json',
-                                },
-                                body: JSON.stringify({
-                                  variant: style.value,
-                                }),
-                              });
-
-                              if (!response.ok) {
-                                throw new Error('Failed to update theme');
-                              }
-
-                              window.location.reload();
-                            } catch (error) {
-                              toast({
-                                title: "خطأ في تحديث المظهر",
-                                description: "حدث خطأ أثناء تحديث نمط التصميم",
-                                variant: "destructive",
-                              });
-                            }
+                          onClick={() => {
+                            themeMutation.mutate({ variant: style.value });
                           }}
                         >
                           {style.label}
@@ -599,30 +590,8 @@ export default function SettingsPage() {
                       defaultValue={[0.5]}
                       max={1}
                       step={0.1}
-                      onValueChange={async ([value]) => {
-                        try {
-                          const response = await fetch('/api/theme', {
-                            method: 'POST',
-                            headers: {
-                              'Content-Type': 'application/json',
-                            },
-                            body: JSON.stringify({
-                              radius: value,
-                            }),
-                          });
-
-                          if (!response.ok) {
-                            throw new Error('Failed to update theme');
-                          }
-
-                          window.location.reload();
-                        } catch (error) {
-                          toast({
-                            title: "خطأ في تحديث المظهر",
-                            description: "حدث خطأ أثناء تحديث حجم الزوايا",
-                            variant: "destructive",
-                          });
-                        }
+                      onValueChange={(value) => {
+                        themeMutation.mutate({ radius: value[0] });
                       }}
                     />
                   </div>
@@ -639,30 +608,8 @@ export default function SettingsPage() {
                             <FormItem>
                               <Select
                                 defaultValue="medium"
-                                onValueChange={async (value) => {
-                                  try {
-                                    const response = await fetch('/api/theme', {
-                                      method: 'POST',
-                                      headers: {
-                                        'Content-Type': 'application/json',
-                                      },
-                                      body: JSON.stringify({
-                                        fontSize: value,
-                                      }),
-                                    });
-
-                                    if (!response.ok) {
-                                      throw new Error('Failed to update font size');
-                                    }
-
-                                    window.location.reload();
-                                  } catch (error) {
-                                    toast({
-                                      title: "خطأ في تحديث حجم الخط",
-                                      description: "حدث خطأ أثناء تحديث حجم الخط",
-                                      variant: "destructive",
-                                    });
-                                  }
+                                onValueChange={(value) => {
+                                  themeMutation.mutate({ fontSize: value });
                                 }}
                               >
                                 <FormControl>
@@ -691,30 +638,8 @@ export default function SettingsPage() {
                             <FormItem>
                               <Select
                                 defaultValue="h2"
-                                onValueChange={async (value) => {
-                                  try {
-                                    const response = await fetch('/api/theme', {
-                                      method: 'POST',
-                                      headers: {
-                                        'Content-Type': 'application/json',
-                                      },
-                                      body: JSON.stringify({
-                                        headingSize: value,
-                                      }),
-                                    });
-
-                                    if (!response.ok) {
-                                      throw new Error('Failed to update heading size');
-                                    }
-
-                                    window.location.reload();
-                                  } catch (error) {
-                                    toast({
-                                      title: "خطأ في تحديث حجم العناوين",
-                                      description: "حدث خطأ أثناء تحديث حجم العناوين",
-                                      variant: "destructive",
-                                    });
-                                  }
+                                onValueChange={(value) => {
+                                  themeMutation.mutate({ headingSize: value });
                                 }}
                               >
                                 <FormControl>
@@ -743,30 +668,8 @@ export default function SettingsPage() {
                             <FormItem>
                               <Select
                                 defaultValue="cairo"
-                                onValueChange={async (value) => {
-                                  try {
-                                    const response = await fetch('/api/theme', {
-                                      method: 'POST',
-                                      headers: {
-                                        'Content-Type': 'application/json',
-                                      },
-                                      body: JSON.stringify({
-                                        fontFamily: value,
-                                      }),
-                                    });
-
-                                    if (!response.ok) {
-                                      throw new Error('Failed to update font family');
-                                    }
-
-                                    window.location.reload();
-                                  } catch (error) {
-                                    toast({
-                                      title: "خطأ في تحديث نوع الخط",
-                                      description: "حدث خطأ أثناء تحديث نوع الخط",
-                                      variant: "destructive",
-                                    });
-                                  }
+                                onValueChange={(value) => {
+                                  themeMutation.mutate({ fontFamily: value });
                                 }}
                               >
                                 <FormControl>
