@@ -1,6 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
 import { MarketingCampaign } from "@shared/schema";
+import { formatCurrency } from "@/lib/storage";
 
 interface CampaignStatsProps {
   campaigns: MarketingCampaign[];
@@ -24,7 +25,7 @@ export function CampaignStats({ campaigns }: CampaignStatsProps) {
     name: name === 'facebook' ? 'فيسبوك' :
           name === 'instagram' ? 'انستغرام' :
           name === 'snapchat' ? 'سناب شات' : name,
-    value: value / 100 // تحويل من هللات إلى ريال
+    value: value / 100 // تحويل من السنتات إلى الدولار
   }));
 
   const COLORS = ['#1877F2', '#E4405F', '#FFFC00'];
@@ -52,7 +53,7 @@ export function CampaignStats({ campaigns }: CampaignStatsProps) {
           <CardDescription>إجمالي ميزانية الحملات النشطة حالياً</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="text-3xl font-bold">{(totalBudget / 100).toLocaleString()} ريال</div>
+          <div className="text-3xl font-bold">{formatCurrency(totalBudget / 100, true)}</div>
         </CardContent>
       </Card>
 
@@ -86,13 +87,13 @@ export function CampaignStats({ campaigns }: CampaignStatsProps) {
                     cy="50%"
                     outerRadius={80}
                     fill="#8884d8"
-                    label={({ name, value }) => `${name}: ${value.toLocaleString()} ريال`}
+                    label={({ name, value }) => `${name}: ${formatCurrency(value, true)}`}
                   >
                     {pieData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
-                  <Tooltip />
+                  <Tooltip formatter={(value: number) => formatCurrency(value, true)} />
                 </PieChart>
               </ResponsiveContainer>
             ) : (
@@ -150,7 +151,7 @@ export function CampaignStats({ campaigns }: CampaignStatsProps) {
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="name" />
                   <YAxis />
-                  <Tooltip formatter={(value) => `${value} ريال`} />
+                  <Tooltip formatter={(value: number) => formatCurrency(value, true)} />
                   <Bar dataKey="budget" fill="#8884d8" />
                 </BarChart>
               </ResponsiveContainer>
