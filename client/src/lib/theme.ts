@@ -36,10 +36,45 @@ export const hexToHSL = (hex: string): string => {
   return `${Math.round(h)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%`;
 };
 
-// Update theme CSS variables
-export const updateThemeVariables = (primary: string) => {
+// Update theme CSS variables for colors
+export const updateThemeColors = (primary: string) => {
   const root = document.documentElement;
   const hslColor = hexToHSL(primary);
   root.style.setProperty('--primary', hslColor);
   root.style.setProperty('--primary-foreground', '210 40% 98%');
+
+  // Save to localStorage
+  localStorage.setItem('theme-color', primary);
+};
+
+// Update font settings
+export const updateThemeFonts = (fontSize: string, fontFamily: string) => {
+  const root = document.documentElement;
+  root.style.setProperty('--font-size', fontSize);
+  root.style.setProperty('--font-family', fontFamily);
+
+  // Save to localStorage
+  localStorage.setItem('theme-font-size', fontSize);
+  localStorage.setItem('theme-font-family', fontFamily);
+};
+
+// Load theme settings from localStorage
+export const loadThemeSettings = () => {
+  const color = localStorage.getItem('theme-color');
+  const fontSize = localStorage.getItem('theme-font-size');
+  const fontFamily = localStorage.getItem('theme-font-family');
+
+  if (color) {
+    updateThemeColors(color);
+  }
+
+  if (fontSize && fontFamily) {
+    updateThemeFonts(fontSize, fontFamily);
+  }
+
+  return {
+    color,
+    fontSize,
+    fontFamily,
+  };
 };

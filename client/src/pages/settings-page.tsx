@@ -30,56 +30,9 @@ import { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
+import { updateThemeColors, updateThemeFonts, loadThemeSettings } from "@/lib/theme";
 
-// Add this helper function at the top level
-const updateThemeVariables = (primary: string) => {
-  // Convert hex to HSL
-  const root = document.documentElement;
-  const hslColor = hexToHSL(primary);
-  root.style.setProperty('--primary', hslColor);
-  root.style.setProperty('--primary-foreground', '210 40% 98%');
-};
 
-// Add hex to HSL conversion helper
-const hexToHSL = (hex: string): string => {
-  // Remove the hash if it exists
-  hex = hex.replace(/^#/, '');
-
-  // Parse the values
-  const r = parseInt(hex.slice(0, 2), 16) / 255;
-  const g = parseInt(hex.slice(2, 4), 16) / 255;
-  const b = parseInt(hex.slice(4, 6), 16) / 255;
-
-  const max = Math.max(r, g, b);
-  const min = Math.min(r, g, b);
-  let h = 0;
-  let s = 0;
-  const l = (max + min) / 2;
-
-  if (max !== min) {
-    const d = max - min;
-    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-
-    switch (max) {
-      case r:
-        h = (g - b) / d + (g < b ? 6 : 0);
-        break;
-      case g:
-        h = (b - r) / d + 2;
-        break;
-      case b:
-        h = (r - g) / d + 4;
-        break;
-    }
-
-    h = h * 60;
-  }
-
-  // Return the HSL string
-  return `${Math.round(h)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%`;
-};
-
-// تحسين مخطط التحقق للحسابات الاجتماعية
 const socialMediaAccountSchema = z.object({
   platform: z.enum(['facebook', 'instagram', 'snapchat'], {
     required_error: "يرجى اختيار المنصة"
@@ -122,18 +75,7 @@ export default function SettingsPage() {
 
   // Add theme loading on mount
   useEffect(() => {
-    const loadInitialTheme = async () => {
-      try {
-        const response = await fetch('/api/theme');
-        const theme = await response.json();
-        if (theme?.primary) {
-          updateThemeVariables(theme.primary);
-        }
-      } catch (error) {
-        console.error('Error loading theme:', error);
-      }
-    };
-    loadInitialTheme();
+    loadThemeSettings();
   }, []);
 
   const { data: settings } = useQuery<Setting[]>({
@@ -195,13 +137,11 @@ export default function SettingsPage() {
       storeName?: string; 
       storeLogo?: string;
       primary?: string;
-      appearance?: 'light' | 'dark';
-      radius?: number;
       fontSize?: string;
       fontFamily?: string;
     }) => {
       try {
-        // Update store settings first
+        // Update store settings
         if (data.storeName !== undefined || data.storeLogo !== undefined) {
           const storeRes = await apiRequest("POST", "/api/store-settings", {
             storeName: data.storeName,
@@ -210,30 +150,17 @@ export default function SettingsPage() {
           await storeRes.json();
         }
 
-        // Then update theme if appearance related settings are changed
-        if (data.primary || data.appearance || data.radius || data.fontSize || data.fontFamily) {
-          const themeRes = await apiRequest("POST", "/api/theme", {
-            primary: data.primary,
-            appearance: data.appearance,
-            radius: data.radius,
-            fontSize: data.fontSize,
-            fontFamily: data.fontFamily,
-            variant: "tint", // Keep the default variant
-          });
+        // Handle color changes
+        if (data.primary) {
+          updateThemeColors(data.primary);
+        }
 
-          if (!themeRes.ok) {
-            throw new Error('فشل في تحديث المظهر');
-          }
-
-          // If we're just changing the primary color, apply it immediately
-          if (data.primary && !data.appearance && !data.radius && !data.fontSize && !data.fontFamily) {
-            updateThemeVariables(data.primary);
-          } else {
-            // Only reload for major theme changes
-            setTimeout(() => {
-              window.location.reload();
-            }, 1000);
-          }
+        // Handle font changes
+        if (data.fontSize || data.fontFamily) {
+          updateThemeFonts(
+            data.fontSize || localStorage.getItem('theme-font-size') || 'medium',
+            data.fontFamily || localStorage.getItem('theme-font-family') || 'tajawal'
+          );
         }
 
         return { success: true };
@@ -775,7 +702,7 @@ export default function SettingsPage() {
                         variant="outline"
                         className={cn(
                           "w-full h-12 rounded-md",
-                          color === storeSettings?.primary && "ring-2 ring-primary"
+                          color === localStorage.getItem('theme-color') && "ring-2 ring-primary"
                         )}
                         style={{ backgroundColor: color }}
                         onClick={() => {
@@ -790,44 +717,11 @@ export default function SettingsPage() {
                   </div>
                 </div>
 
-                {/* Dark Mode Toggle */}
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label>الوضع الداكن</Label>
-                    <div className="text-sm text-muted-foreground">
-                      تبديل بين الوضع الفاتح والداكن
-                    </div>
-                  </div>
-                  <Switch
-                    checked={storeSettings?.appearance === 'dark'}
-                    onCheckedChange={(checked) => {
-                      storeSettingsMutation.mutate({
-                        appearance: checked ? 'dark' : 'light'
-                      });
-                    }}
-                  />
-                </div>
-
-                {/* Border Radius */}
-                <div className="space-y-4">
-                  <Label>نصف قطر الحواف</Label>
-                  <Slider
-                    defaultValue={[storeSettings?.radius || 0.5]}
-                    max={1.5}
-                    step={0.1}
-                    onValueChange={([value]) => {
-                      storeSettingsMutation.mutate({
-                        radius: value
-                      });
-                    }}
-                  />
-                </div>
-
-                {/* Font Size */}
+                {/* Font Settings */}
                 <div className="space-y-4">
                   <Label>حجم الخط</Label>
                   <Select
-                    value={storeSettings?.fontSize || 'medium'}
+                    defaultValue={localStorage.getItem('theme-font-size') || 'medium'}
                     onValueChange={(value) => {
                       storeSettingsMutation.mutate({
                         fontSize: value
@@ -845,11 +739,10 @@ export default function SettingsPage() {
                   </Select>
                 </div>
 
-                {/* Font Family */}
                 <div className="space-y-4">
                   <Label>نوع الخط</Label>
                   <Select
-                    value={storeSettings?.fontFamily || 'tajawal'}
+                    defaultValue={localStorage.getItem('theme-font-family') || 'tajawal'}
                     onValueChange={(value) => {
                       storeSettingsMutation.mutate({
                         fontFamily: value
@@ -860,9 +753,9 @@ export default function SettingsPage() {
                       <SelectValue placeholder="اختر نوع الخط" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="cairo">Cairo</SelectItem>
                       <SelectItem value="tajawal">Tajawal</SelectItem>
-                      <SelectItem value="almarai">Almarai</SelectItem>
+                      <SelectItem value="cairo">Cairo</SelectItem>
+                      <SelectItem value="noto-sans-arabic">Noto Sans Arabic</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

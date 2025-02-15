@@ -14,7 +14,7 @@ import ProductsPage from "@/pages/products-page";
 import BarcodesPage from "@/pages/barcodes-page";
 import InvoicesPage from "@/pages/invoices-page";
 import { useEffect } from "react";
-import { updateThemeVariables } from "@/lib/theme";
+import { loadThemeSettings } from "@/lib/theme";
 
 function Router() {
   return (
@@ -35,20 +35,9 @@ function Router() {
 }
 
 function App() {
-  // Add theme initialization
+  // Load theme settings on app initialization
   useEffect(() => {
-    const initializeTheme = async () => {
-      try {
-        const response = await fetch('/api/theme');
-        const theme = await response.json();
-        if (theme?.primary) {
-          updateThemeVariables(theme.primary);
-        }
-      } catch (error) {
-        console.error('Error initializing theme:', error);
-      }
-    };
-    initializeTheme();
+    loadThemeSettings();
   }, []);
 
   return (
