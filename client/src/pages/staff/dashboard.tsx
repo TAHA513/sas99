@@ -44,14 +44,11 @@ export default function StaffDashboard() {
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">لوحة تحكم الموظفين</h1>
         <div className="flex gap-4">
-          <Button onClick={() => setLocation("/staff/products")}>
+          <Button onClick={() => setLocation("/products")}>
             إدارة المنتجات
           </Button>
-          <Button onClick={() => setLocation("/staff/appointments")}>
+          <Button onClick={() => setLocation("/appointments")}>
             إدارة المواعيد
-          </Button>
-          <Button variant="outline" onClick={() => setLocation("/staff/login")}>
-            تسجيل الخروج
           </Button>
         </div>
       </div>
@@ -82,7 +79,7 @@ export default function StaffDashboard() {
             <div>
               <h2 className="text-xl font-semibold mb-1">مواعيد اليوم</h2>
               <div className="text-2xl font-bold">{quickStats?.appointmentsCount}</div>
-              <Link href="/staff/appointments" className="text-sm text-primary hover:underline">
+              <Link href="/appointments" className="text-sm text-primary hover:underline">
                 عرض المواعيد
               </Link>
             </div>
@@ -112,7 +109,7 @@ export default function StaffDashboard() {
       <Card className="p-6">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-semibold">المبيعات الأخيرة</h2>
-          <Button variant="outline" onClick={() => setLocation("/staff/sales")}>
+          <Button variant="outline" onClick={() => setLocation("/invoices")}>
             عرض كل المبيعات
           </Button>
         </div>
@@ -153,7 +150,7 @@ export default function StaffDashboard() {
       <Card className="p-6">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-semibold">مواعيد اليوم</h2>
-          <Button variant="outline" onClick={() => setLocation("/staff/appointments")}>
+          <Button variant="outline" onClick={() => setLocation("/appointments")}>
             عرض كل المواعيد
           </Button>
         </div>
@@ -192,7 +189,7 @@ export default function StaffDashboard() {
       <Card className="p-6">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-semibold">المنتجات منخفضة المخزون</h2>
-          <Button variant="outline" onClick={() => setLocation("/staff/products")}>
+          <Button variant="outline" onClick={() => setLocation("/products")}>
             إدارة المخزون
           </Button>
         </div>

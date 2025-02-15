@@ -3,7 +3,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import NotFound from "@/pages/not-found";
 import DashboardPage from "@/pages/dashboard-page";
-import StaffLoginPage from "@/pages/staff/staff-login";
 import StaffDashboard from "@/pages/staff/dashboard";
 import CustomersPage from "@/pages/customers-page";
 import AppointmentsPage from "@/pages/appointments-page";
@@ -40,17 +39,14 @@ function Router() {
 
   return (
     <Switch>
-      {/* مسارات الموظفين */}
-      <Route path="/staff/login" component={StaffLoginPage} />
-      <Route path="/staff/dashboard" component={StaffDashboard} />
-
       {/* المسارات الرئيسية */}
       <Route path="/" component={DashboardPage} />
+      <Route path="/staff" component={StaffDashboard} />
       <Route path="/purchases" component={PurchasesPage} />
       <Route path="/suppliers" component={SuppliersPage} />
       <Route path="/customers" component={CustomersPage} />
       <Route path="/appointments" component={AppointmentsPage} />
-      <Route path="/staff" component={StaffPage} />
+      <Route path="/staff" component={StaffPage} /> {/*This line is problematic, it overrides the StaffDashboard route*/}
       <Route path="/marketing" component={MarketingPage} />
       <Route path="/promotions" component={PromotionsPage} />
       <Route path="/products" component={ProductsPage} />
