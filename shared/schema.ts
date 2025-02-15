@@ -284,3 +284,77 @@ export type InstallmentPlan = typeof installmentPlans.$inferSelect;
 export type InsertInstallmentPlan = z.infer<typeof insertInstallmentPlanSchema>;
 export type InstallmentPayment = typeof installmentPayments.$inferSelect;
 export type InsertInstallmentPayment = z.infer<typeof insertInstallmentPaymentSchema>;
+
+
+export const suppliers = pgTable("suppliers", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  phoneNumber: text("phone_number").notNull(),
+  email: text("email"),
+  address: text("address"),
+  status: text("status").notNull().default("active"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const purchaseOrders = pgTable("purchase_orders", {
+  id: serial("id").primaryKey(),
+  supplierId: integer("supplier_id").notNull(),
+  status: text("status").notNull().default("pending"),
+  totalAmount: decimal("total_amount").notNull(),
+  paid: decimal("paid").notNull().default("0"),
+  remaining: decimal("remaining").notNull().default("0"),
+  paymentStatus: text("payment_status").notNull().default("unpaid"),
+  paymentDueDate: timestamp("payment_due_date"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const purchaseItems = pgTable("purchase_items", {
+  id: serial("id").primaryKey(),
+  purchaseId: integer("purchase_id").notNull(),
+  productId: integer("product_id").notNull(),
+  quantity: decimal("quantity").notNull(),
+  unitPrice: decimal("unit_price").notNull(),
+  totalPrice: decimal("total_price").notNull(),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// Add Zod schemas for validation
+export const insertSupplierSchema = createInsertSchema(suppliers).extend({
+  phoneNumber: z.string().min(10, "رقم الهاتف يجب أن لا يقل عن 10 أرقام"),
+  email: z.string().email("البريد الإلكتروني غير صالح").optional().nullable(),
+  status: z.enum(["active", "inactive"]).default("active"),
+});
+
+export const insertPurchaseOrderSchema = createInsertSchema(purchaseOrders).extend({
+  supplierId: z.number(),
+  status: z.enum(["pending", "completed", "cancelled"]).default("pending"),
+  totalAmount: z.number().min(0),
+  paid: z.number().min(0),
+  remaining: z.number().min(0),
+  paymentStatus: z.enum(["paid", "partially_paid", "unpaid"]).default("unpaid"),
+  items: z.array(z.object({
+    productId: z.number(),
+    quantity: z.number().min(0),
+    unitPrice: z.number().min(0),
+    totalPrice: z.number().min(0),
+  })),
+});
+
+export const insertPurchaseItemSchema = createInsertSchema(purchaseItems).extend({
+  quantity: z.number().min(0),
+  unitPrice: z.number().min(0),
+  totalPrice: z.number().min(0),
+});
+
+// Add type exports
+export type Supplier = typeof suppliers.$inferSelect;
+export type InsertSupplier = z.infer<typeof insertSupplierSchema>;
+export type PurchaseOrder = typeof purchaseOrders.$inferSelect;
+export type InsertPurchaseOrder = z.infer<typeof insertPurchaseOrderSchema>;
+export type PurchaseItem = typeof purchaseItems.$inferSelect;
+export type InsertPurchaseItem = z.infer<typeof insertPurchaseItemSchema>;

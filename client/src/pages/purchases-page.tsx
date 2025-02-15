@@ -30,9 +30,38 @@ import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
 import { formatCurrency } from "@/lib/storage";
+import { PurchaseForm } from "@/components/purchases/purchase-form";
 
 export default function PurchasesPage() {
   const [searchTerm, setSearchTerm] = useState("");
+
+  // جلب طلبات الشراء
+  const { data: purchases } = useQuery({
+    queryKey: ["/api/purchase-orders"],
+  });
+
+  // فلترة الطلبات حسب البحث
+  const filteredPurchases = purchases?.filter(purchase =>
+    purchase.supplier?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    purchase.id.toString().includes(searchTerm)
+  );
+
+  // حساب الإحصائيات
+  const todayPurchases = purchases?.filter(purchase => 
+    new Date(purchase.createdAt).toDateString() === new Date().toDateString()
+  )?.length || 0;
+
+  const totalProducts = purchases?.reduce((sum, purchase) => 
+    sum + purchase.items.length, 0
+  ) || 0;
+
+  const activeSuppliers = new Set(
+    purchases?.map(purchase => purchase.supplierId)
+  ).size || 0;
+
+  const totalAmount = purchases?.reduce((sum, purchase) => 
+    sum + Number(purchase.totalAmount), 0
+  ) || 0;
 
   return (
     <DashboardLayout>
@@ -53,7 +82,7 @@ export default function PurchasesPage() {
                   أدخل تفاصيل طلب الشراء مع تحديد المورد والمنتجات المطلوبة
                 </DialogDescription>
               </DialogHeader>
-              {/* سيتم إضافة نموذج طلب الشراء هنا */}
+              <PurchaseForm />
             </DialogContent>
           </Dialog>
         </div>
@@ -66,7 +95,7 @@ export default function PurchasesPage() {
               <ShoppingCart className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">0</div>
+              <div className="text-2xl font-bold">{todayPurchases}</div>
             </CardContent>
           </Card>
 
@@ -76,7 +105,7 @@ export default function PurchasesPage() {
               <Package className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">0</div>
+              <div className="text-2xl font-bold">{totalProducts}</div>
             </CardContent>
           </Card>
 
@@ -86,7 +115,7 @@ export default function PurchasesPage() {
               <Truck className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">0</div>
+              <div className="text-2xl font-bold">{activeSuppliers}</div>
             </CardContent>
           </Card>
 
@@ -96,7 +125,7 @@ export default function PurchasesPage() {
               <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{formatCurrency(0, true)}</div>
+              <div className="text-2xl font-bold">{formatCurrency(totalAmount, true)}</div>
             </CardContent>
           </Card>
         </div>
@@ -125,11 +154,41 @@ export default function PurchasesPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              <TableRow>
-                <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                  لا توجد طلبات شراء حالياً
-                </TableCell>
-              </TableRow>
+              {filteredPurchases?.map((purchase) => (
+                <TableRow key={purchase.id}>
+                  <TableCell>{purchase.id}</TableCell>
+                  <TableCell>{purchase.supplier?.name}</TableCell>
+                  <TableCell>
+                    {format(new Date(purchase.createdAt), 'dd MMMM yyyy', { locale: ar })}
+                  </TableCell>
+                  <TableCell>{purchase.items.length} منتج</TableCell>
+                  <TableCell>{formatCurrency(Number(purchase.totalAmount), true)}</TableCell>
+                  <TableCell>
+                    <Badge
+                      className={
+                        purchase.status === 'completed' ? 'bg-green-100 text-green-800' :
+                        purchase.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                        'bg-red-100 text-red-800'
+                      }
+                    >
+                      {purchase.status === 'completed' ? 'مكتمل' :
+                       purchase.status === 'pending' ? 'قيد الإنتظار' : 'ملغي'}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <Button variant="ghost" size="sm">
+                      عرض التفاصيل
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+              {(!filteredPurchases || filteredPurchases.length === 0) && (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                    لا توجد طلبات شراء حالياً
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </div>

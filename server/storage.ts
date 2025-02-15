@@ -1,6 +1,7 @@
 import { User, Customer, Appointment, Staff, InsertUser, InsertCustomer, InsertAppointment, InsertStaff, MarketingCampaign, InsertMarketingCampaign, Promotion, InsertPromotion, DiscountCode, InsertDiscountCode, SocialMediaAccount, InsertSocialMediaAccount, Product, ProductGroup, InsertProduct, InsertProductGroup, Invoice, InsertInvoice } from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
+import { Supplier, InsertSupplier, PurchaseOrder, InsertPurchaseOrder, PurchaseItem, InsertPurchaseItem } from "@shared/schema";
 
 interface Setting {
     id: number;
@@ -105,6 +106,21 @@ export interface IStorage {
     // Store Settings operations
     getStoreSettings(): Promise<StoreSetting | undefined>;
     updateStoreSettings(settings: { storeName: string; storeLogo?: string }): Promise<StoreSetting>;
+
+  // Supplier operations
+  getSuppliers(): Promise<Supplier[]>;
+  getSupplier(id: number): Promise<Supplier | undefined>;
+  createSupplier(supplier: InsertSupplier): Promise<Supplier>;
+  updateSupplier(id: number, supplier: Partial<InsertSupplier>): Promise<Supplier>;
+  deleteSupplier(id: number): Promise<void>;
+
+  // Purchase operations
+  getPurchaseOrders(): Promise<PurchaseOrder[]>;
+  getPurchaseOrder(id: number): Promise<PurchaseOrder | undefined>;
+  createPurchaseOrder(purchase: InsertPurchaseOrder): Promise<PurchaseOrder>;
+  updatePurchaseOrder(id: number, purchase: Partial<InsertPurchaseOrder>): Promise<PurchaseOrder>;
+  deletePurchaseOrder(id: number): Promise<void>;
+  getPurchaseItems(purchaseId: number): Promise<PurchaseItem[]>;
 }
 
 export class MemStorage implements IStorage {
@@ -122,6 +138,9 @@ export class MemStorage implements IStorage {
   private productGroups: Map<number, ProductGroup>;
   private invoices: Map<number, Invoice>;
   private storeSettings: StoreSetting | undefined;
+  private suppliers: Map<number, Supplier>;
+  private purchaseOrders: Map<number, PurchaseOrder>;
+  private purchaseItems: Map<number, PurchaseItem[]>;
   sessionStore: session.Store;
 
   constructor() {
@@ -137,6 +156,9 @@ export class MemStorage implements IStorage {
     this.products = new Map();
     this.productGroups = new Map();
     this.invoices = new Map();
+    this.suppliers = new Map();
+    this.purchaseOrders = new Map();
+    this.purchaseItems = new Map();
     this.currentId = 1;
     this.sessionStore = new MemoryStore({
       checkPeriod: 86400000,
@@ -611,6 +633,97 @@ export class MemStorage implements IStorage {
     };
     this.storeSettings = newSettings;
     return newSettings;
+  }
+
+  // Supplier operations
+  async getSuppliers(): Promise<Supplier[]> {
+    return Array.from(this.suppliers.values());
+  }
+
+  async getSupplier(id: number): Promise<Supplier | undefined> {
+    return this.suppliers.get(id);
+  }
+
+  async createSupplier(supplier: InsertSupplier): Promise<Supplier> {
+    const id = this.currentId++;
+    const newSupplier: Supplier = {
+      ...supplier,
+      id,
+      email: supplier.email || null,
+      notes: supplier.notes || null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.suppliers.set(id, newSupplier);
+    return newSupplier;
+  }
+
+  async updateSupplier(id: number, updates: Partial<InsertSupplier>): Promise<Supplier> {
+    const supplier = await this.getSupplier(id);
+    if (!supplier) throw new Error("Supplier not found");
+    const updatedSupplier = { ...supplier, ...updates, updatedAt: new Date() };
+    this.suppliers.set(id, updatedSupplier);
+    return updatedSupplier;
+  }
+
+  async deleteSupplier(id: number): Promise<void> {
+    this.suppliers.delete(id);
+  }
+
+  // Purchase operations
+  async getPurchaseOrders(): Promise<PurchaseOrder[]> {
+    return Array.from(this.purchaseOrders.values());
+  }
+
+  async getPurchaseOrder(id: number): Promise<PurchaseOrder | undefined> {
+    return this.purchaseOrders.get(id);
+  }
+
+  async createPurchaseOrder(purchase: InsertPurchaseOrder): Promise<PurchaseOrder> {
+    const id = this.currentId++;
+    const newPurchase: PurchaseOrder = {
+      ...purchase,
+      id,
+      notes: purchase.notes || null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.purchaseOrders.set(id, newPurchase);
+
+    // Store purchase items
+    if (purchase.items) {
+      const items: PurchaseItem[] = purchase.items.map((item, index) => ({
+        id: this.currentId + index,
+        purchaseId: id,
+        productId: item.productId,
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+        totalPrice: item.totalPrice,
+        notes: null,
+        createdAt: new Date(),
+      }));
+      this.purchaseItems.set(id, items);
+      this.currentId += purchase.items.length;
+    }
+
+    return newPurchase;
+  }
+
+  async updatePurchaseOrder(id: number, updates: Partial<InsertPurchaseOrder>): Promise<PurchaseOrder> {
+    const purchase = await this.getPurchaseOrder(id);
+    if (!purchase) throw new Error("Purchase order not found");
+    const updatedPurchase = { ...purchase, ...updates, updatedAt: new Date() };
+    this.purchaseOrders.set(id, updatedPurchase);
+    return updatedPurchase;
+  }
+
+  async deletePurchaseOrder(id: number): Promise<void> {
+    this.purchaseOrders.delete(id);
+    this.purchaseItems.delete(id);
+  }
+
+  async getPurchaseItems(purchaseId: number): Promise<PurchaseItem[]> {
+    return this.purchaseItems.get(purchaseId) || [];
   }
 }
 
