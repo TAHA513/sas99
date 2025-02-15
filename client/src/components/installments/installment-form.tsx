@@ -19,6 +19,8 @@ import { useQuery } from "@tanstack/react-query";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { formatCurrency } from "@/lib/storage";
+import { Card, CardContent } from "@/components/ui/card";
+import { Search, Barcode } from "lucide-react";
 
 interface ProductItem {
   productId: number;
@@ -31,11 +33,19 @@ export function InstallmentForm({ onSuccess }: { onSuccess?: () => void }) {
   const { toast } = useToast();
   const [isUpdating, setIsUpdating] = useState(false);
   const [selectedProducts, setSelectedProducts] = useState<ProductItem[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [barcode, setBarcode] = useState("");
 
   // جلب قائمة المنتجات
   const { data: products } = useQuery<Product[]>({
     queryKey: ["/api/products"],
   });
+
+  // فلترة المنتجات حسب البحث
+  const filteredProducts = products?.filter(product => 
+    product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (product.barcode && product.barcode.includes(searchTerm))
+  );
 
   const form = useForm<InsertInstallmentPlan>({
     resolver: zodResolver(insertInstallmentPlanSchema),
@@ -48,6 +58,23 @@ export function InstallmentForm({ onSuccess }: { onSuccess?: () => void }) {
       startDate: new Date().toISOString().split('T')[0],
     },
   });
+
+  // إضافة منتج باستخدام الباركود
+  const handleBarcodeSubmit = () => {
+    if (!barcode) return;
+
+    const product = products?.find(p => p.barcode === barcode);
+    if (product) {
+      addProduct(product.id.toString(), 1);
+      setBarcode("");
+    } else {
+      toast({
+        title: "خطأ",
+        description: "لم يتم العثور على المنتج",
+        variant: "destructive",
+      });
+    }
+  };
 
   // إضافة منتج إلى القائمة
   const addProduct = (productId: string, quantity: number) => {
@@ -69,6 +96,22 @@ export function InstallmentForm({ onSuccess }: { onSuccess?: () => void }) {
   // حذف منتج من القائمة
   const removeProduct = (index: number) => {
     setSelectedProducts(prev => prev.filter((_, i) => i !== index));
+  };
+
+  // تعديل كمية المنتج
+  const updateQuantity = (index: number, newQuantity: number) => {
+    if (newQuantity < 1) return;
+
+    setSelectedProducts(prev => prev.map((item, i) => {
+      if (i === index) {
+        return {
+          ...item,
+          quantity: newQuantity,
+          total: item.price * newQuantity
+        };
+      }
+      return item;
+    }));
   };
 
   // حساب المبلغ الإجمالي
@@ -173,59 +216,128 @@ export function InstallmentForm({ onSuccess }: { onSuccess?: () => void }) {
         </div>
 
         {/* اختيار المنتجات */}
-        <div className="space-y-4">
-          <div className="flex gap-4">
-            <Select onValueChange={(value) => addProduct(value, 1)}>
-              <SelectTrigger className="w-[200px]">
-                <SelectValue placeholder="اختر منتج" />
-              </SelectTrigger>
-              <SelectContent>
-                {products?.map(product => (
-                  <SelectItem key={product.id} value={product.id.toString()}>
-                    {product.name} - {formatCurrency(Number(product.sellingPrice), true)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="space-y-4">
+              {/* البحث والباركود */}
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="relative">
+                  <Search className="absolute right-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="البحث عن منتج..."
+                    className="pl-10"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                </div>
 
-          {/* جدول المنتجات المختارة */}
-          {selectedProducts.length > 0 && (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>المنتج</TableHead>
-                  <TableHead>الكمية</TableHead>
-                  <TableHead>السعر</TableHead>
-                  <TableHead>الإجمالي</TableHead>
-                  <TableHead></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {selectedProducts.map((item, index) => {
-                  const product = products?.find(p => p.id === item.productId);
-                  return (
-                    <TableRow key={index}>
-                      <TableCell>{product?.name}</TableCell>
-                      <TableCell>{item.quantity}</TableCell>
-                      <TableCell>{formatCurrency(item.price, true)}</TableCell>
-                      <TableCell>{formatCurrency(item.total, true)}</TableCell>
-                      <TableCell>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeProduct(index)}
-                        >
-                          حذف
-                        </Button>
-                      </TableCell>
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <Barcode className="absolute right-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="إدخال الباركود..."
+                      className="pl-10"
+                      value={barcode}
+                      onChange={(e) => setBarcode(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleBarcodeSubmit()}
+                    />
+                  </div>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={handleBarcodeSubmit}
+                  >
+                    إضافة
+                  </Button>
+                </div>
+              </div>
+
+              {/* قائمة المنتجات المفلترة */}
+              {searchTerm && filteredProducts && (
+                <div className="border rounded-md p-2 max-h-40 overflow-y-auto">
+                  {filteredProducts.map(product => (
+                    <div
+                      key={product.id}
+                      className="flex justify-between items-center p-2 hover:bg-muted cursor-pointer"
+                      onClick={() => {
+                        addProduct(product.id.toString(), 1);
+                        setSearchTerm("");
+                      }}
+                    >
+                      <span>{product.name}</span>
+                      <span className="text-muted-foreground">
+                        {formatCurrency(Number(product.sellingPrice), true)}
+                      </span>
+                    </div>
+                  ))}
+                  {filteredProducts.length === 0 && (
+                    <p className="text-center py-2 text-muted-foreground">
+                      لا توجد نتائج
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* جدول المنتجات المختارة */}
+              {selectedProducts.length > 0 && (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>المنتج</TableHead>
+                      <TableHead>الكمية</TableHead>
+                      <TableHead>السعر</TableHead>
+                      <TableHead>الإجمالي</TableHead>
+                      <TableHead></TableHead>
                     </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          )}
-        </div>
+                  </TableHeader>
+                  <TableBody>
+                    {selectedProducts.map((item, index) => {
+                      const product = products?.find(p => p.id === item.productId);
+                      return (
+                        <TableRow key={index}>
+                          <TableCell>{product?.name}</TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => updateQuantity(index, item.quantity - 1)}
+                              >
+                                -
+                              </Button>
+                              <span className="w-12 text-center">{item.quantity}</span>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => updateQuantity(index, item.quantity + 1)}
+                              >
+                                +
+                              </Button>
+                            </div>
+                          </TableCell>
+                          <TableCell>{formatCurrency(item.price, true)}</TableCell>
+                          <TableCell>{formatCurrency(item.total, true)}</TableCell>
+                          <TableCell>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => removeProduct(index)}
+                            >
+                              حذف
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              )}
+            </div>
+          </CardContent>
+        </Card>
 
         <div className="grid gap-4 md:grid-cols-2">
           <FormField
