@@ -3,10 +3,11 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import NotFound from "@/pages/not-found";
 import DashboardPage from "@/pages/dashboard-page";
+import StaffLoginPage from "@/pages/staff/staff-login";
+import StaffDashboard from "@/pages/staff/dashboard";
 import CustomersPage from "@/pages/customers-page";
 import AppointmentsPage from "@/pages/appointments-page";
 import StaffPage from "@/pages/staff-page";
-import SettingsPage from "@/pages/settings-page";
 import MarketingPage from "@/pages/marketing-page";
 import PromotionsPage from "@/pages/promotions-page";
 import ProductsPage from "@/pages/products-page";
@@ -18,7 +19,6 @@ import PurchasesPage from "@/pages/purchases-page";
 import SuppliersPage from "@/pages/suppliers-page";
 import ExpensesPage from "@/pages/expenses-page";
 import ExpenseCategoriesPage from "@/pages/expense-categories-page";
-import StaffDashboardPage from "@/pages/staff-dashboard";
 import { useEffect } from "react";
 import { loadThemeSettings } from "@/lib/theme";
 
@@ -40,8 +40,12 @@ function Router() {
 
   return (
     <Switch>
+      {/* مسارات الموظفين */}
+      <Route path="/staff/login" component={StaffLoginPage} />
+      <Route path="/staff/dashboard" component={StaffDashboard} />
+
+      {/* المسارات الرئيسية */}
       <Route path="/" component={DashboardPage} />
-      <Route path="/staff-dashboard" component={StaffDashboardPage} />
       <Route path="/purchases" component={PurchasesPage} />
       <Route path="/suppliers" component={SuppliersPage} />
       <Route path="/customers" component={CustomersPage} />
@@ -56,7 +60,6 @@ function Router() {
       <Route path="/expense-categories" component={ExpenseCategoriesPage} />
       <Route path="/reports" component={ReportsPage} />
       <Route path="/barcodes" component={BarcodesPage} />
-      <Route path="/settings" component={SettingsPage} />
       <Route component={NotFound} />
     </Switch>
   );
