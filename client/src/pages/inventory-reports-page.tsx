@@ -114,63 +114,6 @@ export default function InventoryReportsPage() {
           </Card>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>قائمة أسعار المنتجات</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>المنتج</TableHead>
-                  <TableHead>النوع</TableHead>
-                  <TableHead>الكمية المتوفرة</TableHead>
-                  <TableHead>سعر التكلفة</TableHead>
-                  <TableHead>سعر البيع بالمفرد</TableHead>
-                  <TableHead>سعر البيع بالجملة</TableHead>
-                  <TableHead>الربح المتوقع</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {products.map((product) => {
-                  const isWholesale = product.type === "weight";
-                  const quantity = Number(product.quantity);
-                  const costPrice = Number(product.costPrice);
-                  const sellingPrice = Number(product.sellingPrice);
-                  const expectedProfit = (sellingPrice - costPrice) * quantity;
-
-                  return (
-                    <TableRow key={product.id}>
-                      <TableCell className="font-medium">{product.name}</TableCell>
-                      <TableCell>{isWholesale ? "جملة" : "مفرد"}</TableCell>
-                      <TableCell>
-                        {quantity} {isWholesale ? "كغم" : "قطعة"}
-                      </TableCell>
-                      <TableCell>{formatCurrency(costPrice)}</TableCell>
-                      <TableCell>
-                        {isWholesale ? "-" : formatCurrency(sellingPrice)}
-                      </TableCell>
-                      <TableCell>
-                        {isWholesale ? formatCurrency(sellingPrice) : "-"}
-                      </TableCell>
-                      <TableCell className="text-green-600">
-                        {formatCurrency(expectedProfit)}
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-                {products.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={7} className="text-center h-24 text-muted-foreground">
-                      لا توجد منتجات
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-
         <Tabs defaultValue="retail" className="space-y-4">
           <TabsList>
             <TabsTrigger value="retail">المفرد</TabsTrigger>
