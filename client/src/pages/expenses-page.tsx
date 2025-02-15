@@ -27,6 +27,19 @@ import { format } from "date-fns";
 import { ar } from "date-fns/locale";
 import { formatCurrency } from "@/lib/utils";
 import type { Expense } from "@shared/schema";
+import { motion } from "framer-motion";
+
+const fadeIn = {
+  initial: { opacity: 0, y: 20 },
+  animate: { opacity: 1, y: 0 },
+  transition: { duration: 0.5 }
+};
+
+const tableRowVariants = {
+  initial: { opacity: 0, x: -20 },
+  animate: { opacity: 1, x: 0 },
+  transition: { duration: 0.3 }
+};
 
 export default function ExpensesPage() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -68,128 +81,152 @@ export default function ExpensesPage() {
 
   return (
     <DashboardLayout>
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">المصروفات</h1>
-        <div className="flex items-center gap-4">
-          <SearchInput
-            placeholder="بحث في المصروفات..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="h-4 w-4 ml-2" />
-                إضافة مصروف
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>إضافة مصروف جديد</DialogTitle>
-                <DialogDescription>
-                  أدخل تفاصيل المصروف الجديد
-                </DialogDescription>
-              </DialogHeader>
-              <ExpenseForm />
-            </DialogContent>
-          </Dialog>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5 }}
+      >
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-3xl font-bold">المصروفات</h1>
+          <div className="flex items-center gap-4">
+            <SearchInput
+              placeholder="بحث في المصروفات..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button className="transition-transform hover:scale-105">
+                  <Plus className="h-4 w-4 ml-2" />
+                  إضافة مصروف
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>إضافة مصروف جديد</DialogTitle>
+                  <DialogDescription>
+                    أدخل تفاصيل المصروف الجديد
+                  </DialogDescription>
+                </DialogHeader>
+                <ExpenseForm />
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
-      </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">مصروفات اليوم</CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(todayTotal, 'USD')}</div>
-            <p className="text-xs text-muted-foreground">
-              {todayExpenses.length} مصروف
-            </p>
-          </CardContent>
-        </Card>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <motion.div {...fadeIn} transition={{ delay: 0.1 }}>
+            <Card className="transition-transform hover:scale-[1.02]">
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium">مصروفات اليوم</CardTitle>
+                <Calendar className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{formatCurrency(todayTotal, 'USD')}</div>
+                <p className="text-xs text-muted-foreground">
+                  {todayExpenses.length} مصروف
+                </p>
+              </CardContent>
+            </Card>
+          </motion.div>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">مصروفات الشهر</CardTitle>
-            <FileText className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(monthTotal, 'USD')}</div>
-            <p className="text-xs text-muted-foreground">
-              {monthExpenses.length} مصروف
-            </p>
-          </CardContent>
-        </Card>
+          <motion.div {...fadeIn} transition={{ delay: 0.2 }}>
+            <Card className="transition-transform hover:scale-[1.02]">
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium">مصروفات الشهر</CardTitle>
+                <FileText className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{formatCurrency(monthTotal, 'USD')}</div>
+                <p className="text-xs text-muted-foreground">
+                  {monthExpenses.length} مصروف
+                </p>
+              </CardContent>
+            </Card>
+          </motion.div>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">إجمالي المصروفات</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {formatCurrency(totalExpenses, 'USD')}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {expenses.length} مصروف
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+          <motion.div {...fadeIn} transition={{ delay: 0.3 }}>
+            <Card className="transition-transform hover:scale-[1.02]">
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium">إجمالي المصروفات</CardTitle>
+                <DollarSign className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {formatCurrency(totalExpenses, 'USD')}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {expenses.length} مصروف
+                </p>
+              </CardContent>
+            </Card>
+          </motion.div>
+        </div>
 
-      <div className="border rounded-lg">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>التاريخ</TableHead>
-              <TableHead>الفئة</TableHead>
-              <TableHead>الوصف</TableHead>
-              <TableHead>المبلغ</TableHead>
-              <TableHead>طريقة الدفع</TableHead>
-              <TableHead>المستلم</TableHead>
-              <TableHead>الحالة</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredExpenses.map((expense) => (
-              <TableRow key={expense.id}>
-                <TableCell>
-                  {format(new Date(expense.date), 'dd MMMM yyyy', { locale: ar })}
-                </TableCell>
-                <TableCell>{expense.categoryId}</TableCell>
-                <TableCell>{expense.description}</TableCell>
-                <TableCell>{formatCurrency(Number(expense.amount), 'USD')}</TableCell>
-                <TableCell>
-                  {expense.paymentMethod === 'cash' ? 'نقداً' :
-                   expense.paymentMethod === 'bank_transfer' ? 'تحويل بنكي' : 'شيك'}
-                </TableCell>
-                <TableCell>{expense.recipient}</TableCell>
-                <TableCell>
-                  <Badge
-                    className={
-                      expense.status === 'completed' ? 'bg-green-100 text-green-800' :
-                      expense.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                      'bg-red-100 text-red-800'
-                    }
-                  >
-                    {expense.status === 'completed' ? 'مكتمل' :
-                     expense.status === 'pending' ? 'قيد الانتظار' : 'ملغي'}
-                  </Badge>
-                </TableCell>
-              </TableRow>
-            ))}
-            {filteredExpenses.length === 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.4 }}
+          className="border rounded-lg"
+        >
+          <Table>
+            <TableHeader>
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                  لا توجد مصروفات حالياً
-                </TableCell>
+                <TableHead>التاريخ</TableHead>
+                <TableHead>الفئة</TableHead>
+                <TableHead>الوصف</TableHead>
+                <TableHead>المبلغ</TableHead>
+                <TableHead>طريقة الدفع</TableHead>
+                <TableHead>المستلم</TableHead>
+                <TableHead>الحالة</TableHead>
               </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
+            </TableHeader>
+            <TableBody>
+              {filteredExpenses.map((expense, index) => (
+                <motion.tr
+                  key={expense.id}
+                  initial="initial"
+                  animate="animate"
+                  variants={tableRowVariants}
+                  transition={{ delay: index * 0.1 }}
+                  className="transition-colors hover:bg-muted/50"
+                >
+                  <TableCell>
+                    {format(new Date(expense.date), 'dd MMMM yyyy', { locale: ar })}
+                  </TableCell>
+                  <TableCell>{expense.categoryId}</TableCell>
+                  <TableCell>{expense.description}</TableCell>
+                  <TableCell>{formatCurrency(Number(expense.amount), 'USD')}</TableCell>
+                  <TableCell>
+                    {expense.paymentMethod === 'cash' ? 'نقداً' :
+                     expense.paymentMethod === 'bank_transfer' ? 'تحويل بنكي' : 'شيك'}
+                  </TableCell>
+                  <TableCell>{expense.recipient}</TableCell>
+                  <TableCell>
+                    <Badge
+                      className={
+                        expense.status === 'completed' ? 'bg-green-100 text-green-800' :
+                        expense.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                        'bg-red-100 text-red-800'
+                      }
+                    >
+                      {expense.status === 'completed' ? 'مكتمل' :
+                       expense.status === 'pending' ? 'قيد الانتظار' : 'ملغي'}
+                    </Badge>
+                  </TableCell>
+                </motion.tr>
+              ))}
+              {filteredExpenses.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                    لا توجد مصروفات حالياً
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </motion.div>
+      </motion.div>
     </DashboardLayout>
   );
 }
