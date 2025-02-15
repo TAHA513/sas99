@@ -756,6 +756,13 @@ export default function SettingsPage() {
                       <SelectItem value="tajawal">Tajawal</SelectItem>
                       <SelectItem value="cairo">Cairo</SelectItem>
                       <SelectItem value="noto-sans-arabic">Noto Sans Arabic</SelectItem>
+                      <SelectItem value="dubai">Dubai</SelectItem>
+                      <SelectItem value="ibm-plex-sans-arabic">IBM Plex Sans Arabic</SelectItem>
+                      <SelectItem value="aref-ruqaa">Aref Ruqaa</SelectItem>
+                      <SelectItem value="almarai">Almarai</SelectItem>
+                      <SelectItem value="lateef">Lateef</SelectItem>
+                      <SelectItem value="scheherazade">Scheherazade New</SelectItem>
+                      <SelectItem value="harmattan">Harmattan</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

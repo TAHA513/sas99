@@ -36,6 +36,20 @@ export const hexToHSL = (hex: string): string => {
   return `${Math.round(h)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%`;
 };
 
+// Map of font families to their CSS values
+const fontFamilyMap: Record<string, string> = {
+  'tajawal': 'Tajawal, sans-serif',
+  'cairo': 'Cairo, sans-serif',
+  'noto-sans-arabic': 'Noto Sans Arabic, sans-serif',
+  'dubai': 'Dubai, sans-serif',
+  'ibm-plex-sans-arabic': 'IBM Plex Sans Arabic, sans-serif',
+  'aref-ruqaa': 'Aref Ruqaa, serif',
+  'almarai': 'Almarai, sans-serif',
+  'lateef': 'Lateef, serif',
+  'scheherazade': 'Scheherazade New, serif',
+  'harmattan': 'Harmattan, sans-serif',
+};
+
 // Update theme CSS variables for colors
 export const updateThemeColors = (primary: string) => {
   const root = document.documentElement;
@@ -51,7 +65,7 @@ export const updateThemeColors = (primary: string) => {
 export const updateThemeFonts = (fontSize: string, fontFamily: string) => {
   const root = document.documentElement;
   root.style.setProperty('--font-size', fontSize);
-  root.style.setProperty('--font-family', fontFamily);
+  root.style.setProperty('--font-family', fontFamilyMap[fontFamily] || fontFamilyMap['tajawal']);
 
   // Save to localStorage
   localStorage.setItem('theme-font-size', fontSize);
