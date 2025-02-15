@@ -128,10 +128,17 @@ export const setSocialMediaSettings = (settings: Partial<SocialMediaSettings>) =
   setItem(STORAGE_KEYS.SOCIAL_MEDIA_SETTINGS, { ...current, ...settings });
 };
 
-// Helper function to convert currency
+// Currency conversion functions
 export const convertCurrency = (amount: number, fromUSD = true): number => {
   const settings = getStoreSettings();
   const rate = settings.currencySettings?.usdToIqdRate || 1460;
-
   return fromUSD ? amount * rate : amount / rate;
+};
+
+export const formatCurrency = (amount: number): string => {
+  const settings = getStoreSettings();
+  const currency = settings.currencySettings?.defaultCurrency || 'USD';
+  return currency === 'USD' 
+    ? `${amount.toFixed(2)} دولار`
+    : `${amount.toFixed(2)} دينار`;
 };

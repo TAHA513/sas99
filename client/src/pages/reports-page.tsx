@@ -16,6 +16,7 @@ import { ar } from "date-fns/locale";
 import { useQuery } from "@tanstack/react-query";
 import type { Product, Invoice } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
+import { getStoreSettings } from "@/lib/storage";
 
 export default function ReportsPage() {
   const { toast } = useToast();
@@ -31,6 +32,16 @@ export default function ReportsPage() {
   const { data: invoices } = useQuery<Invoice[]>({
     queryKey: ["/api/invoices"],
   });
+
+  const storeSettings = getStoreSettings();
+  const defaultCurrency = storeSettings.currencySettings?.defaultCurrency || 'USD';
+
+  // Helper function to format currency
+  const formatCurrency = (amount: number) => {
+    return defaultCurrency === 'USD' 
+      ? `${amount.toFixed(2)} دولار` 
+      : `${amount.toFixed(2)} دينار`;
+  };
 
   // Filter invoices by date range
   const filteredInvoices = invoices?.filter(invoice => {
@@ -59,7 +70,7 @@ export default function ReportsPage() {
     if (!filteredInvoices) return;
 
     const workbook = XLSX.utils.book_new();
-    
+
     // Prepare sales data
     const salesData = filteredInvoices.map(invoice => ({
       'رقم الفاتورة': invoice.id,
@@ -67,7 +78,7 @@ export default function ReportsPage() {
       'العميل': invoice.customerName || 'عميل نقدي',
       'المجموع': invoice.subtotal,
       'الخصم': invoice.discountAmount,
-      'الإجمالي': invoice.finalTotal
+      'الإجمالي': formatCurrency(invoice.finalTotal)
     }));
 
     const worksheet = XLSX.utils.json_to_sheet(salesData, { RTL: true });
@@ -95,7 +106,7 @@ export default function ReportsPage() {
     if (!products) return;
 
     const workbook = XLSX.utils.book_new();
-    
+
     // Prepare inventory data
     const inventoryData = products.map(product => ({
       'اسم المنتج': product.name,
@@ -104,8 +115,8 @@ export default function ReportsPage() {
       'الحد الأدنى': product.minimumQuantity,
       'حالة المخزون': product.quantity <= 0 ? 'نفذ المخزون' : 
                       product.quantity <= product.minimumQuantity ? 'منخفض' : 'جيد',
-      'سعر التكلفة': product.costPrice,
-      'سعر البيع': product.sellingPrice
+      'سعر التكلفة': formatCurrency(product.costPrice),
+      'سعر البيع': formatCurrency(product.sellingPrice)
     }));
 
     const worksheet = XLSX.utils.json_to_sheet(inventoryData, { RTL: true });
@@ -163,10 +174,10 @@ export default function ReportsPage() {
                   <CardTitle className="text-lg">إجمالي المبيعات</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-2xl font-bold">{salesStats.totalSales.toFixed(2)} ريال</p>
+                  <p className="text-2xl font-bold">{formatCurrency(salesStats.totalSales)}</p>
                 </CardContent>
               </Card>
-              
+
               <Card>
                 <CardHeader>
                   <CardTitle className="text-lg">عدد الفواتير</CardTitle>
@@ -181,7 +192,7 @@ export default function ReportsPage() {
                   <CardTitle className="text-lg">متوسط قيمة الفاتورة</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-2xl font-bold">{salesStats.averageInvoice.toFixed(2)} ريال</p>
+                  <p className="text-2xl font-bold">{formatCurrency(salesStats.averageInvoice)}</p>
                 </CardContent>
               </Card>
             </div>
@@ -204,7 +215,7 @@ export default function ReportsPage() {
                   <p className="text-2xl font-bold">{inventoryStats.totalProducts}</p>
                 </CardContent>
               </Card>
-              
+
               <Card>
                 <CardHeader>
                   <CardTitle className="text-lg">منتجات منخفضة المخزون</CardTitle>
