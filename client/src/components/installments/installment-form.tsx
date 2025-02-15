@@ -10,15 +10,32 @@ import {
 import { Input } from "@/components/ui/input";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { InsertInstallmentPlan, insertInstallmentPlanSchema } from "@shared/schema";
+import { InsertInstallmentPlan, insertInstallmentPlanSchema, Product } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
 import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { formatCurrency } from "@/lib/storage";
+
+interface ProductItem {
+  productId: number;
+  quantity: number;
+  price: number;
+  total: number;
+}
 
 export function InstallmentForm({ onSuccess }: { onSuccess?: () => void }) {
   const { toast } = useToast();
   const [isUpdating, setIsUpdating] = useState(false);
+  const [selectedProducts, setSelectedProducts] = useState<ProductItem[]>([]);
+
+  // جلب قائمة المنتجات
+  const { data: products } = useQuery<Product[]>({
+    queryKey: ["/api/products"],
+  });
 
   const form = useForm<InsertInstallmentPlan>({
     resolver: zodResolver(insertInstallmentPlanSchema),
@@ -32,6 +49,34 @@ export function InstallmentForm({ onSuccess }: { onSuccess?: () => void }) {
     },
   });
 
+  // إضافة منتج إلى القائمة
+  const addProduct = (productId: string, quantity: number) => {
+    const product = products?.find(p => p.id === Number(productId));
+    if (product) {
+      const total = Number(product.sellingPrice) * quantity;
+      setSelectedProducts(prev => [
+        ...prev,
+        {
+          productId: product.id,
+          quantity,
+          price: Number(product.sellingPrice),
+          total
+        }
+      ]);
+    }
+  };
+
+  // حذف منتج من القائمة
+  const removeProduct = (index: number) => {
+    setSelectedProducts(prev => prev.filter((_, i) => i !== index));
+  };
+
+  // حساب المبلغ الإجمالي
+  useEffect(() => {
+    const total = selectedProducts.reduce((sum, item) => sum + item.total, 0);
+    form.setValue("totalAmount", total);
+  }, [selectedProducts, form]);
+
   // مراقبة التغييرات في الحقول الرئيسية وحساب الأقساط
   useEffect(() => {
     const subscription = form.watch((value, { name }) => {
@@ -42,7 +87,7 @@ export function InstallmentForm({ onSuccess }: { onSuccess?: () => void }) {
         const downPayment = value.downPayment || 0;
         const numberOfInstallments = value.numberOfInstallments || 1;
 
-        if (total && downPayment && numberOfInstallments) {
+        if (total && numberOfInstallments) {
           setIsUpdating(true);
           const remaining = total - downPayment;
           const installment = remaining / numberOfInstallments;
@@ -59,13 +104,29 @@ export function InstallmentForm({ onSuccess }: { onSuccess?: () => void }) {
 
   const onSubmit = async (data: InsertInstallmentPlan) => {
     try {
-      await apiRequest("POST", "/api/installment-plans", data);
+      // إنشاء الفاتورة أولاً
+      const invoice = await apiRequest("POST", "/api/invoices", {
+        customerName: data.customerName,
+        items: selectedProducts,
+        subtotal: data.totalAmount,
+        discount: 0,
+        discountAmount: 0,
+        finalTotal: data.totalAmount,
+        note: "فاتورة تقسيط",
+      });
+
+      // إنشاء خطة التقسيط مع ربطها بالفاتورة
+      const installmentPlan = await apiRequest("POST", "/api/installment-plans", {
+        ...data,
+        invoiceId: invoice.id,
+      });
 
       queryClient.invalidateQueries({ queryKey: ['/api/installment-plans'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/invoices'] });
 
       toast({
         title: "تم إنشاء خطة التقسيط",
-        description: "تم إنشاء خطة التقسيط بنجاح",
+        description: "تم إنشاء خطة التقسيط والفاتورة بنجاح",
       });
 
       onSuccess?.();
@@ -109,25 +170,64 @@ export function InstallmentForm({ onSuccess }: { onSuccess?: () => void }) {
               </FormItem>
             )}
           />
+        </div>
 
-          <FormField
-            control={form.control}
-            name="totalAmount"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>المبلغ الإجمالي</FormLabel>
-                <FormControl>
-                  <Input 
-                    type="number" 
-                    {...field} 
-                    onChange={e => field.onChange(Number(e.target.value))}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+        {/* اختيار المنتجات */}
+        <div className="space-y-4">
+          <div className="flex gap-4">
+            <Select onValueChange={(value) => addProduct(value, 1)}>
+              <SelectTrigger className="w-[200px]">
+                <SelectValue placeholder="اختر منتج" />
+              </SelectTrigger>
+              <SelectContent>
+                {products?.map(product => (
+                  <SelectItem key={product.id} value={product.id.toString()}>
+                    {product.name} - {formatCurrency(Number(product.sellingPrice), true)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
+          {/* جدول المنتجات المختارة */}
+          {selectedProducts.length > 0 && (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>المنتج</TableHead>
+                  <TableHead>الكمية</TableHead>
+                  <TableHead>السعر</TableHead>
+                  <TableHead>الإجمالي</TableHead>
+                  <TableHead></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {selectedProducts.map((item, index) => {
+                  const product = products?.find(p => p.id === item.productId);
+                  return (
+                    <TableRow key={index}>
+                      <TableCell>{product?.name}</TableCell>
+                      <TableCell>{item.quantity}</TableCell>
+                      <TableCell>{formatCurrency(item.price, true)}</TableCell>
+                      <TableCell>{formatCurrency(item.total, true)}</TableCell>
+                      <TableCell>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeProduct(index)}
+                        >
+                          حذف
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          )}
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2">
           <FormField
             control={form.control}
             name="downPayment"
@@ -225,18 +325,25 @@ export function InstallmentForm({ onSuccess }: { onSuccess?: () => void }) {
           />
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2 border-t pt-4 mt-4">
+        <div className="grid gap-4 md:grid-cols-3 border-t pt-4 mt-4">
+          <div>
+            <FormLabel>المبلغ الإجمالي</FormLabel>
+            <p className="text-2xl font-bold mt-1">
+              {formatCurrency(form.watch("totalAmount"), true)}
+            </p>
+          </div>
+
           <div>
             <FormLabel>المبلغ المتبقي</FormLabel>
             <p className="text-2xl font-bold mt-1">
-              {form.watch("remainingAmount").toFixed(2)}
+              {formatCurrency(form.watch("remainingAmount"), true)}
             </p>
           </div>
 
           <div>
             <FormLabel>قيمة القسط الشهري</FormLabel>
             <p className="text-2xl font-bold mt-1">
-              {form.watch("installmentAmount").toFixed(2)}
+              {formatCurrency(form.watch("installmentAmount"), true)}
             </p>
           </div>
         </div>

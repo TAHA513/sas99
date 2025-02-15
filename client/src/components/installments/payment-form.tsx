@@ -33,17 +33,18 @@ export function PaymentForm({ planId, nextPaymentNumber, expectedAmount, onSucce
       amount: expectedAmount,
       paymentDate: new Date().toISOString(),
       status: 'paid',
+      notes: '',
     },
   });
 
   const onSubmit = async (data: InsertInstallmentPayment) => {
     try {
       await apiRequest("POST", "/api/installment-payments", data);
-      
+
       // تحديث البيانات
       queryClient.invalidateQueries({ queryKey: ['/api/installment-plans'] });
       queryClient.invalidateQueries({ queryKey: ['/api/installment-payments'] });
-      
+
       toast({
         title: "تم تسجيل الدفعة",
         description: "تم تسجيل الدفعة بنجاح",
@@ -72,6 +73,7 @@ export function PaymentForm({ planId, nextPaymentNumber, expectedAmount, onSucce
                 <Input
                   type="number"
                   {...field}
+                  value={field.value}
                   onChange={e => field.onChange(Number(e.target.value))}
                 />
               </FormControl>
@@ -90,7 +92,7 @@ export function PaymentForm({ planId, nextPaymentNumber, expectedAmount, onSucce
                 <Input
                   type="date"
                   {...field}
-                  value={field.value?.split('T')[0]}
+                  value={field.value ? new Date(field.value).toISOString().split('T')[0] : ''}
                   onChange={e => field.onChange(new Date(e.target.value).toISOString())}
                 />
               </FormControl>
@@ -106,7 +108,7 @@ export function PaymentForm({ planId, nextPaymentNumber, expectedAmount, onSucce
             <FormItem>
               <FormLabel>ملاحظات</FormLabel>
               <FormControl>
-                <Input {...field} />
+                <Input {...field} value={field.value || ''} />
               </FormControl>
               <FormMessage />
             </FormItem>

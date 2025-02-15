@@ -4,8 +4,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
-import { InstallmentPlan, InstallmentPayment } from "@shared/schema";
+import { InstallmentPlan, InstallmentPayment, Invoice } from "@shared/schema";
 import { formatCurrency } from "@/lib/storage";
+import { Printer } from "lucide-react"; 
+import { useQuery } from "@tanstack/react-query";
+import { Table, TableBody, TableCell, TableHeader, TableHead, TableRow } from "@/components/ui/table";
+
 
 interface InstallmentDetailsProps {
   plan: InstallmentPlan;
@@ -14,6 +18,12 @@ interface InstallmentDetailsProps {
 }
 
 export function InstallmentDetails({ plan, payments, onRecordPayment }: InstallmentDetailsProps) {
+  // Fetch invoice details
+  const { data: invoice } = useQuery<Invoice>({
+    queryKey: ["/api/invoices", plan.invoiceId],
+    enabled: !!plan.invoiceId,
+  });
+
   // حساب تقدم الخطة
   const totalPaid = payments.reduce((sum, payment) => sum + Number(payment.amount), 0);
   const progressPercentage = (totalPaid / Number(plan.totalAmount)) * 100;
@@ -21,20 +31,114 @@ export function InstallmentDetails({ plan, payments, onRecordPayment }: Installm
   const nextPaymentDue = new Date(plan.startDate);
   nextPaymentDue.setMonth(nextPaymentDue.getMonth() + payments.length);
 
-  // تنسيق حالة القسط
-  const getStatusBadge = (status: string) => {
-    const statusMap: Record<string, { label: string; color: string }> = {
-      active: { label: "نشط", color: "bg-green-100 text-green-800" },
-      completed: { label: "مكتمل", color: "bg-blue-100 text-blue-800" },
-      overdue: { label: "متأخر", color: "bg-red-100 text-red-800" },
-      cancelled: { label: "ملغي", color: "bg-gray-100 text-gray-800" },
-    };
+  // طباعة الفاتورة
+  const printInvoice = () => {
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(`
+        <html dir="rtl">
+          <head>
+            <title>فاتورة تقسيط - ${plan.customerName}</title>
+            <style>
+              body { font-family: Arial, sans-serif; padding: 20px; }
+              .header { text-align: center; margin-bottom: 30px; }
+              .details { margin-bottom: 20px; }
+              .table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+              .table th, .table td { border: 1px solid #ddd; padding: 8px; text-align: right; }
+              .total { text-align: left; margin-top: 20px; }
+            </style>
+          </head>
+          <body>
+            <div class="header">
+              <h1>فاتورة تقسيط</h1>
+              <p>رقم الفاتورة: ${plan.invoiceId}</p>
+              <p>التاريخ: ${format(new Date(plan.startDate), 'dd MMMM yyyy', { locale: ar })}</p>
+            </div>
 
-    return statusMap[status] || { label: status, color: "bg-gray-100 text-gray-800" };
+            <div class="details">
+              <h3>معلومات العميل:</h3>
+              <p>الاسم: ${plan.customerName}</p>
+              <p>رقم الهاتف: ${plan.phoneNumber}</p>
+              <p>رقم الهوية: ${plan.identityDocument}</p>
+            </div>
+
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>المنتج</th>
+                  <th>الكمية</th>
+                  <th>السعر</th>
+                  <th>الإجمالي</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${invoice?.items.map(item => `
+                  <tr>
+                    <td>${item.productId}</td>
+                    <td>${item.quantity}</td>
+                    <td>${formatCurrency(item.price, true)}</td>
+                    <td>${formatCurrency(item.total, true)}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+
+            <div class="total">
+              <p>المبلغ الإجمالي: ${formatCurrency(Number(plan.totalAmount), true)}</p>
+              <p>الدفعة الأولى: ${formatCurrency(Number(plan.downPayment), true)}</p>
+              <p>المبلغ المتبقي: ${formatCurrency(Number(plan.remainingAmount), true)}</p>
+              <p>عدد الأقساط: ${plan.numberOfInstallments}</p>
+              <p>قيمة القسط: ${formatCurrency(Number(plan.installmentAmount), true)}</p>
+            </div>
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
+      printWindow.print();
+    }
   };
 
   return (
     <div className="space-y-4">
+      {/* زر الطباعة */}
+      <div className="flex justify-end">
+        <Button onClick={printInvoice} variant="outline" size="sm">
+          <Printer className="h-4 w-4 ml-2" />
+          طباعة الفاتورة
+        </Button>
+      </div>
+
+      {/* تفاصيل المنتجات */}
+      {invoice && (
+        <Card>
+          <CardHeader>
+            <CardTitle>تفاصيل المنتجات</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>المنتج</TableHead>
+                  <TableHead>الكمية</TableHead>
+                  <TableHead>السعر</TableHead>
+                  <TableHead>الإجمالي</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {invoice.items.map((item, index) => (
+                  <TableRow key={index}>
+                    <TableCell>{item.productId}</TableCell>
+                    <TableCell>{item.quantity}</TableCell>
+                    <TableCell>{formatCurrency(item.price, true)}</TableCell>
+                    <TableCell>{formatCurrency(item.total, true)}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      )}
+
       {/* معلومات العميل */}
       <Card>
         <CardHeader>
@@ -164,3 +268,15 @@ export function InstallmentDetails({ plan, payments, onRecordPayment }: Installm
     </div>
   );
 }
+
+// تنسيق حالة القسط
+const getStatusBadge = (status: string) => {
+  const statusMap: Record<string, { label: string; color: string }> = {
+    active: { label: "نشط", color: "bg-green-100 text-green-800" },
+    completed: { label: "مكتمل", color: "bg-blue-100 text-blue-800" },
+    overdue: { label: "متأخر", color: "bg-red-100 text-red-800" },
+    cancelled: { label: "ملغي", color: "bg-gray-100 text-gray-800" },
+  };
+
+  return statusMap[status] || { label: status, color: "bg-gray-100 text-gray-800" };
+};
