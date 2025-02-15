@@ -21,6 +21,7 @@ import ExpenseCategoriesPage from "@/pages/expense-categories-page";
 import SettingsPage from "@/pages/settings-page";
 import { useEffect } from "react";
 import { loadThemeSettings } from "@/lib/theme";
+import DatabaseSettingsPage from "@/pages/database-settings-page";
 
 // Create a client
 const queryClient = new QueryClient({
@@ -58,6 +59,7 @@ function Router() {
       <Route path="/reports" component={ReportsPage} />
       <Route path="/barcodes" component={BarcodesPage} />
       <Route path="/settings" component={SettingsPage} />
+      <Route path="/database-settings" component={DatabaseSettingsPage} />
       <Route component={NotFound} />
     </Switch>
   );

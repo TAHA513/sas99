@@ -402,3 +402,34 @@ export type ExpenseCategory = typeof expenseCategories.$inferSelect;
 export type InsertExpenseCategory = z.infer<typeof insertExpenseCategorySchema>;
 export type Expense = typeof expenses.$inferSelect;
 export type InsertExpense = z.infer<typeof insertExpenseSchema>;
+
+// Add after the existing code, before the last export statement
+export const databaseConnections = pgTable("database_connections", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  type: text("type").notNull(), // 'firestore', 'mysql', 'sqlite', 'postgres'
+  host: text("host"),
+  port: text("port"),
+  database: text("database"),
+  username: text("username"),
+  password: text("password"),
+  connectionString: text("connection_string"),
+  isActive: boolean("is_active").notNull().default(false),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const insertDatabaseConnectionSchema = createInsertSchema(databaseConnections).extend({
+  type: z.enum(["firestore", "mysql", "sqlite", "postgres"], {
+    errorMap: () => ({ message: "نوع قاعدة البيانات غير صالح" })
+  }),
+  host: z.string().optional(),
+  port: z.string().optional(),
+  database: z.string().optional(),
+  username: z.string().optional(),
+  password: z.string().optional(),
+  connectionString: z.string().optional(),
+});
+
+export type DatabaseConnection = typeof databaseConnections.$inferSelect;
+export type InsertDatabaseConnection = z.infer<typeof insertDatabaseConnectionSchema>;

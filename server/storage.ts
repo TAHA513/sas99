@@ -123,6 +123,14 @@ export interface IStorage {
   createExpense(expense: schema.InsertExpense): Promise<schema.Expense>;
   updateExpense(id: number, expense: Partial<schema.InsertExpense>): Promise<schema.Expense>;
   deleteExpense(id: number): Promise<void>;
+
+  // Database connection operations
+  getDatabaseConnections(): Promise<schema.DatabaseConnection[]>;
+  getDatabaseConnection(id: number): Promise<schema.DatabaseConnection | undefined>;
+  createDatabaseConnection(connection: schema.InsertDatabaseConnection): Promise<schema.DatabaseConnection>;
+  updateDatabaseConnection(id: number, connection: Partial<schema.InsertDatabaseConnection>): Promise<schema.DatabaseConnection>;
+  deleteDatabaseConnection(id: number): Promise<void>;
+  testDatabaseConnection(connection: schema.InsertDatabaseConnection): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -604,6 +612,39 @@ export class DatabaseStorage implements IStorage {
   }
   async deleteExpense(id: number): Promise<void> {
     await db.delete(schema.expenses).where(eq(schema.expenses.id, id));
+  }
+
+  // Database connection operations
+  async getDatabaseConnections(): Promise<schema.DatabaseConnection[]> {
+    return await db.select().from(schema.databaseConnections);
+  }
+
+  async getDatabaseConnection(id: number): Promise<schema.DatabaseConnection | undefined> {
+    const [connection] = await db.select().from(schema.databaseConnections).where(eq(schema.databaseConnections.id, id));
+    return connection;
+  }
+
+  async createDatabaseConnection(connection: schema.InsertDatabaseConnection): Promise<schema.DatabaseConnection> {
+    const [newConnection] = await db.insert(schema.databaseConnections).values(connection).returning();
+    return newConnection;
+  }
+
+  async updateDatabaseConnection(id: number, connection: Partial<schema.InsertDatabaseConnection>): Promise<schema.DatabaseConnection> {
+    const [updatedConnection] = await db
+      .update(schema.databaseConnections)
+      .set({ ...connection, updatedAt: new Date() })
+      .where(eq(schema.databaseConnections.id, id))
+      .returning();
+    return updatedConnection;
+  }
+
+  async deleteDatabaseConnection(id: number): Promise<void> {
+    await db.delete(schema.databaseConnections).where(eq(schema.databaseConnections.id, id));
+  }
+
+  async testDatabaseConnection(connection: schema.InsertDatabaseConnection): Promise<boolean> {
+    // TODO: Implement actual connection testing logic based on the database type
+    return true;
   }
 }
 
