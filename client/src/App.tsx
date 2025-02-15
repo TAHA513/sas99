@@ -16,6 +16,7 @@ import InstallmentsPage from "@/pages/installments-page";
 import ReportsPage from "@/pages/reports-page";
 import PurchasesPage from "@/pages/purchases-page";
 import SuppliersPage from "@/pages/suppliers-page";
+import ExpensesPage from "@/pages/expenses-page";
 import { useEffect } from "react";
 import { loadThemeSettings } from "@/lib/theme";
 
@@ -48,6 +49,7 @@ function Router() {
       <Route path="/products" component={ProductsPage} />
       <Route path="/invoices" component={InvoicesPage} />
       <Route path="/installments" component={InstallmentsPage} />
+      <Route path="/expenses" component={ExpensesPage} />
       <Route path="/reports" component={ReportsPage} />
       <Route path="/barcodes" component={BarcodesPage} />
       <Route path="/settings" component={SettingsPage} />

@@ -2,6 +2,7 @@ import { User, Customer, Appointment, Staff, InsertUser, InsertCustomer, InsertA
 import session from "express-session";
 import createMemoryStore from "memorystore";
 import { Supplier, InsertSupplier, PurchaseOrder, InsertPurchaseOrder, PurchaseItem, InsertPurchaseItem } from "@shared/schema";
+import { ExpenseCategory, InsertExpenseCategory, Expense, InsertExpense } from "@shared/schema";
 
 interface Setting {
     id: number;
@@ -121,6 +122,20 @@ export interface IStorage {
   updatePurchaseOrder(id: number, purchase: Partial<InsertPurchaseOrder>): Promise<PurchaseOrder>;
   deletePurchaseOrder(id: number): Promise<void>;
   getPurchaseItems(purchaseId: number): Promise<PurchaseItem[]>;
+
+  // Expense Category operations
+  getExpenseCategories(): Promise<ExpenseCategory[]>;
+  getExpenseCategory(id: number): Promise<ExpenseCategory | undefined>;
+  createExpenseCategory(category: InsertExpenseCategory): Promise<ExpenseCategory>;
+  updateExpenseCategory(id: number, category: Partial<InsertExpenseCategory>): Promise<ExpenseCategory>;
+  deleteExpenseCategory(id: number): Promise<void>;
+
+  // Expense operations
+  getExpenses(): Promise<Expense[]>;
+  getExpense(id: number): Promise<Expense | undefined>;
+  createExpense(expense: InsertExpense): Promise<Expense>;
+  updateExpense(id: number, expense: Partial<InsertExpense>): Promise<Expense>;
+  deleteExpense(id: number): Promise<void>;
 }
 
 export class MemStorage implements IStorage {
@@ -141,6 +156,8 @@ export class MemStorage implements IStorage {
   private suppliers: Map<number, Supplier>;
   private purchaseOrders: Map<number, PurchaseOrder>;
   private purchaseItems: Map<number, PurchaseItem[]>;
+  private expenseCategories: Map<number, ExpenseCategory>;
+  private expenses: Map<number, Expense>;
   sessionStore: session.Store;
 
   constructor() {
@@ -159,6 +176,8 @@ export class MemStorage implements IStorage {
     this.suppliers = new Map();
     this.purchaseOrders = new Map();
     this.purchaseItems = new Map();
+    this.expenseCategories = new Map();
+    this.expenses = new Map();
     this.currentId = 1;
     this.sessionStore = new MemoryStore({
       checkPeriod: 86400000,
@@ -244,6 +263,28 @@ export class MemStorage implements IStorage {
       name: "منظفات",
       description: "مواد التنظيف",
       createdAt: new Date(),
+    });
+
+    // Add sample expense categories
+    this.expenseCategories.set(1, {
+      id: 1,
+      name: "رواتب",
+      description: "رواتب الموظفين",
+      createdAt: new Date()
+    });
+
+    this.expenseCategories.set(2, {
+      id: 2,
+      name: "إيجارات",
+      description: "إيجارات المحلات والمكاتب",
+      createdAt: new Date()
+    });
+
+    this.expenseCategories.set(3, {
+      id: 3,
+      name: "مرافق",
+      description: "كهرباء، ماء، إنترنت",
+      createdAt: new Date()
     });
   }
 
@@ -724,6 +765,73 @@ export class MemStorage implements IStorage {
 
   async getPurchaseItems(purchaseId: number): Promise<PurchaseItem[]> {
     return this.purchaseItems.get(purchaseId) || [];
+  }
+
+  // Expense Category operations
+  async getExpenseCategories(): Promise<ExpenseCategory[]> {
+    return Array.from(this.expenseCategories.values());
+  }
+
+  async getExpenseCategory(id: number): Promise<ExpenseCategory | undefined> {
+    return this.expenseCategories.get(id);
+  }
+
+  async createExpenseCategory(category: InsertExpenseCategory): Promise<ExpenseCategory> {
+    const id = this.currentId++;
+    const newCategory: ExpenseCategory = {
+      ...category,
+      id,
+      description: category.description || null,
+      createdAt: new Date()
+    };
+    this.expenseCategories.set(id, newCategory);
+    return newCategory;
+  }
+
+  async updateExpenseCategory(id: number, updates: Partial<InsertExpenseCategory>): Promise<ExpenseCategory> {
+    const category = await this.getExpenseCategory(id);
+    if (!category) throw new Error("فئة المصروفات غير موجودة");
+    const updatedCategory = { ...category, ...updates };
+    this.expenseCategories.set(id, updatedCategory);
+    return updatedCategory;
+  }
+
+  async deleteExpenseCategory(id: number): Promise<void> {
+    this.expenseCategories.delete(id);
+  }
+
+  // Expense operations
+  async getExpenses(): Promise<Expense[]> {
+    return Array.from(this.expenses.values());
+  }
+
+  async getExpense(id: number): Promise<Expense | undefined> {
+    return this.expenses.get(id);
+  }
+
+  async createExpense(expense: InsertExpense): Promise<Expense> {
+    const id = this.currentId++;
+    const newExpense: Expense = {
+      ...expense,
+      id,
+      receiptImage: expense.receiptImage || null,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    this.expenses.set(id, newExpense);
+    return newExpense;
+  }
+
+  async updateExpense(id: number, updates: Partial<InsertExpense>): Promise<Expense> {
+    const expense = await this.getExpense(id);
+    if (!expense) throw new Error("المصروف غير موجود");
+    const updatedExpense = { ...expense, ...updates, updatedAt: new Date() };
+    this.expenses.set(id, updatedExpense);
+    return updatedExpense;
+  }
+
+  async deleteExpense(id: number): Promise<void> {
+    this.expenses.delete(id);
   }
 }
 

@@ -358,3 +358,47 @@ export type PurchaseOrder = typeof purchaseOrders.$inferSelect;
 export type InsertPurchaseOrder = z.infer<typeof insertPurchaseOrderSchema>;
 export type PurchaseItem = typeof purchaseItems.$inferSelect;
 export type InsertPurchaseItem = z.infer<typeof insertPurchaseItemSchema>;
+
+export const expenseCategories = pgTable("expense_categories", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const expenses = pgTable("expenses", {
+  id: serial("id").primaryKey(),
+  categoryId: integer("category_id").notNull(),
+  amount: decimal("amount").notNull(),
+  description: text("description").notNull(),
+  date: timestamp("date").notNull(),
+  paymentMethod: text("payment_method").notNull(),
+  recipient: text("recipient").notNull(),
+  receiptImage: text("receipt_image"),
+  status: text("status").notNull().default("completed"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// Add Zod schemas for validation
+export const insertExpenseCategorySchema = createInsertSchema(expenseCategories).extend({
+  description: z.string().optional().nullable(),
+});
+
+export const insertExpenseSchema = createInsertSchema(expenses).extend({
+  amount: z.number().min(0, "المبلغ يجب أن يكون أكبر من صفر"),
+  paymentMethod: z.enum(["cash", "bank_transfer", "check"], {
+    errorMap: () => ({ message: "طريقة الدفع غير صالحة" })
+  }),
+  status: z.enum(["completed", "pending", "cancelled"], {
+    errorMap: () => ({ message: "الحالة غير صالحة" })
+  }).default("completed"),
+  date: z.date(),
+  receiptImage: z.string().optional().nullable(),
+});
+
+// Add type exports
+export type ExpenseCategory = typeof expenseCategories.$inferSelect;
+export type InsertExpenseCategory = z.infer<typeof insertExpenseCategorySchema>;
+export type Expense = typeof expenses.$inferSelect;
+export type InsertExpense = z.infer<typeof insertExpenseSchema>;

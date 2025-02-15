@@ -14,6 +14,7 @@ import {
   CreditCard,
   ShoppingCart,
   Truck,
+  DollarSign,
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
@@ -63,6 +64,11 @@ const navItems = [
     title: "التقسيط",
     href: "/installments",
     icon: CreditCard,
+  },
+  {
+    title: "المصروفات",
+    href: "/expenses",
+    icon: DollarSign,
   },
   {
     title: "التقارير",
