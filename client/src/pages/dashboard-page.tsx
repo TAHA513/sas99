@@ -1,5 +1,5 @@
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import {
   Users,
@@ -10,6 +10,10 @@ import {
   DollarSign,
   ShoppingCart,
   AlertTriangle,
+  Target,
+  ArrowUpRight,
+  ArrowDownRight,
+  Percent,
 } from "lucide-react";
 import {
   AreaChart,
@@ -29,6 +33,8 @@ import {
   Line
 } from "recharts";
 import { ar } from "date-fns/locale";
+import { Progress } from "@/components/ui/progress";
+import { Badge } from "@/components/ui/badge";
 
 // Sample data - replace with actual API data
 const salesData = [
@@ -82,12 +88,96 @@ export default function DashboardPage() {
     }).format(amount);
   };
 
+  // Sample KPI calculations - replace with actual data
+  const salesGrowth = 15.2; // % نسبة نمو المبيعات
+  const targetProgress = 78; // % نسبة تحقيق الأهداف
+  const stockStatus = 85; // % حالة المخزون
+  const dailySalesTarget = 92; // % تحقيق هدف المبيعات اليومي
+
   return (
     <DashboardLayout>
       <div className="space-y-8">
-        <h1 className="text-3xl font-bold">لوحة التحكم</h1>
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold">لوحة التحكم</h1>
+            <p className="text-muted-foreground">مؤشرات الأداء الرئيسية والتحليلات</p>
+          </div>
+          <Badge variant="outline" className="text-lg">
+            {new Date().toLocaleDateString('ar-IQ', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+          </Badge>
+        </div>
 
-        {/* KPI Cards */}
+        {/* KPI Cards - New Interactive Design */}
+        <div className="grid gap-4 md:grid-cols-4">
+          {/* نمو المبيعات */}
+          <Card className="relative overflow-hidden">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">نمو المبيعات</CardTitle>
+              <TrendingUp className={`h-4 w-4 ${salesGrowth >= 0 ? 'text-green-500' : 'text-red-500'}`} />
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-baseline space-x-2 rtl:space-x-reverse">
+                <div className="text-2xl font-bold">{Math.abs(salesGrowth)}%</div>
+                {salesGrowth >= 0 ? (
+                  <ArrowUpRight className="text-green-500" />
+                ) : (
+                  <ArrowDownRight className="text-red-500" />
+                )}
+              </div>
+              <Progress value={Math.abs(salesGrowth)} className="mt-2" />
+              <p className="text-xs text-muted-foreground mt-1">
+                مقارنة بالشهر السابق
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* تحقيق الأهداف */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">تحقيق الأهداف</CardTitle>
+              <Target className="h-4 w-4 text-blue-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{targetProgress}%</div>
+              <Progress value={targetProgress} className="mt-2" />
+              <p className="text-xs text-muted-foreground mt-1">
+                من الهدف السنوي
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* حالة المخزون */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">حالة المخزون</CardTitle>
+              <Package2 className="h-4 w-4 text-orange-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stockStatus}%</div>
+              <Progress value={stockStatus} className="mt-2" />
+              <p className="text-xs text-muted-foreground mt-1">
+                نسبة اكتمال المخزون
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* المبيعات اليومية */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">المبيعات اليومية</CardTitle>
+              <DollarSign className="h-4 w-4 text-green-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{dailySalesTarget}%</div>
+              <Progress value={dailySalesTarget} className="mt-2" />
+              <p className="text-xs text-muted-foreground mt-1">
+                من هدف اليوم
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* معلومات إضافية */}
         <div className="grid gap-4 md:grid-cols-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
