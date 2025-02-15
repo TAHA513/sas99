@@ -9,7 +9,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useQuery } from "@tanstack/react-query";
-import { InstallmentPlan } from "@shared/schema";
+import { InstallmentPlan, InstallmentPayment } from "@shared/schema";
 import { CreditCard, Plus, Search } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { SearchInput } from "@/components/ui/search-input";
@@ -26,21 +26,31 @@ import {
 } from "@/components/ui/dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/storage";
+import { InstallmentForm } from "@/components/installments/installment-form";
+import { InstallmentDetails } from "@/components/installments/installment-details";
+import { PaymentForm } from "@/components/installments/payment-form";
 
 export default function InstallmentsPage() {
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedPlan, setSelectedPlan] = useState<InstallmentPlan | null>(null);
+  const [showPaymentForm, setShowPaymentForm] = useState(false);
 
   const { data: installmentPlans } = useQuery<InstallmentPlan[]>({
     queryKey: ["/api/installment-plans"],
   });
 
-  // Filter plans based on search term
+  const { data: installmentPayments } = useQuery<InstallmentPayment[]>({
+    queryKey: ["/api/installment-payments"],
+    enabled: !!selectedPlan,
+  });
+
+  // فلترة الخطط حسب البحث
   const filteredPlans = installmentPlans?.filter((plan) =>
     plan.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
     plan.status.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Calculate totals for stats
+  // حساب الإحصائيات
   const totalActiveAmount = filteredPlans
     ?.filter(plan => plan.status === 'active')
     .reduce((sum, plan) => sum + Number(plan.remainingAmount), 0) || 0;
@@ -51,7 +61,7 @@ export default function InstallmentsPage() {
   const overdueCount = filteredPlans
     ?.filter(plan => plan.status === 'overdue').length || 0;
 
-  // Status badge styling
+  // تنسيق حالة القسط
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { label: string; color: string }> = {
       active: { label: "نشط", color: "bg-green-100 text-green-800" },
@@ -61,6 +71,11 @@ export default function InstallmentsPage() {
     };
 
     return statusMap[status] || { label: status, color: "bg-gray-100 text-gray-800" };
+  };
+
+  // الحصول على المدفوعات للخطة المحددة
+  const getPaymentsForPlan = (planId: number) => {
+    return installmentPayments?.filter(payment => payment.planId === planId) || [];
   };
 
   return (
@@ -82,12 +97,12 @@ export default function InstallmentsPage() {
                   أدخل بيانات العميل وتفاصيل خطة التقسيط
                 </DialogDescription>
               </DialogHeader>
-              {/* Form component will be added here */}
+              <InstallmentForm onSuccess={() => setSelectedPlan(null)} />
             </DialogContent>
           </Dialog>
         </div>
 
-        {/* Stats Cards */}
+        {/* الإحصائيات */}
         <div className="grid gap-4 md:grid-cols-3">
           <Card>
             <CardHeader>
@@ -117,7 +132,7 @@ export default function InstallmentsPage() {
           </Card>
         </div>
 
-        {/* Search */}
+        {/* البحث */}
         <div className="max-w-sm">
           <SearchInput
             value={searchTerm}
@@ -126,7 +141,7 @@ export default function InstallmentsPage() {
           />
         </div>
 
-        {/* Installment Plans Table */}
+        {/* جدول خطط التقسيط */}
         <div className="border rounded-lg">
           <Table>
             <TableHeader>
@@ -144,7 +159,11 @@ export default function InstallmentsPage() {
             </TableHeader>
             <TableBody>
               {filteredPlans?.map((plan) => (
-                <TableRow key={plan.id}>
+                <TableRow 
+                  key={plan.id}
+                  className="cursor-pointer hover:bg-muted/50"
+                  onClick={() => setSelectedPlan(plan)}
+                >
                   <TableCell className="font-medium">
                     {plan.customerName}
                     <p className="text-sm text-muted-foreground">{plan.phoneNumber}</p>
@@ -175,6 +194,45 @@ export default function InstallmentsPage() {
             </TableBody>
           </Table>
         </div>
+
+        {/* تفاصيل الخطة المحددة */}
+        {selectedPlan && (
+          <Dialog open={!!selectedPlan} onOpenChange={(open) => !open && setSelectedPlan(null)}>
+            <DialogContent className="max-w-4xl">
+              <DialogHeader>
+                <DialogTitle>تفاصيل خطة التقسيط</DialogTitle>
+                <DialogDescription>
+                  تفاصيل وسجل مدفوعات خطة التقسيط
+                </DialogDescription>
+              </DialogHeader>
+              <InstallmentDetails
+                plan={selectedPlan}
+                payments={getPaymentsForPlan(selectedPlan.id)}
+                onRecordPayment={() => setShowPaymentForm(true)}
+              />
+            </DialogContent>
+          </Dialog>
+        )}
+
+        {/* نموذج تسجيل دفعة جديدة */}
+        {showPaymentForm && selectedPlan && (
+          <Dialog open={showPaymentForm} onOpenChange={setShowPaymentForm}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>تسجيل دفعة جديدة</DialogTitle>
+                <DialogDescription>
+                  تسجيل دفعة جديدة لخطة التقسيط
+                </DialogDescription>
+              </DialogHeader>
+              <PaymentForm
+                planId={selectedPlan.id}
+                nextPaymentNumber={getPaymentsForPlan(selectedPlan.id).length + 1}
+                expectedAmount={Number(selectedPlan.installmentAmount)}
+                onSuccess={() => setShowPaymentForm(false)}
+              />
+            </DialogContent>
+          </Dialog>
+        )}
       </div>
     </DashboardLayout>
   );
