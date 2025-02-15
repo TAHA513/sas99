@@ -410,13 +410,9 @@ export default function InvoicesPage() {
               <FileSpreadsheet className="h-4 w-4 ml-2" />
               تصدير Excel
             </Button>
-            <Button onClick={() => {
-              saveInvoice().then(() => {
-                printInvoice();
-              });
-            }}>
-              <Receipt className="h-4 w-4 ml-2" />
-              حفظ وطباعة
+            <Button onClick={saveInvoice}>
+              <Save className="h-4 w-4 ml-2" />
+              حفظ الفاتورة
             </Button>
           </div>
         </div>
@@ -577,24 +573,13 @@ export default function InvoicesPage() {
 
               {/* Action Buttons */}
               <div className="grid gap-2">
-                <Button className="w-full" variant="outline" onClick={saveInvoice}>
+                <Button className="w-full" onClick={saveInvoice}>
                   <Save className="h-4 w-4 ml-2" />
-                  حفظ الفاتورة فقط
-                </Button>
-                <Button
-                  className="w-full"
-                  onClick={() => {
-                    saveInvoice().then(() => {
-                      printInvoice();
-                    });
-                  }}
-                >
-                  <Receipt className="h-4 w-4 ml-2" />
-                  حفظ وطباعة الفاتورة
+                  حفظ الفاتورة
                 </Button>
                 <Button className="w-full" variant="secondary" onClick={printInvoice}>
                   <Receipt className="h-4 w-4 ml-2" />
-                  طباعة الفاتورة فقط
+                  طباعة الفاتورة
                 </Button>
               </div>
             </CardContent>
