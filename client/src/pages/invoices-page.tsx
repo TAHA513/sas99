@@ -410,10 +410,6 @@ export default function InvoicesPage() {
               <FileSpreadsheet className="h-4 w-4 ml-2" />
               تصدير Excel
             </Button>
-            <Button variant="outline" onClick={saveInvoice}>
-              <Save className="h-4 w-4 ml-2" />
-              حفظ فقط
-            </Button>
             <Button onClick={() => {
               saveInvoice().then(() => {
                 printInvoice();
@@ -421,10 +417,6 @@ export default function InvoicesPage() {
             }}>
               <Receipt className="h-4 w-4 ml-2" />
               حفظ وطباعة
-            </Button>
-            <Button variant="secondary" onClick={printInvoice}>
-              <Receipt className="h-4 w-4 ml-2" />
-              طباعة فقط
             </Button>
           </div>
         </div>
