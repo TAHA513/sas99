@@ -47,7 +47,7 @@ export default function InventoryReportsPage() {
         </div>
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {/* بطاقة جديدة لعرض إجمالي قيمة المخزون بسعر التكلفة */}
+          {/* بطاقة لعرض إجمالي قيمة المخزون بسعر التكلفة */}
           <Card className="col-span-2">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">إجمالي قيمة المخزون (سعر التكلفة)</CardTitle>
@@ -59,7 +59,7 @@ export default function InventoryReportsPage() {
             </CardContent>
           </Card>
 
-          {/* بطاقة جديدة لعرض إجمالي قيمة المخزون بسعر البيع */}
+          {/* بطاقة لعرض إجمالي قيمة المخزون بسعر البيع */}
           <Card className="col-span-2">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">إجمالي قيمة المخزون (سعر البيع)</CardTitle>
