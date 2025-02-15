@@ -19,6 +19,7 @@ import SuppliersPage from "@/pages/suppliers-page";
 import ExpensesPage from "@/pages/expenses-page";
 import ExpenseCategoriesPage from "@/pages/expense-categories-page";
 import SettingsPage from "@/pages/settings-page";
+import InventoryReportsPage from "@/pages/inventory-reports-page";
 import { useEffect } from "react";
 import { loadThemeSettings } from "@/lib/theme";
 
@@ -56,6 +57,7 @@ function Router() {
       <Route path="/expenses" component={ExpensesPage} />
       <Route path="/expense-categories" component={ExpenseCategoriesPage} />
       <Route path="/reports" component={ReportsPage} />
+      <Route path="/inventory-reports" component={InventoryReportsPage} />
       <Route path="/barcodes" component={BarcodesPage} />
       <Route path="/settings" component={SettingsPage} />
       <Route component={NotFound} />
