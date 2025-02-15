@@ -27,6 +27,11 @@ const queryClient = new QueryClient({
 });
 
 function Router() {
+  // Load theme settings on app initialization
+  useEffect(() => {
+    loadThemeSettings();
+  }, []);
+
   return (
     <Switch>
       <Route path="/" component={DashboardPage} />
@@ -46,11 +51,6 @@ function Router() {
 }
 
 function App() {
-  // Load theme settings on app initialization
-  useEffect(() => {
-    loadThemeSettings();
-  }, []);
-
   return (
     <QueryClientProvider client={queryClient}>
       <Router />
