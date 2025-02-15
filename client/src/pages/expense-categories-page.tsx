@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/dialog";
 import { motion } from "framer-motion";
 import type { ExpenseCategory } from "@shared/schema";
+import { ExpenseCategoryForm } from "@/components/expenses/expense-category-form";
 
 const tableRowVariants = {
   initial: { opacity: 0, x: -20 },
@@ -51,7 +52,10 @@ export default function ExpenseCategoriesPage() {
         transition={{ duration: 0.5 }}
       >
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold">فئات المصروفات</h1>
+          <div>
+            <h1 className="text-3xl font-bold mb-2">فئات المصروفات</h1>
+            <p className="text-muted-foreground">إدارة وتنظيم فئات المصروفات في النظام</p>
+          </div>
           <div className="flex items-center gap-4">
             <SearchInput
               placeholder="بحث في الفئات..."
@@ -72,7 +76,7 @@ export default function ExpenseCategoriesPage() {
                     أدخل تفاصيل الفئة الجديدة
                   </DialogDescription>
                 </DialogHeader>
-                {/* Add category form component here */}
+                <ExpenseCategoryForm />
               </DialogContent>
             </Dialog>
           </div>
