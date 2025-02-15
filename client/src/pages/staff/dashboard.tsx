@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import {
   Table,
@@ -11,6 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Loader2, AlertCircle, Calendar, DollarSign, Package, Users, Clock, Printer } from "lucide-react";
 import { Link, useLocation } from "wouter";
+import { useEffect } from "react";
 
 // Loading skeleton components
 const CardSkeleton = () => (
@@ -30,11 +31,11 @@ const TableSkeleton = () => (
   <Table>
     <TableHeader>
       <TableRow>
-        <TableHead>...</TableHead>
-        <TableHead>...</TableHead>
-        <TableHead>...</TableHead>
-        <TableHead>...</TableHead>
-        <TableHead>...</TableHead>
+        <TableHead></TableHead>
+        <TableHead></TableHead>
+        <TableHead></TableHead>
+        <TableHead></TableHead>
+        <TableHead></TableHead>
       </TableRow>
     </TableHeader>
     <TableBody>
@@ -53,6 +54,71 @@ const TableSkeleton = () => (
 
 export default function StaffDashboard() {
   const [, setLocation] = useLocation();
+  const queryClient = useQueryClient();
+
+  // Prefetch data for commonly accessed routes
+  useEffect(() => {
+    // Prefetch products data
+    queryClient.prefetchQuery({
+      queryKey: ["/api/products"],
+      staleTime: 1000 * 60 * 5, // 5 minutes
+    });
+
+    // Prefetch appointments data
+    queryClient.prefetchQuery({
+      queryKey: ["/api/appointments"],
+      staleTime: 1000 * 60 * 2, // 2 minutes
+    });
+  }, [queryClient]);
+
+  // Parallel queries with optimized caching
+  const { data: quickStats, isLoading: statsLoading } = useQuery({
+    queryKey: ["/api/staff/quick-stats"],
+    staleTime: 1000 * 60 * 15, // Cache for 15 minutes
+    cacheTime: 1000 * 60 * 30, // Keep in cache for 30 minutes
+  });
+
+  const { data: todaySales, isLoading: salesLoading } = useQuery({
+    queryKey: ["/api/sales/today"],
+    staleTime: 1000 * 60 * 2, // Cache for 2 minutes
+    cacheTime: 1000 * 60 * 5, // Keep in cache for 5 minutes
+  });
+
+  const { data: appointments, isLoading: appointmentsLoading } = useQuery({
+    queryKey: ["/api/appointments/today"],
+    staleTime: 1000 * 60 * 2, // Cache for 2 minutes
+    cacheTime: 1000 * 60 * 5, // Keep in cache for 5 minutes
+  });
+
+  const { data: lowStockProducts, isLoading: productsLoading } = useQuery({
+    queryKey: ["/api/products/low-stock"],
+    staleTime: 1000 * 60 * 15, // Cache for 15 minutes
+    cacheTime: 1000 * 60 * 30, // Keep in cache for 30 minutes
+  });
+
+  // Pre-fetch data when hovering over navigation buttons
+  const handlePrefetch = (route: string) => {
+    switch (route) {
+      case "/products":
+        queryClient.prefetchQuery({
+          queryKey: ["/api/products"],
+          staleTime: 1000 * 60 * 5,
+        });
+        break;
+      case "/appointments":
+        queryClient.prefetchQuery({
+          queryKey: ["/api/appointments"],
+          staleTime: 1000 * 60 * 2,
+        });
+        break;
+      case "/invoices":
+        queryClient.prefetchQuery({
+          queryKey: ["/api/sales"],
+          staleTime: 1000 * 60 * 2,
+        });
+        break;
+    }
+  };
 
   // Function to handle invoice printing
   const handlePrintInvoice = (invoice: any) => {
@@ -146,27 +212,6 @@ export default function StaffDashboard() {
     printWindow.print();
   };
 
-  // Parallel queries with better caching
-  const { data: quickStats, isLoading: statsLoading } = useQuery({
-    queryKey: ["/api/staff/quick-stats"],
-    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
-  });
-
-  const { data: todaySales, isLoading: salesLoading } = useQuery({
-    queryKey: ["/api/sales/today"],
-    staleTime: 1000 * 60, // Cache for 1 minute
-  });
-
-  const { data: appointments, isLoading: appointmentsLoading } = useQuery({
-    queryKey: ["/api/appointments/today"],
-    staleTime: 1000 * 60, // Cache for 1 minute
-  });
-
-  const { data: lowStockProducts, isLoading: productsLoading } = useQuery({
-    queryKey: ["/api/products/low-stock"],
-    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
-  });
-
   // Show loading skeleton instead of full-page loader
   const isInitialLoading = statsLoading && salesLoading && appointmentsLoading && productsLoading;
 
@@ -208,11 +253,19 @@ export default function StaffDashboard() {
           </p>
         </div>
         <div className="flex gap-4">
-          <Button onClick={() => setLocation("/products")} className="flex items-center gap-2">
+          <Button
+            onClick={() => setLocation("/products")}
+            onMouseEnter={() => handlePrefetch("/products")}
+            className="flex items-center gap-2"
+          >
             <Package className="h-4 w-4" />
             إدارة المنتجات
           </Button>
-          <Button onClick={() => setLocation("/appointments")} className="flex items-center gap-2">
+          <Button
+            onClick={() => setLocation("/appointments")}
+            onMouseEnter={() => handlePrefetch("/appointments")}
+            className="flex items-center gap-2"
+          >
             <Calendar className="h-4 w-4" />
             إدارة المواعيد
           </Button>
@@ -255,7 +308,7 @@ export default function StaffDashboard() {
               <h2 className="text-xl font-semibold">المبيعات الأخيرة</h2>
               <p className="text-sm text-muted-foreground">آخر المبيعات المسجلة في النظام</p>
             </div>
-            <Button variant="outline" onClick={() => setLocation("/invoices")} className="flex items-center gap-2">
+            <Button variant="outline" onClick={() => setLocation("/invoices")} onMouseEnter={() => handlePrefetch("/invoices")} className="flex items-center gap-2">
               <DollarSign className="h-4 w-4" />
               عرض كل المبيعات
             </Button>
@@ -293,11 +346,11 @@ export default function StaffDashboard() {
                       <TableCell>
                         <span className={`px-2 py-1 rounded-full text-sm ${
                           sale.status === 'completed' ? 'bg-green-100 text-green-800' :
-                          sale.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                          'bg-red-100 text-red-800'
+                            sale.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                              'bg-red-100 text-red-800'
                         }`}>
                           {sale.status === 'completed' ? 'مكتمل' :
-                           sale.status === 'pending' ? 'معلق' : 'ملغي'}
+                            sale.status === 'pending' ? 'معلق' : 'ملغي'}
                         </span>
                       </TableCell>
                       <TableCell>
