@@ -10,7 +10,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useQuery } from "@tanstack/react-query";
-import { Package2 } from "lucide-react";
+import { Package2, DollarSign, LineChart } from "lucide-react";
 import type { Product } from "@shared/schema";
 
 export default function InventoryReportsPage() {
@@ -20,6 +20,16 @@ export default function InventoryReportsPage() {
 
   const retailProducts = products.filter(p => p.type === "piece");
   const wholesaleProducts = products.filter(p => p.type === "weight");
+
+  // حساب إجمالي قيمة المخزون بسعر التكلفة
+  const totalInventoryCost = products.reduce((sum, product) => {
+    return sum + (Number(product.quantity) * Number(product.costPrice))
+  }, 0);
+
+  // حساب إجمالي قيمة المخزون بسعر البيع
+  const totalInventorySalePrice = products.reduce((sum, product) => {
+    return sum + (Number(product.quantity) * Number(product.sellingPrice))
+  }, 0);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('ar-IQ', {
@@ -37,6 +47,30 @@ export default function InventoryReportsPage() {
         </div>
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {/* بطاقة جديدة لعرض إجمالي قيمة المخزون بسعر التكلفة */}
+          <Card className="col-span-2">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">إجمالي قيمة المخزون (سعر التكلفة)</CardTitle>
+              <DollarSign className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{formatCurrency(totalInventoryCost)}</div>
+              <p className="text-xs text-muted-foreground mt-1">مجموع (الكمية × سعر التكلفة) لجميع المنتجات</p>
+            </CardContent>
+          </Card>
+
+          {/* بطاقة جديدة لعرض إجمالي قيمة المخزون بسعر البيع */}
+          <Card className="col-span-2">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">إجمالي قيمة المخزون (سعر البيع)</CardTitle>
+              <LineChart className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{formatCurrency(totalInventorySalePrice)}</div>
+              <p className="text-xs text-muted-foreground mt-1">مجموع (الكمية × سعر البيع) لجميع المنتجات</p>
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">إجمالي المنتجات</CardTitle>
@@ -69,15 +103,12 @@ export default function InventoryReportsPage() {
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">القيمة الإجمالية</CardTitle>
+              <CardTitle className="text-sm font-medium">الربح المتوقع</CardTitle>
               <Package2 className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
-                {formatCurrency(
-                  products.reduce((sum, product) => 
-                    sum + (Number(product.quantity) * Number(product.costPrice)), 0)
-                )}
+              <div className="text-2xl font-bold text-green-600">
+                {formatCurrency(totalInventorySalePrice - totalInventoryCost)}
               </div>
             </CardContent>
           </Card>
