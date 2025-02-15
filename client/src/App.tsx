@@ -18,6 +18,7 @@ import PurchasesPage from "@/pages/purchases-page";
 import SuppliersPage from "@/pages/suppliers-page";
 import ExpensesPage from "@/pages/expenses-page";
 import ExpenseCategoriesPage from "@/pages/expense-categories-page";
+import SettingsPage from "@/pages/settings-page";
 import { useEffect } from "react";
 import { loadThemeSettings } from "@/lib/theme";
 
@@ -46,7 +47,7 @@ function Router() {
       <Route path="/suppliers" component={SuppliersPage} />
       <Route path="/customers" component={CustomersPage} />
       <Route path="/appointments" component={AppointmentsPage} />
-      <Route path="/staff" component={StaffPage} /> {/*This line is problematic, it overrides the StaffDashboard route*/}
+      <Route path="/staff-management" component={StaffPage} />
       <Route path="/marketing" component={MarketingPage} />
       <Route path="/promotions" component={PromotionsPage} />
       <Route path="/products" component={ProductsPage} />
@@ -56,6 +57,7 @@ function Router() {
       <Route path="/expense-categories" component={ExpenseCategoriesPage} />
       <Route path="/reports" component={ReportsPage} />
       <Route path="/barcodes" component={BarcodesPage} />
+      <Route path="/settings" component={SettingsPage} />
       <Route component={NotFound} />
     </Switch>
   );
