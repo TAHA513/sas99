@@ -11,6 +11,10 @@ const STORAGE_KEYS = {
 export interface StoreSettings {
   storeName: string;
   storeLogo: string;
+  currencySettings?: {
+    defaultCurrency: 'USD' | 'IQD';
+    usdToIqdRate: number;
+  };
 }
 
 // Social Media Account
@@ -57,8 +61,15 @@ const setItem = <T>(key: string, value: T): void => {
 };
 
 // Store Settings
-export const getStoreSettings = (): StoreSettings => 
-  getItem<StoreSettings>(STORAGE_KEYS.STORE_SETTINGS, { storeName: '', storeLogo: '' });
+export const getStoreSettings = (): StoreSettings =>
+  getItem<StoreSettings>(STORAGE_KEYS.STORE_SETTINGS, {
+    storeName: '',
+    storeLogo: '',
+    currencySettings: {
+      defaultCurrency: 'USD',
+      usdToIqdRate: 1460
+    }
+  });
 
 export const setStoreSettings = (settings: Partial<StoreSettings>) => {
   const current = getStoreSettings();
@@ -66,7 +77,7 @@ export const setStoreSettings = (settings: Partial<StoreSettings>) => {
 };
 
 // Social Media Accounts
-export const getSocialAccounts = (): SocialMediaAccount[] => 
+export const getSocialAccounts = (): SocialMediaAccount[] =>
   getItem<SocialMediaAccount[]>(STORAGE_KEYS.SOCIAL_ACCOUNTS, []);
 
 export const addSocialAccount = (account: Omit<SocialMediaAccount, 'id'>) => {
@@ -81,7 +92,7 @@ export const addSocialAccount = (account: Omit<SocialMediaAccount, 'id'>) => {
 };
 
 // WhatsApp Settings
-export const getWhatsAppSettings = (): WhatsAppSettings => 
+export const getWhatsAppSettings = (): WhatsAppSettings =>
   getItem<WhatsAppSettings>(STORAGE_KEYS.WHATSAPP_SETTINGS, {
     WHATSAPP_API_TOKEN: '',
     WHATSAPP_BUSINESS_PHONE_NUMBER: ''
@@ -93,7 +104,7 @@ export const setWhatsAppSettings = (settings: Partial<WhatsAppSettings>) => {
 };
 
 // Google Calendar Settings
-export const getGoogleCalendarSettings = (): GoogleCalendarSettings => 
+export const getGoogleCalendarSettings = (): GoogleCalendarSettings =>
   getItem<GoogleCalendarSettings>(STORAGE_KEYS.GOOGLE_CALENDAR_SETTINGS, {
     GOOGLE_CLIENT_ID: '',
     GOOGLE_CLIENT_SECRET: ''
@@ -105,7 +116,7 @@ export const setGoogleCalendarSettings = (settings: Partial<GoogleCalendarSettin
 };
 
 // Social Media Settings
-export const getSocialMediaSettings = (): SocialMediaSettings => 
+export const getSocialMediaSettings = (): SocialMediaSettings =>
   getItem<SocialMediaSettings>(STORAGE_KEYS.SOCIAL_MEDIA_SETTINGS, {
     FACEBOOK_APP_ID: '',
     FACEBOOK_APP_SECRET: '',
@@ -115,4 +126,12 @@ export const getSocialMediaSettings = (): SocialMediaSettings =>
 export const setSocialMediaSettings = (settings: Partial<SocialMediaSettings>) => {
   const current = getSocialMediaSettings();
   setItem(STORAGE_KEYS.SOCIAL_MEDIA_SETTINGS, { ...current, ...settings });
+};
+
+// Helper function to convert currency
+export const convertCurrency = (amount: number, fromUSD = true): number => {
+  const settings = getStoreSettings();
+  const rate = settings.currencySettings?.usdToIqdRate || 1460;
+
+  return fromUSD ? amount * rate : amount / rate;
 };

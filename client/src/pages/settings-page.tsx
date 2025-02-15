@@ -65,6 +65,17 @@ const socialMediaSchema = z.object({
   INSTAGRAM_ACCESS_TOKEN: z.string().min(1, "رمز الوصول مطلوب"),
 });
 
+const currencySettingsSchema = z.object({
+  defaultCurrency: z.enum(['USD', 'IQD'], {
+    required_error: "يرجى اختيار العملة الافتراضية"
+  }),
+  usdToIqdRate: z.number()
+    .min(1, "يجب أن يكون سعر الصرف أكبر من 0")
+    .max(999999, "سعر الصرف غير صالح"),
+});
+
+type CurrencySettings = z.infer<typeof currencySettingsSchema>;
+
 const CustomCard = ({ className, ...props }: CardComponentProps) => (
   <CardComponent className={cn("w-full", className)} {...props} />
 );
@@ -121,6 +132,14 @@ export default function SettingsPage() {
     defaultValues: getSocialMediaSettings(),
   });
 
+  const currencyForm = useForm<CurrencySettings>({
+    resolver: zodResolver(currencySettingsSchema),
+    defaultValues: {
+      defaultCurrency: 'USD',
+      usdToIqdRate: 1460, // Default exchange rate
+    }
+  });
+
   // Mutations
   const storeSettingsMutation = useMutation({
     mutationFn: async (data: {
@@ -129,6 +148,7 @@ export default function SettingsPage() {
       primary?: string | { gradient: string[] };
       fontSize?: string;
       fontFamily?: string;
+      currencySettings?: CurrencySettings;
     }) => {
       // Update store settings
       if (data.storeName !== undefined || data.storeLogo !== undefined) {
@@ -150,6 +170,9 @@ export default function SettingsPage() {
           data.fontSize || localStorage.getItem('theme-font-size') || 'medium',
           data.fontFamily || localStorage.getItem('theme-font-family') || 'tajawal'
         );
+      }
+      if (data.currencySettings) {
+        setStoreSettings({ ...storeSettings, currencySettings: data.currencySettings });
       }
     },
     onSuccess: () => {
@@ -477,6 +500,77 @@ export default function SettingsPage() {
                     </div>
                   </div>
                 </div>
+              </CardContent>
+            </CustomCard>
+
+            <CustomCard>
+              <CardHeader>
+                <div className="flex items-center space-x-4">
+                  <div className="flex gap-2">
+                    <Building2 className="h-8 w-8 text-primary" />
+                  </div>
+                  <div>
+                    <CardTitle>إعدادات العملة</CardTitle>
+                    <CardDescription>
+                      تحديد العملة الافتراضية وسعر الصرف
+                    </CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <Form {...currencyForm}>
+                  <form onSubmit={currencyForm.handleSubmit((data) => {
+                    storeSettingsMutation.mutate({ currencySettings: data });
+                  })} className="space-y-4">
+                    <FormField
+                      control={currencyForm.control}
+                      name="defaultCurrency"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>العملة الافتراضية</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="اختر العملة الافتراضية" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="USD">دولار أمريكي</SelectItem>
+                              <SelectItem value="IQD">دينار عراقي</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={currencyForm.control}
+                      name="usdToIqdRate"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>سعر صرف الدولار مقابل الدينار العراقي</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              {...field}
+                              onChange={e => field.onChange(parseFloat(e.target.value))}
+                              placeholder="أدخل سعر الصرف"
+                            />
+                          </FormControl>
+                          <FormDescription>
+                            1 دولار = كم دينار عراقي
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <Button type="submit" disabled={storeSettingsMutation.isLoading}>
+                      {storeSettingsMutation.isLoading ? "جاري الحفظ..." : "حفظ إعدادات العملة"}
+                    </Button>
+                  </form>
+                </Form>
               </CardContent>
             </CustomCard>
           </TabsContent>
