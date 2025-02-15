@@ -418,21 +418,27 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createProduct(product: schema.InsertProduct): Promise<schema.Product> {
-    const [newProduct] = await db.insert(schema.products).values(product).returning();
+    const productWithStringNumbers = {
+      ...product,
+      costPrice: product.costPrice.toString(),
+      sellingPrice: product.sellingPrice.toString(),
+    };
+    const [newProduct] = await db.insert(schema.products).values([productWithStringNumbers]).returning();
     return newProduct;
   }
 
-  async updateProduct(id: number, product: Partial<schema.InsertProduct>): Promise<schema.Product> {
+  async updateProduct(id: number, updates: Partial<schema.InsertProduct>): Promise<schema.Product> {
+    const updatesWithStringNumbers = {
+      ...updates,
+      ...(updates.costPrice && { costPrice: updates.costPrice.toString() }),
+      ...(updates.sellingPrice && { sellingPrice: updates.sellingPrice.toString() }),
+    };
     const [updatedProduct] = await db
       .update(schema.products)
-      .set(product)
+      .set(updatesWithStringNumbers)
       .where(eq(schema.products.id, id))
       .returning();
     return updatedProduct;
-  }
-
-  async deleteProduct(id: number): Promise<void> {
-    await db.delete(schema.products).where(eq(schema.products.id, id));
   }
 
   // Invoice operations
@@ -446,7 +452,14 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createInvoice(invoice: schema.InsertInvoice): Promise<schema.Invoice> {
-    const [newInvoice] = await db.insert(schema.invoices).values(invoice).returning();
+    const invoiceWithStringNumbers = {
+      ...invoice,
+      subtotal: invoice.subtotal.toString(),
+      discount: invoice.discount.toString(),
+      discountAmount: invoice.discountAmount.toString(),
+      finalTotal: invoice.finalTotal.toString(),
+    };
+    const [newInvoice] = await db.insert(schema.invoices).values([invoiceWithStringNumbers]).returning();
     return newInvoice;
   }
 
@@ -507,13 +520,25 @@ export class DatabaseStorage implements IStorage {
     return purchaseOrder;
   }
   async createPurchaseOrder(purchase: schema.InsertPurchaseOrder): Promise<schema.PurchaseOrder> {
-    const [newPurchaseOrder] = await db.insert(schema.purchaseOrders).values(purchase).returning();
+    const purchaseWithStringNumbers = {
+      ...purchase,
+      totalAmount: purchase.totalAmount.toString(),
+      paid: purchase.paid.toString(),
+      remaining: purchase.remaining.toString(),
+    };
+    const [newPurchaseOrder] = await db.insert(schema.purchaseOrders).values([purchaseWithStringNumbers]).returning();
     return newPurchaseOrder;
   }
-  async updatePurchaseOrder(id: number, purchase: Partial<schema.InsertPurchaseOrder>): Promise<schema.PurchaseOrder> {
+  async updatePurchaseOrder(id: number, updates: Partial<schema.InsertPurchaseOrder>): Promise<schema.PurchaseOrder> {
+    const updatesWithStringNumbers = {
+      ...updates,
+      ...(updates.totalAmount && { totalAmount: updates.totalAmount.toString() }),
+      ...(updates.paid && { paid: updates.paid.toString() }),
+      ...(updates.remaining && { remaining: updates.remaining.toString() }),
+    };
     const [updatedPurchaseOrder] = await db
       .update(schema.purchaseOrders)
-      .set(purchase)
+      .set(updatesWithStringNumbers)
       .where(eq(schema.purchaseOrders.id, id))
       .returning();
     return updatedPurchaseOrder;
@@ -558,13 +583,21 @@ export class DatabaseStorage implements IStorage {
     return expense;
   }
   async createExpense(expense: schema.InsertExpense): Promise<schema.Expense> {
-    const [newExpense] = await db.insert(schema.expenses).values(expense).returning();
+    const expenseWithStringNumbers = {
+      ...expense,
+      amount: expense.amount.toString(),
+    };
+    const [newExpense] = await db.insert(schema.expenses).values([expenseWithStringNumbers]).returning();
     return newExpense;
   }
-  async updateExpense(id: number, expense: Partial<schema.InsertExpense>): Promise<schema.Expense> {
+  async updateExpense(id: number, updates: Partial<schema.InsertExpense>): Promise<schema.Expense> {
+    const updatesWithStringNumbers = {
+      ...updates,
+      ...(updates.amount && { amount: updates.amount.toString() }),
+    };
     const [updatedExpense] = await db
       .update(schema.expenses)
-      .set(expense)
+      .set(updatesWithStringNumbers)
       .where(eq(schema.expenses.id, id))
       .returning();
     return updatedExpense;
