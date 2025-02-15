@@ -2,7 +2,7 @@
   "variant": "tint",
   "primary": "#8b5cf6",
   "appearance": "light",
-  "radius": 0.6,
+  "radius": 1,
   "fontSize": "large",
   "fontFamily": "tajawal"
 }
