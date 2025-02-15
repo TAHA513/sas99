@@ -32,8 +32,8 @@ export default function InventoryReportsPage() {
     <DashboardLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold mb-2">تقارير المخزون</h1>
-          <p className="text-muted-foreground">عرض تفصيلي لأرصدة المخزون بالجملة والمفرد</p>
+          <h1 className="text-3xl font-bold mb-2">تقارير المخزون والأسعار</h1>
+          <p className="text-muted-foreground">عرض تفصيلي لأرصدة وأسعار المخزون بالجملة والمفرد</p>
         </div>
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -46,7 +46,7 @@ export default function InventoryReportsPage() {
               <div className="text-2xl font-bold">{products.length}</div>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">منتجات المفرد</CardTitle>
@@ -83,6 +83,63 @@ export default function InventoryReportsPage() {
           </Card>
         </div>
 
+        <Card>
+          <CardHeader>
+            <CardTitle>قائمة أسعار المنتجات</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>المنتج</TableHead>
+                  <TableHead>النوع</TableHead>
+                  <TableHead>الكمية المتوفرة</TableHead>
+                  <TableHead>سعر التكلفة</TableHead>
+                  <TableHead>سعر البيع بالمفرد</TableHead>
+                  <TableHead>سعر البيع بالجملة</TableHead>
+                  <TableHead>الربح المتوقع</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {products.map((product) => {
+                  const isWholesale = product.type === "weight";
+                  const quantity = Number(product.quantity);
+                  const costPrice = Number(product.costPrice);
+                  const sellingPrice = Number(product.sellingPrice);
+                  const expectedProfit = (sellingPrice - costPrice) * quantity;
+
+                  return (
+                    <TableRow key={product.id}>
+                      <TableCell className="font-medium">{product.name}</TableCell>
+                      <TableCell>{isWholesale ? "جملة" : "مفرد"}</TableCell>
+                      <TableCell>
+                        {quantity} {isWholesale ? "كغم" : "قطعة"}
+                      </TableCell>
+                      <TableCell>{formatCurrency(costPrice)}</TableCell>
+                      <TableCell>
+                        {isWholesale ? "-" : formatCurrency(sellingPrice)}
+                      </TableCell>
+                      <TableCell>
+                        {isWholesale ? formatCurrency(sellingPrice) : "-"}
+                      </TableCell>
+                      <TableCell className="text-green-600">
+                        {formatCurrency(expectedProfit)}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+                {products.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center h-24 text-muted-foreground">
+                      لا توجد منتجات
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+
         <Tabs defaultValue="retail" className="space-y-4">
           <TabsList>
             <TabsTrigger value="retail">المفرد</TabsTrigger>
@@ -92,7 +149,7 @@ export default function InventoryReportsPage() {
           <TabsContent value="retail" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle>أرصدة المفرد</CardTitle>
+                <CardTitle>تفاصيل مبيعات المفرد</CardTitle>
               </CardHeader>
               <CardContent>
                 <Table>
@@ -135,7 +192,7 @@ export default function InventoryReportsPage() {
           <TabsContent value="wholesale" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle>أرصدة الجملة</CardTitle>
+                <CardTitle>تفاصيل مبيعات الجملة</CardTitle>
               </CardHeader>
               <CardContent>
                 <Table>
