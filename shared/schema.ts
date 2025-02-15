@@ -146,6 +146,38 @@ export const invoices = pgTable("invoices", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+// Installment Sales Tables
+export const installmentPlans = pgTable("installment_plans", {
+  id: serial("id").primaryKey(),
+  invoiceId: integer("invoice_id").notNull(),
+  customerName: text("customer_name").notNull(),
+  phoneNumber: text("phone_number").notNull(),
+  totalAmount: decimal("total_amount").notNull(),
+  downPayment: decimal("down_payment").notNull(),
+  remainingAmount: decimal("remaining_amount").notNull(),
+  numberOfInstallments: integer("number_of_installments").notNull(),
+  installmentAmount: decimal("installment_amount").notNull(),
+  startDate: timestamp("start_date").notNull(),
+  status: text("status").notNull().default("active"),
+  guarantorName: text("guarantor_name"),
+  guarantorPhone: text("guarantor_phone"),
+  identityDocument: text("identity_document").notNull(),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const installmentPayments = pgTable("installment_payments", {
+  id: serial("id").primaryKey(),
+  planId: integer("plan_id").notNull(),
+  amount: decimal("amount").notNull(),
+  paymentDate: timestamp("payment_date").notNull(),
+  paymentNumber: integer("payment_number").notNull(),
+  status: text("status").notNull().default("paid"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
@@ -207,6 +239,21 @@ export const insertInvoiceSchema = createInsertSchema(invoices).extend({
   note: z.string().optional(),
 });
 
+export const insertInstallmentPlanSchema = createInsertSchema(installmentPlans).extend({
+  totalAmount: z.number().min(0),
+  downPayment: z.number().min(0),
+  remainingAmount: z.number().min(0),
+  numberOfInstallments: z.number().min(1),
+  installmentAmount: z.number().min(0),
+  phoneNumber: z.string().min(10),
+  identityDocument: z.string().min(1),
+});
+
+export const insertInstallmentPaymentSchema = createInsertSchema(installmentPayments).extend({
+  amount: z.number().min(0),
+  paymentNumber: z.number().min(1),
+});
+
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type Customer = typeof customers.$inferSelect;
@@ -233,3 +280,7 @@ export type Product = typeof products.$inferSelect;
 export type InsertProduct = z.infer<typeof insertProductSchema>;
 export type Invoice = typeof invoices.$inferSelect;
 export type InsertInvoice = z.infer<typeof insertInvoiceSchema>;
+export type InstallmentPlan = typeof installmentPlans.$inferSelect;
+export type InsertInstallmentPlan = z.infer<typeof insertInstallmentPlanSchema>;
+export type InstallmentPayment = typeof installmentPayments.$inferSelect;
+export type InsertInstallmentPayment = z.infer<typeof insertInstallmentPaymentSchema>;
