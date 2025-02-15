@@ -40,6 +40,7 @@ import {
 } from "@/components/ui/card";
 import { CampaignForm } from "@/components/marketing/campaign-form";
 import { CampaignStats } from "@/components/marketing/campaign-stats";
+import { formatCurrency } from "@/lib/storage";
 
 export default function MarketingPage() {
   const { data: campaigns } = useQuery<MarketingCampaign[]>({
@@ -217,7 +218,7 @@ export default function MarketingPage() {
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    {campaign.budget ? `${(campaign.budget / 100).toFixed(2)} ريال` : "غير محدد"}
+                    {campaign.budget ? formatCurrency(campaign.budget / 100, true) : "غير محدد"}
                   </TableCell>
                   <TableCell>
                     {format(new Date(campaign.startDate), 'dd MMMM yyyy', { locale: ar })}

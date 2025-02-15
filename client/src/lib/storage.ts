@@ -135,10 +135,18 @@ export const convertCurrency = (amount: number, fromUSD = true): number => {
   return fromUSD ? amount * rate : amount / rate;
 };
 
-export const formatCurrency = (amount: number): string => {
+export const formatCurrency = (amount: number, showBoth = false): string => {
   const settings = getStoreSettings();
+  const rate = settings.currencySettings?.usdToIqdRate || 1460;
+
+  if (showBoth) {
+    const usdAmount = settings.currencySettings?.defaultCurrency === 'IQD' ? amount / rate : amount;
+    const iqdAmount = settings.currencySettings?.defaultCurrency === 'USD' ? amount * rate : amount;
+    return `${usdAmount.toFixed(2)} دولار | ${iqdAmount.toFixed(2)} دينار`;
+  }
+
   const currency = settings.currencySettings?.defaultCurrency || 'USD';
-  return currency === 'USD' 
+  return currency === 'USD'
     ? `${amount.toFixed(2)} دولار`
     : `${amount.toFixed(2)} دينار`;
 };

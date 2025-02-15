@@ -35,12 +35,14 @@ export default function ReportsPage() {
 
   const storeSettings = getStoreSettings();
   const defaultCurrency = storeSettings.currencySettings?.defaultCurrency || 'USD';
+  const secondaryCurrency = storeSettings.currencySettings?.secondaryCurrency || 'JOD'; // Added secondary currency
 
-  // Helper function to format currency
-  const formatCurrency = (amount: number) => {
-    return defaultCurrency === 'USD' 
-      ? `${amount.toFixed(2)} دولار` 
-      : `${amount.toFixed(2)} دينار`;
+
+  // Helper function to format currency with both values
+  const formatCurrency = (amount: number, bothCurrencies: boolean = false): string => {
+    const usdAmount = `${amount.toFixed(2)} دولار`;
+    const jodAmount = `${amount.toFixed(2)} دينار`;
+    return bothCurrencies ? `${usdAmount} / ${jodAmount}` : (defaultCurrency === 'USD' ? usdAmount : jodAmount);
   };
 
   // Filter invoices by date range
@@ -54,7 +56,7 @@ export default function ReportsPage() {
   const salesStats = {
     totalSales: filteredInvoices?.reduce((sum, inv) => sum + inv.finalTotal, 0) || 0,
     totalInvoices: filteredInvoices?.length || 0,
-    averageInvoice: filteredInvoices?.length 
+    averageInvoice: filteredInvoices?.length
       ? (filteredInvoices.reduce((sum, inv) => sum + inv.finalTotal, 0) / filteredInvoices.length)
       : 0
   };
@@ -76,9 +78,9 @@ export default function ReportsPage() {
       'رقم الفاتورة': invoice.id,
       'التاريخ': format(new Date(invoice.date), 'dd/MM/yyyy', { locale: ar }),
       'العميل': invoice.customerName || 'عميل نقدي',
-      'المجموع': invoice.subtotal,
-      'الخصم': invoice.discountAmount,
-      'الإجمالي': formatCurrency(invoice.finalTotal)
+      'المجموع': formatCurrency(invoice.subtotal, true),
+      'الخصم': formatCurrency(invoice.discountAmount, true),
+      'الإجمالي': formatCurrency(invoice.finalTotal, true)
     }));
 
     const worksheet = XLSX.utils.json_to_sheet(salesData, { RTL: true });
@@ -113,10 +115,10 @@ export default function ReportsPage() {
       'الباركود': product.barcode || '-',
       'الكمية الحالية': product.quantity,
       'الحد الأدنى': product.minimumQuantity,
-      'حالة المخزون': product.quantity <= 0 ? 'نفذ المخزون' : 
+      'حالة المخزون': product.quantity <= 0 ? 'نفذ المخزون' :
                       product.quantity <= product.minimumQuantity ? 'منخفض' : 'جيد',
-      'سعر التكلفة': formatCurrency(product.costPrice),
-      'سعر البيع': formatCurrency(product.sellingPrice)
+      'سعر التكلفة': formatCurrency(product.costPrice, true),
+      'سعر البيع': formatCurrency(product.sellingPrice, true)
     }));
 
     const worksheet = XLSX.utils.json_to_sheet(inventoryData, { RTL: true });
@@ -174,7 +176,7 @@ export default function ReportsPage() {
                   <CardTitle className="text-lg">إجمالي المبيعات</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-2xl font-bold">{formatCurrency(salesStats.totalSales)}</p>
+                  <p className="text-2xl font-bold">{formatCurrency(salesStats.totalSales, true)}</p>
                 </CardContent>
               </Card>
 
@@ -192,7 +194,7 @@ export default function ReportsPage() {
                   <CardTitle className="text-lg">متوسط قيمة الفاتورة</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-2xl font-bold">{formatCurrency(salesStats.averageInvoice)}</p>
+                  <p className="text-2xl font-bold">{formatCurrency(salesStats.averageInvoice, true)}</p>
                 </CardContent>
               </Card>
             </div>
