@@ -24,7 +24,8 @@ import {
   Legend,
   BarChart,
   Bar,
-  ResponsiveContainer
+  ResponsiveContainer,
+  Cell
 } from "recharts";
 
 export default function InventoryReportsPage() {
@@ -170,10 +171,16 @@ export default function InventoryReportsPage() {
                     cy="50%"
                     outerRadius={80}
                     fill="#8884d8"
-                    label
-                  />
-                  <Tooltip />
-                  <Legend />
+                    label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
+                    animationBegin={0}
+                    animationDuration={1500}
+                  >
+                    {pieChartData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={index === 0 ? '#8884d8' : '#82ca9d'} />
+                    ))}
+                  </Pie>
+                  <Tooltip formatter={(value) => `عدد المنتجات: ${value}`} />
+                  <Legend verticalAlign="bottom" height={36} />
                 </PieChart>
               </ResponsiveContainer>
             </CardContent>
@@ -187,12 +194,33 @@ export default function InventoryReportsPage() {
             <CardContent className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
                 <RechartsLineChart data={profitData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                  <XAxis 
+                    dataKey="name" 
+                    stroke="#64748b"
+                    tick={{ fill: '#64748b', fontSize: 12 }}
+                    axisLine={{ stroke: '#e2e8f0' }}
+                  />
+                  <YAxis 
+                    stroke="#64748b"
+                    tick={{ fill: '#64748b', fontSize: 12 }}
+                    axisLine={{ stroke: '#e2e8f0' }}
+                    tickFormatter={(value) => `${value.toLocaleString('ar-IQ')} د.ع`}
+                  />
+                  <Tooltip 
+                    formatter={(value) => [`${value.toLocaleString('ar-IQ')} د.ع`, 'الربح المتوقع']}
+                    labelStyle={{ fontFamily: 'inherit', textAlign: 'right' }}
+                  />
                   <Legend />
-                  <Line type="monotone" dataKey="الربح المتوقع" stroke="#82ca9d" />
+                  <Line 
+                    type="monotone" 
+                    dataKey="الربح المتوقع" 
+                    stroke="#82ca9d" 
+                    strokeWidth={2}
+                    dot={{ fill: '#82ca9d', strokeWidth: 2 }}
+                    activeDot={{ r: 8 }}
+                    animationDuration={1500}
+                  />
                 </RechartsLineChart>
               </ResponsiveContainer>
             </CardContent>
@@ -206,13 +234,36 @@ export default function InventoryReportsPage() {
             <CardContent className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={barChartData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                  <XAxis 
+                    dataKey="name" 
+                    stroke="#64748b"
+                    tick={{ fill: '#64748b', fontSize: 12 }}
+                    axisLine={{ stroke: '#e2e8f0' }}
+                  />
+                  <YAxis 
+                    stroke="#64748b"
+                    tick={{ fill: '#64748b', fontSize: 12 }}
+                    axisLine={{ stroke: '#e2e8f0' }}
+                    tickFormatter={(value) => `${value.toLocaleString('ar-IQ')} د.ع`}
+                  />
+                  <Tooltip 
+                    formatter={(value) => [`${value.toLocaleString('ar-IQ')} د.ع`, '']}
+                    labelStyle={{ fontFamily: 'inherit', textAlign: 'right' }}
+                  />
                   <Legend />
-                  <Bar dataKey="سعر التكلفة" fill="#8884d8" />
-                  <Bar dataKey="سعر البيع" fill="#82ca9d" />
+                  <Bar 
+                    dataKey="سعر التكلفة" 
+                    fill="#8884d8" 
+                    radius={[4, 4, 0, 0]}
+                    animationDuration={1500}
+                  />
+                  <Bar 
+                    dataKey="سعر البيع" 
+                    fill="#82ca9d" 
+                    radius={[4, 4, 0, 0]}
+                    animationDuration={1500}
+                  />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
