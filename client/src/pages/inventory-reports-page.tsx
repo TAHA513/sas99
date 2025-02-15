@@ -12,6 +12,20 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useQuery } from "@tanstack/react-query";
 import { Package2, DollarSign, LineChart } from "lucide-react";
 import type { Product } from "@shared/schema";
+import {
+  PieChart,
+  Pie,
+  LineChart as RechartsLineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  BarChart,
+  Bar,
+  ResponsiveContainer
+} from "recharts";
 
 export default function InventoryReportsPage() {
   const { data: products = [] } = useQuery<Product[]>({
@@ -37,6 +51,25 @@ export default function InventoryReportsPage() {
       currency: 'IQD'
     }).format(amount);
   };
+
+  // بيانات الرسم البياني الدائري
+  const pieChartData = [
+    { name: 'منتجات المفرد', value: retailProducts.length },
+    { name: 'منتجات الجملة', value: wholesaleProducts.length },
+  ];
+
+  // بيانات الرسم البياني العمودي للمقارنة
+  const barChartData = products.slice(0, 5).map(product => ({
+    name: product.name,
+    'سعر التكلفة': Number(product.costPrice),
+    'سعر البيع': Number(product.sellingPrice),
+  }));
+
+  // بيانات الرسم البياني الخطي للأرباح
+  const profitData = products.slice(0, 5).map(product => ({
+    name: product.name,
+    'الربح المتوقع': Number(product.sellingPrice) - Number(product.costPrice),
+  }));
 
   return (
     <DashboardLayout>
@@ -110,6 +143,73 @@ export default function InventoryReportsPage() {
               <div className="text-2xl font-bold text-green-600">
                 {formatCurrency(totalInventorySalePrice - totalInventoryCost)}
               </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* الرسوم البيانية */}
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {/* رسم بياني دائري لتوزيع المنتجات */}
+          <Card className="col-span-1">
+            <CardHeader>
+              <CardTitle>توزيع المنتجات</CardTitle>
+            </CardHeader>
+            <CardContent className="h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={pieChartData}
+                    dataKey="value"
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={80}
+                    fill="#8884d8"
+                    label
+                  />
+                  <Tooltip />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
+          {/* رسم بياني خطي للأرباح المتوقعة */}
+          <Card className="col-span-1">
+            <CardHeader>
+              <CardTitle>الأرباح المتوقعة (أعلى 5 منتجات)</CardTitle>
+            </CardHeader>
+            <CardContent className="h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <RechartsLineChart data={profitData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Line type="monotone" dataKey="الربح المتوقع" stroke="#82ca9d" />
+                </RechartsLineChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
+          {/* رسم بياني عمودي لمقارنة الأسعار */}
+          <Card className="col-span-1">
+            <CardHeader>
+              <CardTitle>مقارنة الأسعار (أعلى 5 منتجات)</CardTitle>
+            </CardHeader>
+            <CardContent className="h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={barChartData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Bar dataKey="سعر التكلفة" fill="#8884d8" />
+                  <Bar dataKey="سعر البيع" fill="#82ca9d" />
+                </BarChart>
+              </ResponsiveContainer>
             </CardContent>
           </Card>
         </div>
