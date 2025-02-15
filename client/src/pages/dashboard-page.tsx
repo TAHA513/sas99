@@ -1,3 +1,4 @@
+import React, { useState } from "react";
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
@@ -63,7 +64,7 @@ const topProductsData = [
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 
-export default function DashboardPage() {
+const DashboardPage: React.FC = () => {
   const { data: customers } = useQuery({
     queryKey: ["/api/customers"],
   });
@@ -336,4 +337,6 @@ export default function DashboardPage() {
       </div>
     </DashboardLayout>
   );
-}
+};
+
+export default DashboardPage;
