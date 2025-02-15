@@ -68,6 +68,21 @@ const CustomCard = ({ className, ...props }: CardComponentProps) => (
   <CardComponent className={cn("w-full", className)} {...props} />
 );
 
+const colorOptions = [
+  { type: 'solid', color: "#0ea5e9", name: "أزرق" },
+  { type: 'solid', color: "#10b981", name: "أخضر" },
+  { type: 'solid', color: "#8b5cf6", name: "بنفسجي" },
+  { type: 'solid', color: "#ef4444", name: "أحمر" },
+  { type: 'solid', color: "#f59e0b", name: "برتقالي" },
+  { type: 'gradient', colors: ["#00c6ff", "#0072ff"], name: "تدرج أزرق" },
+  { type: 'gradient', colors: ["#11998e", "#38ef7d"], name: "تدرج أخضر" },
+  { type: 'gradient', colors: ["#fc466b", "#3f5efb"], name: "تدرج وردي" },
+  { type: 'gradient', colors: ["#f12711", "#f5af19"], name: "تدرج برتقالي" },
+  { type: 'gradient', colors: ["#8e2de2", "#4a00e0"], name: "تدرج بنفسجي" },
+];
+
+const createGradient = (color1: string, color2: string) => `linear-gradient(to right, ${color1}, ${color2})`;
+
 export default function SettingsPage() {
   const { toast } = useToast();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -133,10 +148,10 @@ export default function SettingsPage() {
   });
 
   const storeSettingsMutation = useMutation({
-    mutationFn: async (data: { 
-      storeName?: string; 
+    mutationFn: async (data: {
+      storeName?: string;
       storeLogo?: string;
-      primary?: string;
+      primary?: string | { gradient: string[] };
       fontSize?: string;
       fontFamily?: string;
     }) => {
@@ -152,7 +167,11 @@ export default function SettingsPage() {
 
         // Handle color changes
         if (data.primary) {
-          updateThemeColors(data.primary);
+          if (typeof data.primary === 'string') {
+            updateThemeColors(data.primary);
+          } else {
+            updateThemeColors(data.primary); // Assuming backend handles gradient
+          }
         }
 
         // Handle font changes
@@ -690,28 +709,31 @@ export default function SettingsPage() {
                 <div className="space-y-4">
                   <Label>لون النظام الأساسي</Label>
                   <div className="grid grid-cols-5 gap-2">
-                    {[
-                      { color: "#0ea5e9", name: "أزرق" },
-                      { color: "#10b981", name: "أخضر" },
-                      { color: "#8b5cf6", name: "بنفسجي" },
-                      { color: "#ef4444", name: "أحمر" },
-                      { color: "#f59e0b", name: "برتقالي" }
-                    ].map(({ color, name }) => (
+                    {colorOptions.map((option) => (
                       <Button
-                        key={color}
+                        key={option.type === 'solid' ? option.color : option.colors.join('-')}
                         variant="outline"
                         className={cn(
                           "w-full h-12 rounded-md",
-                          color === localStorage.getItem('theme-color') && "ring-2 ring-primary"
+                          ((option.type === 'solid' && option.color === localStorage.getItem('theme-color')) ||
+                           (option.type === 'gradient' &&
+                            JSON.stringify(option.colors) === localStorage.getItem('theme-gradient'))) &&
+                          "ring-2 ring-primary"
                         )}
-                        style={{ backgroundColor: color }}
+                        style={{
+                          background: option.type === 'solid'
+                            ? option.color
+                            : createGradient(option.colors[0], option.colors[1])
+                        }}
                         onClick={() => {
                           storeSettingsMutation.mutate({
-                            primary: color
+                            primary: option.type === 'solid'
+                              ? option.color
+                              : { gradient: option.colors }
                           });
                         }}
                       >
-                        <span className="sr-only">{name}</span>
+                        <span className="sr-only">{option.name}</span>
                       </Button>
                     ))}
                   </div>

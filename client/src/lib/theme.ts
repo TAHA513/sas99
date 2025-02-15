@@ -50,15 +50,30 @@ const fontFamilyMap: Record<string, string> = {
   'harmattan': 'Harmattan, sans-serif',
 };
 
-// Update theme CSS variables for colors
-export const updateThemeColors = (primary: string) => {
-  const root = document.documentElement;
-  const hslColor = hexToHSL(primary);
-  root.style.setProperty('--primary', hslColor);
-  root.style.setProperty('--primary-foreground', '210 40% 98%');
+// Create gradient string from two colors
+export const createGradient = (color1: string, color2: string, direction: 'to right' | 'to bottom' = 'to right'): string => {
+  return `linear-gradient(${direction}, ${color1}, ${color2})`;
+};
 
-  // Save to localStorage
-  localStorage.setItem('theme-color', primary);
+// Update theme CSS variables for colors
+export const updateThemeColors = (primary: string | { gradient: [string, string] }) => {
+  const root = document.documentElement;
+
+  if (typeof primary === 'string') {
+    // Single color
+    const hslColor = hexToHSL(primary);
+    root.style.setProperty('--primary', hslColor);
+    root.style.setProperty('--primary-foreground', '210 40% 98%');
+    localStorage.setItem('theme-color', primary);
+    localStorage.removeItem('theme-gradient');
+  } else {
+    // Gradient
+    const [color1, color2] = primary.gradient;
+    const gradient = createGradient(color1, color2);
+    root.style.setProperty('--primary-gradient', gradient);
+    localStorage.setItem('theme-gradient', JSON.stringify(primary.gradient));
+    localStorage.removeItem('theme-color');
+  }
 };
 
 // Update font settings
@@ -75,11 +90,19 @@ export const updateThemeFonts = (fontSize: string, fontFamily: string) => {
 // Load theme settings from localStorage
 export const loadThemeSettings = () => {
   const color = localStorage.getItem('theme-color');
+  const gradientStr = localStorage.getItem('theme-gradient');
   const fontSize = localStorage.getItem('theme-font-size');
   const fontFamily = localStorage.getItem('theme-font-family');
 
   if (color) {
     updateThemeColors(color);
+  } else if (gradientStr) {
+    try {
+      const gradient = JSON.parse(gradientStr) as [string, string];
+      updateThemeColors({ gradient });
+    } catch (error) {
+      console.error('Error parsing gradient:', error);
+    }
   }
 
   if (fontSize && fontFamily) {
@@ -88,6 +111,7 @@ export const loadThemeSettings = () => {
 
   return {
     color,
+    gradient: gradientStr ? JSON.parse(gradientStr) : undefined,
     fontSize,
     fontFamily,
   };
