@@ -573,10 +573,6 @@ export default function InvoicesPage() {
 
               {/* Action Buttons */}
               <div className="grid gap-2">
-                <Button className="w-full" onClick={saveInvoice}>
-                  <Save className="h-4 w-4 ml-2" />
-                  حفظ الفاتورة
-                </Button>
                 <Button className="w-full" variant="secondary" onClick={printInvoice}>
                   <Receipt className="h-4 w-4 ml-2" />
                   طباعة الفاتورة
