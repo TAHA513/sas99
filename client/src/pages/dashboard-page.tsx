@@ -25,7 +25,7 @@ export default function DashboardPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">العملاء</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
+              <Users className="h-4 w-4 text-foreground opacity-90" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{customers?.length || 0}</div>
@@ -35,7 +35,7 @@ export default function DashboardPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">المواعيد</CardTitle>
-              <Calendar className="h-4 w-4 text-muted-foreground" />
+              <Calendar className="h-4 w-4 text-foreground opacity-90" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{appointments?.length || 0}</div>
@@ -45,7 +45,7 @@ export default function DashboardPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">الموظفين</CardTitle>
-              <UserCog className="h-4 w-4 text-muted-foreground" />
+              <UserCog className="h-4 w-4 text-foreground opacity-90" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{staff?.length || 0}</div>

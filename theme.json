@@ -1,8 +1,8 @@
 {
-  "variant": "vibrant",
-  "primary": "#4f46e5",
+  "variant": "tint",
+  "primary": "#8b5cf6",
   "appearance": "light",
-  "radius": 0.75,
+  "radius": 0.6,
   "fontSize": "large",
   "fontFamily": "tajawal"
 }
