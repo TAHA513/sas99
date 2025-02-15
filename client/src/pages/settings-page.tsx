@@ -3,35 +3,41 @@ import { Button } from "@/components/ui/button";
 import { Card as CardComponent, CardContent, CardHeader, CardTitle, CardProps as CardComponentProps, CardDescription } from "@/components/ui/card";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { useToast, toast } from "@/hooks/use-toast";
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { MessageSquare, Upload, Plus, Building2, Settings as SettingsIcon, Paintbrush } from "lucide-react";
 import { SiGooglecalendar } from "react-icons/si";
 import { SiFacebook, SiInstagram, SiSnapchat } from "react-icons/si";
-import { Setting, User, Customer, SocialMediaAccount, StoreSetting } from "@shared/schema";
 import { Label } from "@/components/ui/label";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useState, useEffect } from "react";
-import { useQueryClient } from "@tanstack/react-query";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import { updateThemeColors, updateThemeFonts, loadThemeSettings } from "@/lib/theme";
-
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  getStoreSettings,
+  setStoreSettings,
+  getSocialAccounts,
+  addSocialAccount,
+  getWhatsAppSettings,
+  setWhatsAppSettings,
+  getGoogleCalendarSettings,
+  setGoogleCalendarSettings,
+  getSocialMediaSettings,
+  setSocialMediaSettings,
+  type StoreSettings,
+  type SocialMediaAccount,
+  type WhatsAppSettings,
+  type GoogleCalendarSettings,
+  type SocialMediaSettings
+} from "@/lib/storage";
 
 const socialMediaAccountSchema = z.object({
   platform: z.enum(['facebook', 'instagram', 'snapchat'], {
@@ -59,11 +65,6 @@ const socialMediaSchema = z.object({
   INSTAGRAM_ACCESS_TOKEN: z.string().min(1, "رمز الوصول مطلوب"),
 });
 
-type WhatsAppSettings = z.infer<typeof whatsappSchema>;
-type GoogleCalendarSettings = z.infer<typeof googleCalendarSchema>;
-type SocialMediaSettings = z.infer<typeof socialMediaSchema>;
-
-
 const CustomCard = ({ className, ...props }: CardComponentProps) => (
   <CardComponent className={cn("w-full", className)} {...props} />
 );
@@ -88,65 +89,39 @@ export default function SettingsPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const queryClient = useQueryClient();
 
-  // Add theme loading on mount
+  // Load theme settings on mount
   useEffect(() => {
     loadThemeSettings();
   }, []);
 
-  const { data: settings } = useQuery<Setting[]>({
-    queryKey: ["/api/settings"],
+  // Queries
+  const { data: storeSettings } = useQuery({
+    queryKey: ['storeSettings'],
+    queryFn: getStoreSettings,
   });
 
-  const { data: storeSettings } = useQuery<StoreSetting>({
-    queryKey: ["/api/store-settings"],
+  const { data: socialAccounts } = useQuery({
+    queryKey: ['socialAccounts'],
+    queryFn: getSocialAccounts,
   });
 
+  // Forms
   const whatsappForm = useForm<WhatsAppSettings>({
     resolver: zodResolver(whatsappSchema),
-    defaultValues: {
-      WHATSAPP_API_TOKEN: settings?.find(s => s.key === "WHATSAPP_API_TOKEN")?.value || "",
-      WHATSAPP_BUSINESS_PHONE_NUMBER: settings?.find(s => s.key === "WHATSAPP_BUSINESS_PHONE_NUMBER")?.value || "",
-    },
+    defaultValues: getWhatsAppSettings(),
   });
 
   const googleCalendarForm = useForm<GoogleCalendarSettings>({
     resolver: zodResolver(googleCalendarSchema),
-    defaultValues: {
-      GOOGLE_CLIENT_ID: settings?.find(s => s.key === "GOOGLE_CLIENT_ID")?.value || "",
-      GOOGLE_CLIENT_SECRET: settings?.find(s => s.key === "GOOGLE_CLIENT_SECRET")?.value || "",
-    },
+    defaultValues: getGoogleCalendarSettings(),
   });
 
   const socialMediaForm = useForm<SocialMediaSettings>({
     resolver: zodResolver(socialMediaSchema),
-    defaultValues: {
-      FACEBOOK_APP_ID: settings?.find(s => s.key === "FACEBOOK_APP_ID")?.value || "",
-      FACEBOOK_APP_SECRET: settings?.find(s => s.key === "FACEBOOK_APP_SECRET")?.value || "",
-      INSTAGRAM_ACCESS_TOKEN: settings?.find(s => s.key === "INSTAGRAM_ACCESS_TOKEN")?.value || "",
-    },
+    defaultValues: getSocialMediaSettings(),
   });
 
-  const saveSettingsMutation = useMutation({
-    mutationFn: async (data: { key: string; value: string }) => {
-      const res = await apiRequest("POST", "/api/settings", data);
-      return res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/settings"] });
-      toast({
-        title: "تم حفظ الإعدادات",
-        description: "تم تحديث الإعدادات بنجاح",
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "خطأ في حفظ الإعدادات",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
-
+  // Mutations
   const storeSettingsMutation = useMutation({
     mutationFn: async (data: {
       storeName?: string;
@@ -155,97 +130,50 @@ export default function SettingsPage() {
       fontSize?: string;
       fontFamily?: string;
     }) => {
-      try {
-        // Update store settings
-        if (data.storeName !== undefined || data.storeLogo !== undefined) {
-          const storeRes = await apiRequest("POST", "/api/store-settings", {
-            storeName: data.storeName,
-            storeLogo: data.storeLogo,
-          });
-          await storeRes.json();
-        }
+      // Update store settings
+      if (data.storeName !== undefined || data.storeLogo !== undefined) {
+        const newSettings = {
+          ...(data.storeName !== undefined && { storeName: data.storeName }),
+          ...(data.storeLogo !== undefined && { storeLogo: data.storeLogo }),
+        };
+        setStoreSettings(newSettings);
+      }
 
-        // Handle color changes
-        if (data.primary) {
-          if (typeof data.primary === 'string') {
-            updateThemeColors(data.primary);
-          } else {
-            updateThemeColors(data.primary); // Assuming backend handles gradient
-          }
-        }
+      // Handle color changes
+      if (data.primary) {
+        updateThemeColors(data.primary);
+      }
 
-        // Handle font changes
-        if (data.fontSize || data.fontFamily) {
-          updateThemeFonts(
-            data.fontSize || localStorage.getItem('theme-font-size') || 'medium',
-            data.fontFamily || localStorage.getItem('theme-font-family') || 'tajawal'
-          );
-        }
-
-        return { success: true };
-      } catch (error) {
-        console.error('Error updating settings:', error);
-        throw error;
+      // Handle font changes
+      if (data.fontSize || data.fontFamily) {
+        updateThemeFonts(
+          data.fontSize || localStorage.getItem('theme-font-size') || 'medium',
+          data.fontFamily || localStorage.getItem('theme-font-family') || 'tajawal'
+        );
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/store-settings"] });
+      queryClient.invalidateQueries({ queryKey: ['storeSettings'] });
       toast({
         title: "تم حفظ الإعدادات",
         description: "تم تحديث الإعدادات بنجاح",
       });
     },
-    onError: (error: Error) => {
-      toast({
-        title: "خطأ في حفظ الإعدادات",
-        description: error.message || "حدث خطأ أثناء حفظ الإعدادات",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const handleLogoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        storeSettingsMutation.mutate({
-          storeName: storeSettings?.storeName || "",
-          storeLogo: reader.result as string,
-        });
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const { data: socialAccounts } = useQuery<SocialMediaAccount[]>({
-    queryKey: ["/api/social-accounts"],
   });
 
   const accountMutation = useMutation({
-    mutationFn: async (data: SocialMediaAccountFormData) => {
-      try {
-        const res = await apiRequest("POST", "/api/social-accounts", data);
-        return await res.json();
-      } catch (error) {
-        throw new Error("فشل في إضافة الحساب. يرجى المحاولة مرة أخرى.");
-      }
+    mutationFn: (data: SocialMediaAccountFormData) => {
+      const newAccount = addSocialAccount(data);
+      return newAccount;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/social-accounts"] });
+      queryClient.invalidateQueries({ queryKey: ['socialAccounts'] });
       toast({
         title: "تم بنجاح",
         description: "تم إضافة الحساب بنجاح",
       });
       form.reset();
       setIsDialogOpen(false);
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "خطأ",
-        description: error.message,
-        variant: "destructive",
-      });
     },
   });
 
@@ -263,21 +191,27 @@ export default function SettingsPage() {
   };
 
   const onWhatsAppSubmit = async (data: WhatsAppSettings) => {
-    for (const [key, value] of Object.entries(data)) {
-      await saveSettingsMutation.mutateAsync({ key, value });
-    }
+    setWhatsAppSettings(data);
+    toast({
+      title: "تم حفظ الإعدادات",
+      description: "تم تحديث إعدادات WhatsApp بنجاح",
+    });
   };
 
   const onGoogleCalendarSubmit = async (data: GoogleCalendarSettings) => {
-    for (const [key, value] of Object.entries(data)) {
-      await saveSettingsMutation.mutateAsync({ key, value });
-    }
+    setGoogleCalendarSettings(data);
+    toast({
+      title: "تم حفظ الإعدادات",
+      description: "تم تحديث إعدادات Google Calendar بنجاح",
+    });
   };
 
   const onSocialMediaSubmit = async (data: SocialMediaSettings) => {
-    for (const [key, value] of Object.entries(data)) {
-      await saveSettingsMutation.mutateAsync({ key, value });
-    }
+    setSocialMediaSettings(data);
+    toast({
+      title: "تم حفظ الإعدادات",
+      description: "تم تحديث إعدادات وسائل التواصل الاجتماعي بنجاح",
+    });
   };
 
   return (
@@ -423,10 +357,10 @@ export default function SettingsPage() {
 
                   <Button
                     type="submit"
-                    disabled={accountMutation.isPending || !form.formState.isValid}
+                    disabled={accountMutation.isLoading || !form.formState.isValid}
                     className="w-full"
                   >
-                    {accountMutation.isPending ? "جاري الحفظ..." : "حفظ الحساب"}
+                    {accountMutation.isLoading ? "جاري الحفظ..." : "حفظ الحساب"}
                   </Button>
                 </form>
               </Form>
@@ -472,11 +406,7 @@ export default function SettingsPage() {
                     placeholder="أدخل اسم المتجر"
                     defaultValue={storeSettings?.storeName || ""}
                     onChange={(e) => {
-                      const newValue = e.target.value;
-                      storeSettingsMutation.mutate({
-                        storeName: newValue,
-                        storeLogo: storeSettings?.storeLogo || "",
-                      });
+                      storeSettingsMutation.mutate({ storeName: e.target.value, storeLogo: storeSettings?.storeLogo || "" });
                     }}
                   />
                 </div>
@@ -496,10 +426,7 @@ export default function SettingsPage() {
                           size="sm"
                           className="absolute top-0 right-0 mt-2 mr-2"
                           onClick={() => {
-                            storeSettingsMutation.mutate({
-                              storeName: storeSettings.storeName || "",
-                              storeLogo: "",
-                            });
+                            storeSettingsMutation.mutate({ storeName: storeSettings.storeName || "", storeLogo: "" });
                           }}
                         >
                           حذف
@@ -587,8 +514,8 @@ export default function SettingsPage() {
                         </FormItem>
                       )}
                     />
-                    <Button type="submit" disabled={saveSettingsMutation.isPending}>
-                      {saveSettingsMutation.isPending ? "جاري الحفظ..." : "حفظ الإعدادات"}
+                    <Button type="submit" disabled={storeSettingsMutation.isLoading}>
+                      {storeSettingsMutation.isLoading ? "جاري الحفظ..." : "حفظ الإعدادات"}
                     </Button>
                   </form>
                 </Form>
@@ -640,8 +567,8 @@ export default function SettingsPage() {
                         </FormItem>
                       )}
                     />
-                    <Button type="submit" disabled={saveSettingsMutation.isPending}>
-                      {saveSettingsMutation.isPending ? "جاري الحفظ..." : "حفظ الإعدادات"}
+                    <Button type="submit" disabled={storeSettingsMutation.isLoading}>
+                      {storeSettingsMutation.isLoading ? "جاري الحفظ..." : "حفظ الإعدادات"}
                     </Button>
                   </form>
                 </Form>
@@ -716,9 +643,9 @@ export default function SettingsPage() {
                         className={cn(
                           "w-full h-12 rounded-md",
                           ((option.type === 'solid' && option.color === localStorage.getItem('theme-color')) ||
-                           (option.type === 'gradient' &&
-                            JSON.stringify(option.colors) === localStorage.getItem('theme-gradient'))) &&
-                          "ring-2 ring-primary"
+                            (option.type === 'gradient' &&
+                              JSON.stringify(option.colors) === localStorage.getItem('theme-gradient'))) &&
+                            "ring-2 ring-primary"
                         )}
                         style={{
                           background: option.type === 'solid'
@@ -745,9 +672,7 @@ export default function SettingsPage() {
                   <Select
                     defaultValue={localStorage.getItem('theme-font-size') || 'medium'}
                     onValueChange={(value) => {
-                      storeSettingsMutation.mutate({
-                        fontSize: value
-                      });
+                      storeSettingsMutation.mutate({ fontSize: value });
                     }}
                   >
                     <SelectTrigger>
@@ -766,9 +691,7 @@ export default function SettingsPage() {
                   <Select
                     defaultValue={localStorage.getItem('theme-font-family') || 'tajawal'}
                     onValueChange={(value) => {
-                      storeSettingsMutation.mutate({
-                        fontFamily: value
-                      });
+                      storeSettingsMutation.mutate({ fontFamily: value });
                     }}
                   >
                     <SelectTrigger>
@@ -796,3 +719,16 @@ export default function SettingsPage() {
     </DashboardLayout>
   );
 }
+
+const handleLogoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const file = event.target.files?.[0];
+  if (file) {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      storeSettingsMutation.mutate({
+        storeLogo: reader.result as string,
+      });
+    };
+    reader.readAsDataURL(file);
+  }
+};
