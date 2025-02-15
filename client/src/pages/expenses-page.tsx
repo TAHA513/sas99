@@ -82,6 +82,14 @@ export default function ExpensesPage() {
     sum + Number(expense.amount), 0
   );
 
+  // تحويل العملة
+  const exchangeRate = 1300; // سعر صرف الدولار مقابل الدينار العراقي
+
+  const convertAmount = (amount: number, fromCurrency: 'USD' | 'IQD', toCurrency: 'USD' | 'IQD') => {
+    if (fromCurrency === toCurrency) return amount;
+    return fromCurrency === 'USD' ? amount * exchangeRate : amount / exchangeRate;
+  };
+
   return (
     <DashboardLayout>
       <motion.div
@@ -137,8 +145,16 @@ export default function ExpensesPage() {
                 <Calendar className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{formatCurrency(todayTotal, displayCurrency)}</div>
-                <p className="text-xs text-muted-foreground">
+                <div className="text-2xl font-bold">
+                  {formatCurrency(convertAmount(todayTotal, 'USD', displayCurrency), displayCurrency)}
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  {displayCurrency === 'USD' ? 
+                    `${formatCurrency(convertAmount(todayTotal, 'USD', 'IQD'), 'IQD')} (د.ع)` :
+                    `${formatCurrency(todayTotal, 'USD')} ($)`
+                  }
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">
                   {todayExpenses.length} مصروف
                 </p>
               </CardContent>
@@ -152,8 +168,16 @@ export default function ExpensesPage() {
                 <FileText className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{formatCurrency(monthTotal, displayCurrency)}</div>
-                <p className="text-xs text-muted-foreground">
+                <div className="text-2xl font-bold">
+                  {formatCurrency(convertAmount(monthTotal, 'USD', displayCurrency), displayCurrency)}
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  {displayCurrency === 'USD' ? 
+                    `${formatCurrency(convertAmount(monthTotal, 'USD', 'IQD'), 'IQD')} (د.ع)` :
+                    `${formatCurrency(monthTotal, 'USD')} ($)`
+                  }
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">
                   {monthExpenses.length} مصروف
                 </p>
               </CardContent>
@@ -168,9 +192,15 @@ export default function ExpensesPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {formatCurrency(totalExpenses, displayCurrency)}
+                  {formatCurrency(convertAmount(totalExpenses, 'USD', displayCurrency), displayCurrency)}
                 </div>
-                <p className="text-xs text-muted-foreground">
+                <div className="text-sm text-muted-foreground">
+                  {displayCurrency === 'USD' ? 
+                    `${formatCurrency(convertAmount(totalExpenses, 'USD', 'IQD'), 'IQD')} (د.ع)` :
+                    `${formatCurrency(totalExpenses, 'USD')} ($)`
+                  }
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">
                   {expenses.length} مصروف
                 </p>
               </CardContent>
@@ -191,7 +221,7 @@ export default function ExpensesPage() {
                 <TableHead>الفئة</TableHead>
                 <TableHead>الوصف</TableHead>
                 <TableHead>المبلغ</TableHead>
-                <TableHead>العملة</TableHead>
+                <TableHead>المبلغ المحول</TableHead>
                 <TableHead>طريقة الدفع</TableHead>
                 <TableHead>المستلم</TableHead>
                 <TableHead>الحالة</TableHead>
@@ -212,9 +242,12 @@ export default function ExpensesPage() {
                   </TableCell>
                   <TableCell>{expense.categoryId}</TableCell>
                   <TableCell>{expense.description}</TableCell>
-                  <TableCell>{formatCurrency(Number(expense.amount), expense.currency || displayCurrency)}</TableCell>
+                  <TableCell>{formatCurrency(Number(expense.amount), expense.currency || 'USD')}</TableCell>
                   <TableCell>
-                    {expense.currency === 'USD' ? 'دولار أمريكي' : 'دينار عراقي'}
+                    {expense.currency === 'USD' ? 
+                      formatCurrency(Number(expense.amount) * exchangeRate, 'IQD') :
+                      formatCurrency(Number(expense.amount) / exchangeRate, 'USD')
+                    }
                   </TableCell>
                   <TableCell>
                     {expense.paymentMethod === 'cash' ? 'نقداً' :
