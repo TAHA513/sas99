@@ -18,8 +18,11 @@ import PurchasesPage from "@/pages/purchases-page";
 import SuppliersPage from "@/pages/suppliers-page";
 import ExpensesPage from "@/pages/expenses-page";
 import ExpenseCategoriesPage from "@/pages/expense-categories-page";
+import StaffDashboardPage from "@/pages/staff-dashboard";
 import { useEffect } from "react";
 import { loadThemeSettings } from "@/lib/theme";
+import { ProtectedRoute } from "@/lib/protected-route";
+import { AuthProvider } from "@/hooks/use-auth";
 
 // Create a client
 const queryClient = new QueryClient({
@@ -40,6 +43,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={DashboardPage} />
+      <ProtectedRoute path="/staff-dashboard" component={StaffDashboardPage} />
       <Route path="/purchases" component={PurchasesPage} />
       <Route path="/suppliers" component={SuppliersPage} />
       <Route path="/customers" component={CustomersPage} />
@@ -63,8 +67,10 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <Router />
-      <Toaster />
+      <AuthProvider>
+        <Router />
+        <Toaster />
+      </AuthProvider>
     </QueryClientProvider>
   );
 }
