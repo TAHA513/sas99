@@ -12,6 +12,8 @@ import {
   Receipt,
   LineChart,
   CreditCard,
+  ShoppingCart,
+  Truck,
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
@@ -21,6 +23,16 @@ const navItems = [
     title: "لوحة التحكم",
     href: "/",
     icon: Home,
+  },
+  {
+    title: "المشتريات",
+    href: "/purchases",
+    icon: ShoppingCart,
+  },
+  {
+    title: "الموردين",
+    href: "/suppliers",
+    icon: Truck,
   },
   {
     title: "العملاء",

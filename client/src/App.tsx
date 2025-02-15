@@ -14,6 +14,8 @@ import BarcodesPage from "@/pages/barcodes-page";
 import InvoicesPage from "@/pages/invoices-page";
 import InstallmentsPage from "@/pages/installments-page";
 import ReportsPage from "@/pages/reports-page";
+import PurchasesPage from "@/pages/purchases-page";
+import SuppliersPage from "@/pages/suppliers-page";
 import { useEffect } from "react";
 import { loadThemeSettings } from "@/lib/theme";
 
@@ -22,7 +24,7 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: Infinity,
-      cacheTime: Infinity, //Corrected typo here
+      gcTime: Infinity,
     },
   },
 });
@@ -36,6 +38,8 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={DashboardPage} />
+      <Route path="/purchases" component={PurchasesPage} />
+      <Route path="/suppliers" component={SuppliersPage} />
       <Route path="/customers" component={CustomersPage} />
       <Route path="/appointments" component={AppointmentsPage} />
       <Route path="/staff" component={StaffPage} />
