@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2, AlertCircle, Calendar, DollarSign, Package, Users, Clock, Printer } from "lucide-react";
 import { Link, useLocation } from "wouter";
 
-// Loading skeleton component
+// Loading skeleton components
 const CardSkeleton = () => (
   <Card className="p-6 hover:shadow-lg transition-shadow animate-pulse">
     <div className="flex items-center gap-4">
@@ -26,14 +26,29 @@ const CardSkeleton = () => (
   </Card>
 );
 
-const TableRowSkeleton = () => (
-  <TableRow className="animate-pulse">
-    {[...Array(5)].map((_, i) => (
-      <TableCell key={i}>
-        <div className="h-4 w-24 bg-muted rounded" />
-      </TableCell>
-    ))}
-  </TableRow>
+const TableSkeleton = () => (
+  <Table>
+    <TableHeader>
+      <TableRow>
+        <TableHead>...</TableHead>
+        <TableHead>...</TableHead>
+        <TableHead>...</TableHead>
+        <TableHead>...</TableHead>
+        <TableHead>...</TableHead>
+      </TableRow>
+    </TableHeader>
+    <TableBody>
+      {[...Array(3)].map((_, i) => (
+        <TableRow key={i} className="animate-pulse">
+          {[...Array(5)].map((_, j) => (
+            <TableCell key={j}>
+              <div className="h-4 w-24 bg-muted rounded" />
+            </TableCell>
+          ))}
+        </TableRow>
+      ))}
+    </TableBody>
+  </Table>
 );
 
 export default function StaffDashboard() {
@@ -83,10 +98,8 @@ export default function StaffDashboard() {
           <div className="animate-pulse mb-6">
             <div className="h-6 w-32 bg-muted rounded" />
           </div>
-          <div className="space-y-4">
-            {[...Array(3)].map((_, i) => (
-              <TableRowSkeleton key={i} />
-            ))}
+          <div className="rounded-md border">
+            <TableSkeleton />
           </div>
         </Card>
       </div>
