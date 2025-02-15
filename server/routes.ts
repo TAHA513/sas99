@@ -4,8 +4,12 @@ import { storage } from "./storage";
 import { insertCustomerSchema, insertAppointmentSchema, insertStaffSchema, insertSettingSchema, insertMarketingCampaignSchema, insertPromotionSchema, insertDiscountCodeSchema, insertProductSchema, insertProductGroupSchema } from "@shared/schema";
 import { notificationService } from './services/notification-service';
 import express from 'express';
+import { setupAuth } from './auth';
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Setup authentication routes and middleware
+  setupAuth(app);
+
   // Customer routes
   app.get("/api/customers", async (_req, res) => {
     const customers = await storage.getCustomers();

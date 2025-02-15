@@ -1,838 +1,577 @@
-import { User, Customer, Appointment, Staff, InsertUser, InsertCustomer, InsertAppointment, InsertStaff, MarketingCampaign, InsertMarketingCampaign, Promotion, InsertPromotion, DiscountCode, InsertDiscountCode, SocialMediaAccount, InsertSocialMediaAccount, Product, ProductGroup, InsertProduct, InsertProductGroup, Invoice, InsertInvoice } from "@shared/schema";
+import { Pool } from '@neondatabase/serverless';
+import { eq, and, sql } from 'drizzle-orm';
+import { db } from './db';
+import * as schema from '@shared/schema';
 import session from "express-session";
 import createMemoryStore from "memorystore";
-import { Supplier, InsertSupplier, PurchaseOrder, InsertPurchaseOrder, PurchaseItem, InsertPurchaseItem } from "@shared/schema";
-import { ExpenseCategory, InsertExpenseCategory, Expense, InsertExpense } from "@shared/schema";
+import connectPg from "connect-pg-simple";
 
-interface Setting {
-    id: number;
-    key: string;
-    value: string;
-    createdAt: Date;
-    updatedAt: Date;
-}
-
-interface StoreSetting {
-    id: number;
-    storeName: string;
-    storeLogo: string | null;
-    createdAt: Date;
-    updatedAt: Date;
-}
-
-const MemoryStore = createMemoryStore(session);
+const PostgresSessionStore = connectPg(session);
+const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 
 export interface IStorage {
   // User operations
-  getUser(id: number): Promise<User | undefined>;
-  getUserByUsername(username: string): Promise<User | undefined>;
-  createUser(user: InsertUser): Promise<User>;
+  getUser(id: number): Promise<schema.User | undefined>;
+  getUserByUsername(username: string): Promise<schema.User | undefined>;
+  createUser(user: schema.InsertUser): Promise<schema.User>;
 
   // Customer operations
-  getCustomers(): Promise<Customer[]>;
-  getCustomer(id: number): Promise<Customer | undefined>;
-  createCustomer(customer: InsertCustomer): Promise<Customer>;
-  updateCustomer(id: number, customer: Partial<InsertCustomer>): Promise<Customer>;
+  getCustomers(): Promise<schema.Customer[]>;
+  getCustomer(id: number): Promise<schema.Customer | undefined>;
+  createCustomer(customer: schema.InsertCustomer): Promise<schema.Customer>;
+  updateCustomer(id: number, customer: Partial<schema.InsertCustomer>): Promise<schema.Customer>;
   deleteCustomer(id: number): Promise<void>;
 
   // Appointment operations
-  getAppointments(): Promise<Appointment[]>;
-  getAppointment(id: number): Promise<Appointment | undefined>;
-  createAppointment(appointment: InsertAppointment): Promise<Appointment>;
-  updateAppointment(id: number, appointment: Partial<InsertAppointment>): Promise<Appointment>;
+  getAppointments(): Promise<schema.Appointment[]>;
+  getAppointment(id: number): Promise<schema.Appointment | undefined>;
+  createAppointment(appointment: schema.InsertAppointment): Promise<schema.Appointment>;
+  updateAppointment(id: number, appointment: Partial<schema.InsertAppointment>): Promise<schema.Appointment>;
   deleteAppointment(id: number): Promise<void>;
 
   // Staff operations
-  getStaff(): Promise<Staff[]>;
-  getStaffMember(id: number): Promise<Staff | undefined>;
-  createStaff(staff: InsertStaff): Promise<Staff>;
-  updateStaff(id: number, staff: Partial<InsertStaff>): Promise<Staff>;
+  getStaff(): Promise<schema.Staff[]>;
+  getStaffMember(id: number): Promise<schema.Staff | undefined>;
+  createStaff(staff: schema.InsertStaff): Promise<schema.Staff>;
+  updateStaff(id: number, staff: Partial<schema.InsertStaff>): Promise<schema.Staff>;
   deleteStaff(id: number): Promise<void>;
 
   // Settings operations
-  getSetting(key: string): Promise<Setting | undefined>;
-  getSettings(): Promise<Setting[]>;
-  setSetting(key: string, value: string): Promise<Setting>;
+  getSetting(key: string): Promise<schema.Setting | undefined>;
+  getSettings(): Promise<schema.Setting[]>;
+  setSetting(key: string, value: string): Promise<schema.Setting>;
 
   // Marketing Campaign operations
-  getCampaigns(): Promise<MarketingCampaign[]>;
-  getCampaign(id: number): Promise<MarketingCampaign | undefined>;
-  createCampaign(campaign: InsertMarketingCampaign): Promise<MarketingCampaign>;
-  updateCampaign(id: number, campaign: Partial<InsertMarketingCampaign>): Promise<MarketingCampaign>;
+  getCampaigns(): Promise<schema.MarketingCampaign[]>;
+  getCampaign(id: number): Promise<schema.MarketingCampaign | undefined>;
+  createCampaign(campaign: schema.InsertMarketingCampaign): Promise<schema.MarketingCampaign>;
+  updateCampaign(id: number, campaign: Partial<schema.InsertMarketingCampaign>): Promise<schema.MarketingCampaign>;
   deleteCampaign(id: number): Promise<void>;
 
   // Promotion operations
-  getPromotions(): Promise<Promotion[]>;
-  getPromotion(id: number): Promise<Promotion | undefined>;
-  createPromotion(promotion: InsertPromotion): Promise<Promotion>;
-  updatePromotion(id: number, promotion: Partial<InsertPromotion>): Promise<Promotion>;
+  getPromotions(): Promise<schema.Promotion[]>;
+  getPromotion(id: number): Promise<schema.Promotion | undefined>;
+  createPromotion(promotion: schema.InsertPromotion): Promise<schema.Promotion>;
+  updatePromotion(id: number, promotion: Partial<schema.InsertPromotion>): Promise<schema.Promotion>;
   deletePromotion(id: number): Promise<void>;
 
   // Discount Code operations
-  getDiscountCodes(): Promise<DiscountCode[]>;
-  getDiscountCode(id: number): Promise<DiscountCode | undefined>;
-  getDiscountCodeByCode(code: string): Promise<DiscountCode | undefined>;
-  createDiscountCode(code: InsertDiscountCode): Promise<DiscountCode>;
-  updateDiscountCode(id: number, code: Partial<InsertDiscountCode>): Promise<DiscountCode>;
+  getDiscountCodes(): Promise<schema.DiscountCode[]>;
+  getDiscountCode(id: number): Promise<schema.DiscountCode | undefined>;
+  getDiscountCodeByCode(code: string): Promise<schema.DiscountCode | undefined>;
+  createDiscountCode(code: schema.InsertDiscountCode): Promise<schema.DiscountCode>;
+  updateDiscountCode(id: number, code: Partial<schema.InsertDiscountCode>): Promise<schema.DiscountCode>;
   deleteDiscountCode(id: number): Promise<void>;
 
   // Social Media Account operations
-  getSocialMediaAccounts(): Promise<SocialMediaAccount[]>;
-  getSocialMediaAccount(id: number): Promise<SocialMediaAccount | undefined>;
-  createSocialMediaAccount(account: InsertSocialMediaAccount): Promise<SocialMediaAccount>;
-  updateSocialMediaAccount(id: number, account: Partial<InsertSocialMediaAccount>): Promise<SocialMediaAccount>;
+  getSocialMediaAccounts(): Promise<schema.SocialMediaAccount[]>;
+  getSocialMediaAccount(id: number): Promise<schema.SocialMediaAccount | undefined>;
+  createSocialMediaAccount(account: schema.InsertSocialMediaAccount): Promise<schema.SocialMediaAccount>;
+  updateSocialMediaAccount(id: number, account: Partial<schema.InsertSocialMediaAccount>): Promise<schema.SocialMediaAccount>;
   deleteSocialMediaAccount(id: number): Promise<void>;
 
   // Product Group operations
-  getProductGroups(): Promise<ProductGroup[]>;
-  getProductGroup(id: number): Promise<ProductGroup | undefined>;
-  createProductGroup(group: InsertProductGroup): Promise<ProductGroup>;
-  updateProductGroup(id: number, group: Partial<InsertProductGroup>): Promise<ProductGroup>;
+  getProductGroups(): Promise<schema.ProductGroup[]>;
+  getProductGroup(id: number): Promise<schema.ProductGroup | undefined>;
+  createProductGroup(group: schema.InsertProductGroup): Promise<schema.ProductGroup>;
+  updateProductGroup(id: number, group: Partial<schema.InsertProductGroup>): Promise<schema.ProductGroup>;
   deleteProductGroup(id: number): Promise<void>;
 
   // Product operations
-  getProducts(): Promise<Product[]>;
-  getProduct(id: number): Promise<Product | undefined>;
-  getProductByBarcode(barcode: string): Promise<Product | undefined>;
-  createProduct(product: InsertProduct): Promise<Product>;
-  updateProduct(id: number, product: Partial<InsertProduct>): Promise<Product>;
+  getProducts(): Promise<schema.Product[]>;
+  getProduct(id: number): Promise<schema.Product | undefined>;
+  getProductByBarcode(barcode: string): Promise<schema.Product | undefined>;
+  createProduct(product: schema.InsertProduct): Promise<schema.Product>;
+  updateProduct(id: number, product: Partial<schema.InsertProduct>): Promise<schema.Product>;
   deleteProduct(id: number): Promise<void>;
 
   // Invoice operations
-  getInvoices(): Promise<Invoice[]>;
-  getInvoice(id: number): Promise<Invoice | undefined>;
-  createInvoice(invoice: InsertInvoice): Promise<Invoice>;
+  getInvoices(): Promise<schema.Invoice[]>;
+  getInvoice(id: number): Promise<schema.Invoice | undefined>;
+  createInvoice(invoice: schema.InsertInvoice): Promise<schema.Invoice>;
 
   sessionStore: session.Store;
-    // Store Settings operations
-    getStoreSettings(): Promise<StoreSetting | undefined>;
-    updateStoreSettings(settings: { storeName: string; storeLogo?: string }): Promise<StoreSetting>;
+  // Store Settings operations
+  getStoreSettings(): Promise<schema.StoreSetting | undefined>;
+  updateStoreSettings(settings: { storeName: string; storeLogo?: string }): Promise<schema.StoreSetting>;
 
   // Supplier operations
-  getSuppliers(): Promise<Supplier[]>;
-  getSupplier(id: number): Promise<Supplier | undefined>;
-  createSupplier(supplier: InsertSupplier): Promise<Supplier>;
-  updateSupplier(id: number, supplier: Partial<InsertSupplier>): Promise<Supplier>;
+  getSuppliers(): Promise<schema.Supplier[]>;
+  getSupplier(id: number): Promise<schema.Supplier | undefined>;
+  createSupplier(supplier: schema.InsertSupplier): Promise<schema.Supplier>;
+  updateSupplier(id: number, supplier: Partial<schema.InsertSupplier>): Promise<schema.Supplier>;
   deleteSupplier(id: number): Promise<void>;
 
   // Purchase operations
-  getPurchaseOrders(): Promise<PurchaseOrder[]>;
-  getPurchaseOrder(id: number): Promise<PurchaseOrder | undefined>;
-  createPurchaseOrder(purchase: InsertPurchaseOrder): Promise<PurchaseOrder>;
-  updatePurchaseOrder(id: number, purchase: Partial<InsertPurchaseOrder>): Promise<PurchaseOrder>;
+  getPurchaseOrders(): Promise<schema.PurchaseOrder[]>;
+  getPurchaseOrder(id: number): Promise<schema.PurchaseOrder | undefined>;
+  createPurchaseOrder(purchase: schema.InsertPurchaseOrder): Promise<schema.PurchaseOrder>;
+  updatePurchaseOrder(id: number, purchase: Partial<schema.InsertPurchaseOrder>): Promise<schema.PurchaseOrder>;
   deletePurchaseOrder(id: number): Promise<void>;
-  getPurchaseItems(purchaseId: number): Promise<PurchaseItem[]>;
+  getPurchaseItems(purchaseId: number): Promise<schema.PurchaseItem[]>;
 
   // Expense Category operations
-  getExpenseCategories(): Promise<ExpenseCategory[]>;
-  getExpenseCategory(id: number): Promise<ExpenseCategory | undefined>;
-  createExpenseCategory(category: InsertExpenseCategory): Promise<ExpenseCategory>;
-  updateExpenseCategory(id: number, category: Partial<InsertExpenseCategory>): Promise<ExpenseCategory>;
+  getExpenseCategories(): Promise<schema.ExpenseCategory[]>;
+  getExpenseCategory(id: number): Promise<schema.ExpenseCategory | undefined>;
+  createExpenseCategory(category: schema.InsertExpenseCategory): Promise<schema.ExpenseCategory>;
+  updateExpenseCategory(id: number, category: Partial<schema.InsertExpenseCategory>): Promise<schema.ExpenseCategory>;
   deleteExpenseCategory(id: number): Promise<void>;
 
   // Expense operations
-  getExpenses(): Promise<Expense[]>;
-  getExpense(id: number): Promise<Expense | undefined>;
-  createExpense(expense: InsertExpense): Promise<Expense>;
-  updateExpense(id: number, expense: Partial<InsertExpense>): Promise<Expense>;
+  getExpenses(): Promise<schema.Expense[]>;
+  getExpense(id: number): Promise<schema.Expense | undefined>;
+  createExpense(expense: schema.InsertExpense): Promise<schema.Expense>;
+  updateExpense(id: number, expense: Partial<schema.InsertExpense>): Promise<schema.Expense>;
   deleteExpense(id: number): Promise<void>;
 }
 
-export class MemStorage implements IStorage {
-  private users: Map<number, User>;
-  private customers: Map<number, Customer>;
-  private appointments: Map<number, Appointment>;
-  private staff: Map<number, Staff>;
-  private currentId: number;
-  private settings: Map<string, Setting>;
-  private campaigns: Map<number, MarketingCampaign>;
-  private promotions: Map<number, Promotion>;
-  private discountCodes: Map<number, DiscountCode>;
-  private socialMediaAccounts: Map<number, SocialMediaAccount>;
-  private products: Map<number, Product>;
-  private productGroups: Map<number, ProductGroup>;
-  private invoices: Map<number, Invoice>;
-  private storeSettings: StoreSetting | undefined;
-  private suppliers: Map<number, Supplier>;
-  private purchaseOrders: Map<number, PurchaseOrder>;
-  private purchaseItems: Map<number, PurchaseItem[]>;
-  private expenseCategories: Map<number, ExpenseCategory>;
-  private expenses: Map<number, Expense>;
+export class DatabaseStorage implements IStorage {
   sessionStore: session.Store;
 
   constructor() {
-    this.users = new Map();
-    this.customers = new Map();
-    this.appointments = new Map();
-    this.staff = new Map();
-    this.settings = new Map();
-    this.campaigns = new Map();
-    this.promotions = new Map();
-    this.discountCodes = new Map();
-    this.socialMediaAccounts = new Map();
-    this.products = new Map();
-    this.productGroups = new Map();
-    this.invoices = new Map();
-    this.suppliers = new Map();
-    this.purchaseOrders = new Map();
-    this.purchaseItems = new Map();
-    this.expenseCategories = new Map();
-    this.expenses = new Map();
-    this.currentId = 1;
-    this.sessionStore = new MemoryStore({
-      checkPeriod: 86400000,
-    });
-
-    // Add sample marketing campaigns
-    this.campaigns.set(1, {
-      id: 1,
-      name: "حملة الصيف على فيسبوك",
-      description: "عروض خاصة لموسم الصيف",
-      startDate: new Date("2025-06-01"),
-      endDate: new Date("2025-07-01"),
-      status: "active",
-      type: "facebook",
-      content: "اكتشف عروضنا المميزة لموسم الصيف! خصومات تصل إلى 50%",
-      platforms: ["facebook"],
-      budget: 50000, // 500 SAR
-      messageCount: 245, // تفاعلات وردود
-      targetAudience: JSON.stringify({
-        age: "18-35",
-        gender: "all",
-        location: "الرياض",
-        interests: ["تسوق", "موضة"]
-      }),
-      createdAt: new Date(),
-      updatedAt: new Date()
-    });
-
-    this.campaigns.set(2, {
-      id: 2,
-      name: "حملة رمضان على انستغرام",
-      description: "عروض شهر رمضان المبارك",
-      startDate: new Date("2025-03-11"),
-      endDate: new Date("2025-04-09"),
-      status: "draft",
-      type: "instagram",
-      content: "استعد لشهر رمضان مع أفضل العروض والخصومات",
-      platforms: ["instagram"],
-      budget: 100000, // 1000 SAR
-      messageCount: 412, // تفاعلات وردود
-      targetAudience: JSON.stringify({
-        age: "25-55",
-        gender: "all",
-        location: "المملكة العربية السعودية",
-        interests: ["طبخ", "تسوق", "ديكور"]
-      }),
-      createdAt: new Date(),
-      updatedAt: new Date()
-    });
-
-    this.campaigns.set(3, {
-      id: 3,
-      name: "حملة نهاية الأسبوع على سناب شات",
-      description: "عروض خاصة لنهاية الأسبوع",
-      startDate: new Date("2025-02-20"),
-      endDate: new Date("2025-02-23"),
-      status: "completed",
-      type: "snapchat",
-      content: "عروض حصرية لمتابعينا على سناب شات",
-      platforms: ["snapchat"],
-      budget: 30000, // 300 SAR
-      messageCount: 178, // تفاعلات وردود
-      targetAudience: JSON.stringify({
-        age: "16-24",
-        gender: "all",
-        location: "جدة",
-        interests: ["ترفيه", "تسوق"]
-      }),
-      createdAt: new Date("2025-02-19"),
-      updatedAt: new Date("2025-02-23")
-    });
-
-    // Add sample product groups
-    this.productGroups.set(1, {
-      id: 1,
-      name: "مواد غذائية",
-      description: "منتجات غذائية متنوعة",
-      createdAt: new Date(),
-    });
-
-    this.productGroups.set(2, {
-      id: 2,
-      name: "منظفات",
-      description: "مواد التنظيف",
-      createdAt: new Date(),
-    });
-
-    // Add sample expense categories
-    this.expenseCategories.set(1, {
-      id: 1,
-      name: "رواتب",
-      description: "رواتب الموظفين",
-      createdAt: new Date()
-    });
-
-    this.expenseCategories.set(2, {
-      id: 2,
-      name: "إيجارات",
-      description: "إيجارات المحلات والمكاتب",
-      createdAt: new Date()
-    });
-
-    this.expenseCategories.set(3, {
-      id: 3,
-      name: "مرافق",
-      description: "كهرباء، ماء، إنترنت",
-      createdAt: new Date()
+    this.sessionStore = new PostgresSessionStore({
+      pool,
+      createTableIfMissing: true,
     });
   }
 
   // User operations
-  async getUser(id: number): Promise<User | undefined> {
-    return this.users.get(id);
-  }
-
-  async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.username === username,
-    );
-  }
-
-  async createUser(insertUser: InsertUser): Promise<User> {
-    const id = this.currentId++;
-    const user: User = { ...insertUser, id, role: "staff" };
-    this.users.set(id, user);
+  async getUser(id: number): Promise<schema.User | undefined> {
+    const [user] = await db.select().from(schema.users).where(eq(schema.users.id, id));
     return user;
   }
 
+  async getUserByUsername(username: string): Promise<schema.User | undefined> {
+    const [user] = await db.select().from(schema.users).where(eq(schema.users.username, username));
+    return user;
+  }
+
+  async createUser(user: schema.InsertUser): Promise<schema.User> {
+    const [newUser] = await db.insert(schema.users).values(user).returning();
+    return newUser;
+  }
+
   // Customer operations
-  async getCustomers(): Promise<Customer[]> {
-    return Array.from(this.customers.values());
+  async getCustomers(): Promise<schema.Customer[]> {
+    return await db.select().from(schema.customers);
   }
 
-  async getCustomer(id: number): Promise<Customer | undefined> {
-    return this.customers.get(id);
+  async getCustomer(id: number): Promise<schema.Customer | undefined> {
+    const [customer] = await db.select().from(schema.customers).where(eq(schema.customers.id, id));
+    return customer;
   }
 
-  async createCustomer(customer: InsertCustomer): Promise<Customer> {
-    const id = this.currentId++;
-    const newCustomer: Customer = {
-      ...customer,
-      id,
-      email: customer.email || null,
-      notes: customer.notes || null,
-      createdAt: new Date()
-    };
-    this.customers.set(id, newCustomer);
+  async createCustomer(customer: schema.InsertCustomer): Promise<schema.Customer> {
+    const [newCustomer] = await db.insert(schema.customers).values(customer).returning();
     return newCustomer;
   }
 
-  async updateCustomer(id: number, updates: Partial<InsertCustomer>): Promise<Customer> {
-    const customer = await this.getCustomer(id);
-    if (!customer) throw new Error("Customer not found");
-    const updatedCustomer = { ...customer, ...updates };
-    this.customers.set(id, updatedCustomer);
+  async updateCustomer(id: number, customer: Partial<schema.InsertCustomer>): Promise<schema.Customer> {
+    const [updatedCustomer] = await db
+      .update(schema.customers)
+      .set(customer)
+      .where(eq(schema.customers.id, id))
+      .returning();
     return updatedCustomer;
   }
 
   async deleteCustomer(id: number): Promise<void> {
-    this.customers.delete(id);
+    await db.delete(schema.customers).where(eq(schema.customers.id, id));
   }
 
   // Appointment operations
-  async getAppointments(): Promise<Appointment[]> {
-    return Array.from(this.appointments.values());
+  async getAppointments(): Promise<schema.Appointment[]> {
+    return await db.select().from(schema.appointments);
   }
 
-  async getAppointment(id: number): Promise<Appointment | undefined> {
-    return this.appointments.get(id);
+  async getAppointment(id: number): Promise<schema.Appointment | undefined> {
+    const [appointment] = await db.select().from(schema.appointments).where(eq(schema.appointments.id, id));
+    return appointment;
   }
 
-  async createAppointment(appointment: InsertAppointment): Promise<Appointment> {
-    const id = this.currentId++;
-    const newAppointment: Appointment = {
-      ...appointment,
-      id,
-      status: appointment.status || 'scheduled',
-      notes: appointment.notes || null
-    };
-    this.appointments.set(id, newAppointment);
+  async createAppointment(appointment: schema.InsertAppointment): Promise<schema.Appointment> {
+    const [newAppointment] = await db.insert(schema.appointments).values(appointment).returning();
     return newAppointment;
   }
 
-  async updateAppointment(id: number, updates: Partial<InsertAppointment>): Promise<Appointment> {
-    const appointment = await this.getAppointment(id);
-    if (!appointment) throw new Error("Appointment not found");
-    const updatedAppointment = { ...appointment, ...updates };
-    this.appointments.set(id, updatedAppointment);
+  async updateAppointment(id: number, updates: Partial<schema.InsertAppointment>): Promise<schema.Appointment> {
+    const [updatedAppointment] = await db
+      .update(schema.appointments)
+      .set(updates)
+      .where(eq(schema.appointments.id, id))
+      .returning();
     return updatedAppointment;
   }
 
   async deleteAppointment(id: number): Promise<void> {
-    this.appointments.delete(id);
+    await db.delete(schema.appointments).where(eq(schema.appointments.id, id));
   }
 
   // Staff operations
-  async getStaff(): Promise<Staff[]> {
-    return Array.from(this.staff.values());
+  async getStaff(): Promise<schema.Staff[]> {
+    return await db.select().from(schema.staff);
   }
 
-  async getStaffMember(id: number): Promise<Staff | undefined> {
-    return this.staff.get(id);
+  async getStaffMember(id: number): Promise<schema.Staff | undefined> {
+    const [staff] = await db.select().from(schema.staff).where(eq(schema.staff.id, id));
+    return staff;
   }
 
-  async createStaff(staff: InsertStaff): Promise<Staff> {
-    const id = this.currentId++;
-    const newStaff: Staff = {
-      ...staff,
-      id,
-      specialization: staff.specialization || null,
-      workDays: staff.workDays || null,
-      workHours: staff.workHours || null
-    };
-    this.staff.set(id, newStaff);
+  async createStaff(staff: schema.InsertStaff): Promise<schema.Staff> {
+    const [newStaff] = await db.insert(schema.staff).values(staff).returning();
     return newStaff;
   }
 
-  async updateStaff(id: number, updates: Partial<InsertStaff>): Promise<Staff> {
-    const staff = await this.getStaffMember(id);
-    if (!staff) throw new Error("Staff member not found");
-    const updatedStaff = { ...staff, ...updates };
-    this.staff.set(id, updatedStaff);
+  async updateStaff(id: number, updates: Partial<schema.InsertStaff>): Promise<schema.Staff> {
+    const [updatedStaff] = await db
+      .update(schema.staff)
+      .set(updates)
+      .where(eq(schema.staff.id, id))
+      .returning();
     return updatedStaff;
   }
 
   async deleteStaff(id: number): Promise<void> {
-    this.staff.delete(id);
+    await db.delete(schema.staff).where(eq(schema.staff.id, id));
   }
 
   // Settings operations
-  async getSetting(key: string): Promise<Setting | undefined> {
-    return this.settings.get(key);
+  async getSetting(key: string): Promise<schema.Setting | undefined> {
+    const [setting] = await db.select().from(schema.settings).where(eq(schema.settings.key, key));
+    return setting;
   }
 
-  async getSettings(): Promise<Setting[]> {
-    return Array.from(this.settings.values());
+  async getSettings(): Promise<schema.Setting[]> {
+    return await db.select().from(schema.settings);
   }
 
-  async setSetting(key: string, value: string): Promise<Setting> {
-    const setting: Setting = {
-      id: this.currentId++,
-      key,
-      value,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-    this.settings.set(key, setting);
+  async setSetting(key: string, value: string): Promise<schema.Setting> {
+    const [setting] = await db
+      .insert(schema.settings)
+      .values({ key, value })
+      .onConflictDoUpdate({
+        target: schema.settings.key,
+        set: { value, updatedAt: new Date() },
+      })
+      .returning();
     return setting;
   }
 
   // Marketing Campaign operations
-  async getCampaigns(): Promise<MarketingCampaign[]> {
-    return Array.from(this.campaigns.values());
+  async getCampaigns(): Promise<schema.MarketingCampaign[]> {
+    return await db.select().from(schema.marketingCampaigns);
   }
 
-  async getCampaign(id: number): Promise<MarketingCampaign | undefined> {
-    return this.campaigns.get(id);
+  async getCampaign(id: number): Promise<schema.MarketingCampaign | undefined> {
+    const [campaign] = await db.select().from(schema.marketingCampaigns).where(eq(schema.marketingCampaigns.id, id));
+    return campaign;
   }
 
-  async createCampaign(campaign: InsertMarketingCampaign): Promise<MarketingCampaign> {
-    const id = this.currentId++;
-    const newCampaign: MarketingCampaign = {
-      ...campaign,
-      id,
-      status: campaign.status || 'draft',
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
-    this.campaigns.set(id, newCampaign);
+  async createCampaign(campaign: schema.InsertMarketingCampaign): Promise<schema.MarketingCampaign> {
+    const [newCampaign] = await db.insert(schema.marketingCampaigns).values(campaign).returning();
     return newCampaign;
   }
 
-  async updateCampaign(id: number, updates: Partial<InsertMarketingCampaign>): Promise<MarketingCampaign> {
-    const campaign = await this.getCampaign(id);
-    if (!campaign) throw new Error("Campaign not found");
-    const updatedCampaign = { ...campaign, ...updates, updatedAt: new Date() };
-    this.campaigns.set(id, updatedCampaign);
+  async updateCampaign(id: number, updates: Partial<schema.InsertMarketingCampaign>): Promise<schema.MarketingCampaign> {
+    const [updatedCampaign] = await db
+      .update(schema.marketingCampaigns)
+      .set(updates)
+      .where(eq(schema.marketingCampaigns.id, id))
+      .returning();
     return updatedCampaign;
   }
 
   async deleteCampaign(id: number): Promise<void> {
-    this.campaigns.delete(id);
+    await db.delete(schema.marketingCampaigns).where(eq(schema.marketingCampaigns.id, id));
   }
 
   // Promotion operations
-  async getPromotions(): Promise<Promotion[]> {
-    return Array.from(this.promotions.values());
+  async getPromotions(): Promise<schema.Promotion[]> {
+    return await db.select().from(schema.promotions);
   }
 
-  async getPromotion(id: number): Promise<Promotion | undefined> {
-    return this.promotions.get(id);
+  async getPromotion(id: number): Promise<schema.Promotion | undefined> {
+    const [promotion] = await db.select().from(schema.promotions).where(eq(schema.promotions.id, id));
+    return promotion;
   }
 
-  async createPromotion(promotion: InsertPromotion): Promise<Promotion> {
-    const id = this.currentId++;
-    const newPromotion: Promotion = {
-      ...promotion,
-      id,
-      status: promotion.status || 'active',
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
-    this.promotions.set(id, newPromotion);
+  async createPromotion(promotion: schema.InsertPromotion): Promise<schema.Promotion> {
+    const [newPromotion] = await db.insert(schema.promotions).values(promotion).returning();
     return newPromotion;
   }
 
-  async updatePromotion(id: number, updates: Partial<InsertPromotion>): Promise<Promotion> {
-    const promotion = await this.getPromotion(id);
-    if (!promotion) throw new Error("Promotion not found");
-    const updatedPromotion = { ...promotion, ...updates, updatedAt: new Date() };
-    this.promotions.set(id, updatedPromotion);
+  async updatePromotion(id: number, updates: Partial<schema.InsertPromotion>): Promise<schema.Promotion> {
+    const [updatedPromotion] = await db
+      .update(schema.promotions)
+      .set(updates)
+      .where(eq(schema.promotions.id, id))
+      .returning();
     return updatedPromotion;
   }
 
   async deletePromotion(id: number): Promise<void> {
-    this.promotions.delete(id);
+    await db.delete(schema.promotions).where(eq(schema.promotions.id, id));
   }
 
   // Discount Code operations
-  async getDiscountCodes(): Promise<DiscountCode[]> {
-    return Array.from(this.discountCodes.values());
+  async getDiscountCodes(): Promise<schema.DiscountCode[]> {
+    return await db.select().from(schema.discountCodes);
   }
 
-  async getDiscountCode(id: number): Promise<DiscountCode | undefined> {
-    return this.discountCodes.get(id);
+  async getDiscountCode(id: number): Promise<schema.DiscountCode | undefined> {
+    const [discountCode] = await db.select().from(schema.discountCodes).where(eq(schema.discountCodes.id, id));
+    return discountCode;
   }
 
-  async getDiscountCodeByCode(code: string): Promise<DiscountCode | undefined> {
-    return Array.from(this.discountCodes.values()).find(
-      (discountCode) => discountCode.code === code
-    );
+  async getDiscountCodeByCode(code: string): Promise<schema.DiscountCode | undefined> {
+    const [discountCode] = await db.select().from(schema.discountCodes).where(eq(schema.discountCodes.code, code));
+    return discountCode;
   }
 
-  async createDiscountCode(code: InsertDiscountCode): Promise<DiscountCode> {
-    const id = this.currentId++;
-    const newDiscountCode: DiscountCode = {
-      ...code,
-      id,
-      usageCount: 0,
-      createdAt: new Date()
-    };
-    this.discountCodes.set(id, newDiscountCode);
+  async createDiscountCode(code: schema.InsertDiscountCode): Promise<schema.DiscountCode> {
+    const [newDiscountCode] = await db.insert(schema.discountCodes).values(code).returning();
     return newDiscountCode;
   }
 
-  async updateDiscountCode(id: number, updates: Partial<InsertDiscountCode>): Promise<DiscountCode> {
-    const discountCode = await this.getDiscountCode(id);
-    if (!discountCode) throw new Error("Discount code not found");
-    const updatedDiscountCode = { ...discountCode, ...updates };
-    this.discountCodes.set(id, updatedDiscountCode);
+  async updateDiscountCode(id: number, updates: Partial<schema.InsertDiscountCode>): Promise<schema.DiscountCode> {
+    const [updatedDiscountCode] = await db
+      .update(schema.discountCodes)
+      .set(updates)
+      .where(eq(schema.discountCodes.id, id))
+      .returning();
     return updatedDiscountCode;
   }
 
   async deleteDiscountCode(id: number): Promise<void> {
-    this.discountCodes.delete(id);
+    await db.delete(schema.discountCodes).where(eq(schema.discountCodes.id, id));
   }
 
   // Social Media Account operations
-  async getSocialMediaAccounts(): Promise<SocialMediaAccount[]> {
-    return Array.from(this.socialMediaAccounts.values());
+  async getSocialMediaAccounts(): Promise<schema.SocialMediaAccount[]> {
+    return await db.select().from(schema.socialMediaAccounts);
   }
 
-  async getSocialMediaAccount(id: number): Promise<SocialMediaAccount | undefined> {
-    return this.socialMediaAccounts.get(id);
+  async getSocialMediaAccount(id: number): Promise<schema.SocialMediaAccount | undefined> {
+    const [account] = await db.select().from(schema.socialMediaAccounts).where(eq(schema.socialMediaAccounts.id, id));
+    return account;
   }
 
-  async createSocialMediaAccount(account: InsertSocialMediaAccount): Promise<SocialMediaAccount> {
-    const id = this.currentId++;
-    const newAccount: SocialMediaAccount = {
-      ...account,
-      id,
-      status: 'active',
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
-    this.socialMediaAccounts.set(id, newAccount);
+  async createSocialMediaAccount(account: schema.InsertSocialMediaAccount): Promise<schema.SocialMediaAccount> {
+    const [newAccount] = await db.insert(schema.socialMediaAccounts).values(account).returning();
     return newAccount;
   }
 
-  async updateSocialMediaAccount(id: number, updates: Partial<InsertSocialMediaAccount>): Promise<SocialMediaAccount> {
-    const account = await this.getSocialMediaAccount(id);
-    if (!account) throw new Error("Social media account not found");
-    const updatedAccount = { ...account, ...updates, updatedAt: new Date() };
-    this.socialMediaAccounts.set(id, updatedAccount);
+  async updateSocialMediaAccount(id: number, updates: Partial<schema.InsertSocialMediaAccount>): Promise<schema.SocialMediaAccount> {
+    const [updatedAccount] = await db
+      .update(schema.socialMediaAccounts)
+      .set(updates)
+      .where(eq(schema.socialMediaAccounts.id, id))
+      .returning();
     return updatedAccount;
   }
 
   async deleteSocialMediaAccount(id: number): Promise<void> {
-    this.socialMediaAccounts.delete(id);
+    await db.delete(schema.socialMediaAccounts).where(eq(schema.socialMediaAccounts.id, id));
   }
 
   // Product Group operations
-  async getProductGroups(): Promise<ProductGroup[]> {
-    return Array.from(this.productGroups.values());
+  async getProductGroups(): Promise<schema.ProductGroup[]> {
+    return await db.select().from(schema.productGroups);
   }
 
-  async getProductGroup(id: number): Promise<ProductGroup | undefined> {
-    return this.productGroups.get(id);
+  async getProductGroup(id: number): Promise<schema.ProductGroup | undefined> {
+    const [group] = await db.select().from(schema.productGroups).where(eq(schema.productGroups.id, id));
+    return group;
   }
 
-  async createProductGroup(group: InsertProductGroup): Promise<ProductGroup> {
-    const id = this.currentId++;
-    const newGroup: ProductGroup = {
-      ...group,
-      id,
-      createdAt: new Date(),
-    };
-    this.productGroups.set(id, newGroup);
+  async createProductGroup(group: schema.InsertProductGroup): Promise<schema.ProductGroup> {
+    const [newGroup] = await db.insert(schema.productGroups).values(group).returning();
     return newGroup;
   }
 
-  async updateProductGroup(id: number, updates: Partial<InsertProductGroup>): Promise<ProductGroup> {
-    const group = await this.getProductGroup(id);
-    if (!group) throw new Error("Product group not found");
-    const updatedGroup = { ...group, ...updates };
-    this.productGroups.set(id, updatedGroup);
+  async updateProductGroup(id: number, updates: Partial<schema.InsertProductGroup>): Promise<schema.ProductGroup> {
+    const [updatedGroup] = await db
+      .update(schema.productGroups)
+      .set(updates)
+      .where(eq(schema.productGroups.id, id))
+      .returning();
     return updatedGroup;
   }
 
   async deleteProductGroup(id: number): Promise<void> {
-    this.productGroups.delete(id);
+    await db.delete(schema.productGroups).where(eq(schema.productGroups.id, id));
   }
 
   // Product operations
-  async getProducts(): Promise<Product[]> {
-    return Array.from(this.products.values());
+  async getProducts(): Promise<schema.Product[]> {
+    return await db.select().from(schema.products);
   }
 
-  async getProduct(id: number): Promise<Product | undefined> {
-    return this.products.get(id);
+  async getProduct(id: number): Promise<schema.Product | undefined> {
+    const [product] = await db.select().from(schema.products).where(eq(schema.products.id, id));
+    return product;
   }
 
-  async getProductByBarcode(barcode: string): Promise<Product | undefined> {
-    return Array.from(this.products.values()).find(
-      (product) => product.barcode === barcode
-    );
+  async getProductByBarcode(barcode: string): Promise<schema.Product | undefined> {
+    const [product] = await db.select().from(schema.products).where(eq(schema.products.barcode, barcode));
+    return product;
   }
 
-  async createProduct(product: InsertProduct): Promise<Product> {
-    const id = this.currentId++;
-    const newProduct: Product = {
-      ...product,
-      id,
-      status: "active",
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-    this.products.set(id, newProduct);
+  async createProduct(product: schema.InsertProduct): Promise<schema.Product> {
+    const [newProduct] = await db.insert(schema.products).values(product).returning();
     return newProduct;
   }
 
-  async updateProduct(id: number, updates: Partial<InsertProduct>): Promise<Product> {
-    const product = await this.getProduct(id);
-    if (!product) throw new Error("Product not found");
-    const updatedProduct = { ...product, ...updates, updatedAt: new Date() };
-    this.products.set(id, updatedProduct);
+  async updateProduct(id: number, product: Partial<schema.InsertProduct>): Promise<schema.Product> {
+    const [updatedProduct] = await db
+      .update(schema.products)
+      .set(product)
+      .where(eq(schema.products.id, id))
+      .returning();
     return updatedProduct;
   }
 
   async deleteProduct(id: number): Promise<void> {
-    this.products.delete(id);
+    await db.delete(schema.products).where(eq(schema.products.id, id));
   }
 
-  async getInvoices(): Promise<Invoice[]> {
-    return Array.from(this.invoices.values());
+  // Invoice operations
+  async getInvoices(): Promise<schema.Invoice[]> {
+    return await db.select().from(schema.invoices);
   }
 
-  async getInvoice(id: number): Promise<Invoice | undefined> {
-    return this.invoices.get(id);
+  async getInvoice(id: number): Promise<schema.Invoice | undefined> {
+    const [invoice] = await db.select().from(schema.invoices).where(eq(schema.invoices.id, id));
+    return invoice;
   }
 
-  async createInvoice(invoice: InsertInvoice): Promise<Invoice> {
-    const id = this.currentId++;
-    const newInvoice: Invoice = {
-      ...invoice,
-      id,
-      createdAt: new Date(),
-    };
-    this.invoices.set(id, newInvoice);
+  async createInvoice(invoice: schema.InsertInvoice): Promise<schema.Invoice> {
+    const [newInvoice] = await db.insert(schema.invoices).values(invoice).returning();
     return newInvoice;
   }
 
-  async getStoreSettings(): Promise<StoreSetting | undefined> {
-    return this.storeSettings;
+  // Store Settings operations
+  async getStoreSettings(): Promise<schema.StoreSetting | undefined> {
+    const [settings] = await db.select().from(schema.storeSettings);
+    return settings;
   }
 
-  async updateStoreSettings(settings: { storeName: string; storeLogo?: string }): Promise<StoreSetting> {
-    const newSettings: StoreSetting = {
-      id: 1,
-      storeName: settings.storeName,
-      storeLogo: settings.storeLogo || null,
-      createdAt: this.storeSettings?.createdAt || new Date(),
-      updatedAt: new Date(),
-    };
-    this.storeSettings = newSettings;
-    return newSettings;
+  async updateStoreSettings(settings: {
+    storeName: string;
+    storeLogo?: string;
+  }): Promise<schema.StoreSetting> {
+    const [updatedSettings] = await db
+      .insert(schema.storeSettings)
+      .values({
+        ...settings,
+        id: 1,
+      })
+      .onConflictDoUpdate({
+        target: schema.storeSettings.id,
+        set: { ...settings, updatedAt: new Date() },
+      })
+      .returning();
+    return updatedSettings;
   }
 
   // Supplier operations
-  async getSuppliers(): Promise<Supplier[]> {
-    return Array.from(this.suppliers.values());
+  async getSuppliers(): Promise<schema.Supplier[]> {
+    return await db.select().from(schema.suppliers);
   }
-
-  async getSupplier(id: number): Promise<Supplier | undefined> {
-    return this.suppliers.get(id);
+  async getSupplier(id: number): Promise<schema.Supplier | undefined> {
+    const [supplier] = await db.select().from(schema.suppliers).where(eq(schema.suppliers.id, id));
+    return supplier;
   }
-
-  async createSupplier(supplier: InsertSupplier): Promise<Supplier> {
-    const id = this.currentId++;
-    const newSupplier: Supplier = {
-      ...supplier,
-      id,
-      email: supplier.email || null,
-      notes: supplier.notes || null,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-    this.suppliers.set(id, newSupplier);
+  async createSupplier(supplier: schema.InsertSupplier): Promise<schema.Supplier> {
+    const [newSupplier] = await db.insert(schema.suppliers).values(supplier).returning();
     return newSupplier;
   }
-
-  async updateSupplier(id: number, updates: Partial<InsertSupplier>): Promise<Supplier> {
-    const supplier = await this.getSupplier(id);
-    if (!supplier) throw new Error("Supplier not found");
-    const updatedSupplier = { ...supplier, ...updates, updatedAt: new Date() };
-    this.suppliers.set(id, updatedSupplier);
+  async updateSupplier(id: number, supplier: Partial<schema.InsertSupplier>): Promise<schema.Supplier> {
+    const [updatedSupplier] = await db
+      .update(schema.suppliers)
+      .set(supplier)
+      .where(eq(schema.suppliers.id, id))
+      .returning();
     return updatedSupplier;
   }
-
   async deleteSupplier(id: number): Promise<void> {
-    this.suppliers.delete(id);
+    await db.delete(schema.suppliers).where(eq(schema.suppliers.id, id));
   }
 
   // Purchase operations
-  async getPurchaseOrders(): Promise<PurchaseOrder[]> {
-    return Array.from(this.purchaseOrders.values());
+  async getPurchaseOrders(): Promise<schema.PurchaseOrder[]> {
+    return await db.select().from(schema.purchaseOrders);
   }
-
-  async getPurchaseOrder(id: number): Promise<PurchaseOrder | undefined> {
-    return this.purchaseOrders.get(id);
+  async getPurchaseOrder(id: number): Promise<schema.PurchaseOrder | undefined> {
+    const [purchaseOrder] = await db.select().from(schema.purchaseOrders).where(eq(schema.purchaseOrders.id, id));
+    return purchaseOrder;
   }
-
-  async createPurchaseOrder(purchase: InsertPurchaseOrder): Promise<PurchaseOrder> {
-    const id = this.currentId++;
-    const newPurchase: PurchaseOrder = {
-      ...purchase,
-      id,
-      notes: purchase.notes || null,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-    this.purchaseOrders.set(id, newPurchase);
-
-    // Store purchase items
-    if (purchase.items) {
-      const items: PurchaseItem[] = purchase.items.map((item, index) => ({
-        id: this.currentId + index,
-        purchaseId: id,
-        productId: item.productId,
-        quantity: item.quantity,
-        unitPrice: item.unitPrice,
-        totalPrice: item.totalPrice,
-        notes: null,
-        createdAt: new Date(),
-      }));
-      this.purchaseItems.set(id, items);
-      this.currentId += purchase.items.length;
-    }
-
-    return newPurchase;
+  async createPurchaseOrder(purchase: schema.InsertPurchaseOrder): Promise<schema.PurchaseOrder> {
+    const [newPurchaseOrder] = await db.insert(schema.purchaseOrders).values(purchase).returning();
+    return newPurchaseOrder;
   }
-
-  async updatePurchaseOrder(id: number, updates: Partial<InsertPurchaseOrder>): Promise<PurchaseOrder> {
-    const purchase = await this.getPurchaseOrder(id);
-    if (!purchase) throw new Error("Purchase order not found");
-    const updatedPurchase = { ...purchase, ...updates, updatedAt: new Date() };
-    this.purchaseOrders.set(id, updatedPurchase);
-    return updatedPurchase;
+  async updatePurchaseOrder(id: number, purchase: Partial<schema.InsertPurchaseOrder>): Promise<schema.PurchaseOrder> {
+    const [updatedPurchaseOrder] = await db
+      .update(schema.purchaseOrders)
+      .set(purchase)
+      .where(eq(schema.purchaseOrders.id, id))
+      .returning();
+    return updatedPurchaseOrder;
   }
-
   async deletePurchaseOrder(id: number): Promise<void> {
-    this.purchaseOrders.delete(id);
-    this.purchaseItems.delete(id);
+    await db.delete(schema.purchaseOrders).where(eq(schema.purchaseOrders.id, id));
   }
-
-  async getPurchaseItems(purchaseId: number): Promise<PurchaseItem[]> {
-    return this.purchaseItems.get(purchaseId) || [];
+  async getPurchaseItems(purchaseId: number): Promise<schema.PurchaseItem[]> {
+    return await db.select().from(schema.purchaseItems).where(eq(schema.purchaseItems.purchaseId, purchaseId));
   }
 
   // Expense Category operations
-  async getExpenseCategories(): Promise<ExpenseCategory[]> {
-    return Array.from(this.expenseCategories.values());
+  async getExpenseCategories(): Promise<schema.ExpenseCategory[]> {
+    return await db.select().from(schema.expenseCategories);
   }
-
-  async getExpenseCategory(id: number): Promise<ExpenseCategory | undefined> {
-    return this.expenseCategories.get(id);
+  async getExpenseCategory(id: number): Promise<schema.ExpenseCategory | undefined> {
+    const [expenseCategory] = await db.select().from(schema.expenseCategories).where(eq(schema.expenseCategories.id, id));
+    return expenseCategory;
   }
-
-  async createExpenseCategory(category: InsertExpenseCategory): Promise<ExpenseCategory> {
-    const id = this.currentId++;
-    const newCategory: ExpenseCategory = {
-      ...category,
-      id,
-      description: category.description || null,
-      createdAt: new Date()
-    };
-    this.expenseCategories.set(id, newCategory);
-    return newCategory;
+  async createExpenseCategory(category: schema.InsertExpenseCategory): Promise<schema.ExpenseCategory> {
+    const [newExpenseCategory] = await db.insert(schema.expenseCategories).values(category).returning();
+    return newExpenseCategory;
   }
-
-  async updateExpenseCategory(id: number, updates: Partial<InsertExpenseCategory>): Promise<ExpenseCategory> {
-    const category = await this.getExpenseCategory(id);
-    if (!category) throw new Error("فئة المصروفات غير موجودة");
-    const updatedCategory = { ...category, ...updates };
-    this.expenseCategories.set(id, updatedCategory);
-    return updatedCategory;
+  async updateExpenseCategory(id: number, category: Partial<schema.InsertExpenseCategory>): Promise<schema.ExpenseCategory> {
+    const [updatedExpenseCategory] = await db
+      .update(schema.expenseCategories)
+      .set(category)
+      .where(eq(schema.expenseCategories.id, id))
+      .returning();
+    return updatedExpenseCategory;
   }
-
   async deleteExpenseCategory(id: number): Promise<void> {
-    this.expenseCategories.delete(id);
+    await db.delete(schema.expenseCategories).where(eq(schema.expenseCategories.id, id));
   }
 
   // Expense operations
-  async getExpenses(): Promise<Expense[]> {
-    return Array.from(this.expenses.values());
+  async getExpenses(): Promise<schema.Expense[]> {
+    return await db.select().from(schema.expenses);
   }
-
-  async getExpense(id: number): Promise<Expense | undefined> {
-    return this.expenses.get(id);
+  async getExpense(id: number): Promise<schema.Expense | undefined> {
+    const [expense] = await db.select().from(schema.expenses).where(eq(schema.expenses.id, id));
+    return expense;
   }
-
-  async createExpense(expense: InsertExpense): Promise<Expense> {
-    const id = this.currentId++;
-    const newExpense: Expense = {
-      ...expense,
-      id,
-      receiptImage: expense.receiptImage || null,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
-    this.expenses.set(id, newExpense);
+  async createExpense(expense: schema.InsertExpense): Promise<schema.Expense> {
+    const [newExpense] = await db.insert(schema.expenses).values(expense).returning();
     return newExpense;
   }
-
-  async updateExpense(id: number, updates: Partial<InsertExpense>): Promise<Expense> {
-    const expense = await this.getExpense(id);
-    if (!expense) throw new Error("المصروف غير موجود");
-    const updatedExpense = { ...expense, ...updates, updatedAt: new Date() };
-    this.expenses.set(id, updatedExpense);
+  async updateExpense(id: number, expense: Partial<schema.InsertExpense>): Promise<schema.Expense> {
+    const [updatedExpense] = await db
+      .update(schema.expenses)
+      .set(expense)
+      .where(eq(schema.expenses.id, id))
+      .returning();
     return updatedExpense;
   }
-
   async deleteExpense(id: number): Promise<void> {
-    this.expenses.delete(id);
+    await db.delete(schema.expenses).where(eq(schema.expenses.id, id));
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();

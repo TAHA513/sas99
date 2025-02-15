@@ -38,11 +38,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
     onSuccess: (user: SelectUser) => {
       queryClient.setQueryData(["/api/user"], user);
+      toast({
+        title: "تم تسجيل الدخول بنجاح",
+        description: `مرحباً ${user.name}`,
+      });
     },
     onError: (error: Error) => {
       toast({
-        title: "Login failed",
-        description: error.message,
+        title: "فشل تسجيل الدخول",
+        description: "اسم المستخدم أو كلمة المرور غير صحيحة",
         variant: "destructive",
       });
     },
@@ -55,11 +59,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
     onSuccess: (user: SelectUser) => {
       queryClient.setQueryData(["/api/user"], user);
+      toast({
+        title: "تم إنشاء الحساب بنجاح",
+        description: `مرحباً ${user.name}`,
+      });
     },
     onError: (error: Error) => {
       toast({
-        title: "Registration failed",
-        description: error.message,
+        title: "فشل إنشاء الحساب",
+        description: "اسم المستخدم مستخدم بالفعل",
         variant: "destructive",
       });
     },
@@ -71,10 +79,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
     onSuccess: () => {
       queryClient.setQueryData(["/api/user"], null);
+      toast({
+        title: "تم تسجيل الخروج بنجاح",
+      });
     },
     onError: (error: Error) => {
       toast({
-        title: "Logout failed",
+        title: "فشل تسجيل الخروج",
         description: error.message,
         variant: "destructive",
       });
