@@ -10,7 +10,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useQuery } from "@tanstack/react-query";
-import { Package2, DollarSign, LineChart } from "lucide-react";
+import { Package2, DollarSign, LineChart, TrendingUp, Wallet, BarChart3 } from "lucide-react";
 import type { Product } from "@shared/schema";
 import {
   PieChart,
@@ -45,6 +45,12 @@ export default function InventoryReportsPage() {
     return sum + (Number(product.quantity) * Number(product.sellingPrice))
   }, 0);
 
+  // حساب الربح المتوقع
+  const expectedProfit = totalInventorySalePrice - totalInventoryCost;
+
+  // حساب نسبة الربح
+  const profitMargin = ((expectedProfit / totalInventoryCost) * 100).toFixed(2);
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('ar-IQ', {
       style: 'currency',
@@ -75,35 +81,59 @@ export default function InventoryReportsPage() {
     <DashboardLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold mb-2">تقارير المخزون والأسعار</h1>
-          <p className="text-muted-foreground">عرض تفصيلي لأرصدة وأسعار المخزون بالجملة والمفرد</p>
+          <h1 className="text-3xl font-bold mb-2">تقارير المخزون والسيولة</h1>
+          <p className="text-muted-foreground">عرض تفصيلي للسيولة المتوفرة وأرصدة المخزون</p>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {/* بطاقة لعرض إجمالي قيمة المخزون بسعر التكلفة */}
-          <Card className="col-span-2">
+        {/* قسم السيولة */}
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {/* بطاقة السيولة المتوفرة بسعر التكلفة */}
+          <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">إجمالي قيمة المخزون (سعر التكلفة)</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium">السيولة بسعر التكلفة</CardTitle>
+              <Wallet className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{formatCurrency(totalInventoryCost)}</div>
-              <p className="text-xs text-muted-foreground mt-1">مجموع (الكمية × سعر التكلفة) لجميع المنتجات</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                إجمالي رأس المال المستثمر في المخزون
+              </p>
             </CardContent>
           </Card>
 
-          {/* بطاقة لعرض إجمالي قيمة المخزون بسعر البيع */}
-          <Card className="col-span-2">
+          {/* بطاقة السيولة المتوفرة بسعر البيع */}
+          <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">إجمالي قيمة المخزون (سعر البيع)</CardTitle>
-              <LineChart className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium">السيولة بسعر البيع</CardTitle>
+              <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{formatCurrency(totalInventorySalePrice)}</div>
-              <p className="text-xs text-muted-foreground mt-1">مجموع (الكمية × سعر البيع) لجميع المنتجات</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                إجمالي القيمة المتوقعة عند بيع كامل المخزون
+              </p>
             </CardContent>
           </Card>
 
+          {/* بطاقة الربح المتوقع */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">الربح المتوقع</CardTitle>
+              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-green-600">
+                {formatCurrency(expectedProfit)}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                نسبة الربح: {profitMargin}٪
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* قسم احصائيات المخزون */}
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">إجمالي المنتجات</CardTitle>
@@ -111,16 +141,22 @@ export default function InventoryReportsPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{products.length}</div>
+              <p className="text-xs text-muted-foreground mt-1">
+                عدد المنتجات الكلي في المخزون
+              </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">منتجات المفرد</CardTitle>
-              <Package2 className="h-4 w-4 text-muted-foreground" />
+              <BarChart3 className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{retailProducts.length}</div>
+              <p className="text-xs text-muted-foreground mt-1">
+                عدد منتجات البيع بالمفرد
+              </p>
             </CardContent>
           </Card>
 
@@ -131,18 +167,9 @@ export default function InventoryReportsPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{wholesaleProducts.length}</div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">الربح المتوقع</CardTitle>
-              <Package2 className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-green-600">
-                {formatCurrency(totalInventorySalePrice - totalInventoryCost)}
-              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                عدد منتجات البيع بالجملة
+              </p>
             </CardContent>
           </Card>
         </div>
