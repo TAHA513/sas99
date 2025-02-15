@@ -26,7 +26,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
@@ -120,6 +120,22 @@ export default function SettingsPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const queryClient = useQueryClient();
 
+  // Add theme loading on mount
+  useEffect(() => {
+    const loadInitialTheme = async () => {
+      try {
+        const response = await fetch('/api/theme');
+        const theme = await response.json();
+        if (theme?.primary) {
+          updateThemeVariables(theme.primary);
+        }
+      } catch (error) {
+        console.error('Error loading theme:', error);
+      }
+    };
+    loadInitialTheme();
+  }, []);
+
   const { data: settings } = useQuery<Setting[]>({
     queryKey: ["/api/settings"],
   });
@@ -186,11 +202,13 @@ export default function SettingsPage() {
     }) => {
       try {
         // Update store settings first
-        const storeRes = await apiRequest("POST", "/api/store-settings", {
-          storeName: data.storeName,
-          storeLogo: data.storeLogo,
-        });
-        await storeRes.json();
+        if (data.storeName !== undefined || data.storeLogo !== undefined) {
+          const storeRes = await apiRequest("POST", "/api/store-settings", {
+            storeName: data.storeName,
+            storeLogo: data.storeLogo,
+          });
+          await storeRes.json();
+        }
 
         // Then update theme if appearance related settings are changed
         if (data.primary || data.appearance || data.radius || data.fontSize || data.fontFamily) {
