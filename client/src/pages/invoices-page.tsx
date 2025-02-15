@@ -124,6 +124,12 @@ export default function InvoicesPage() {
     product.barcode.includes(searchQuery)
   );
 
+  // Assuming formatCurrency function is defined elsewhere
+  const formatCurrency = (amount: number, showIQD: boolean = false): string => {
+    //Implementation of formatCurrency,  replace with your actual implementation
+    return amount.toFixed(2) + " ريال"; // Placeholder for now.
+  };
+
   // Update printInvoice function with improved styling
   const printInvoice = () => {
     const printWindow = window.open('', '', 'width=800,height=600');
@@ -239,20 +245,20 @@ export default function InvoicesPage() {
                 <tr>
                   <td>${item.name}</td>
                   <td>${item.quantity}</td>
-                  <td>${item.price.toFixed(2)}</td>
-                  <td>${item.total.toFixed(2)}</td>
+                  <td>${formatCurrency(item.price, true)}</td>
+                  <td>${formatCurrency(item.total, true)}</td>
                 </tr>
               `).join('')}
             </tbody>
           </table>
 
           <div class="totals">
-            <div>المجموع: ${subtotal.toFixed(2)} ريال</div>
+            <div>المجموع: ${formatCurrency(subtotal, true)}</div>
             ${discount > 0 ? `
-              <div>الخصم (${discount}%): ${discountAmount.toFixed(2)} ريال</div>
+              <div>الخصم (${discount}%): ${formatCurrency(discountAmount, true)}</div>
             ` : ''}
             <div style="font-weight: bold; margin-top: 5px;">
-              الإجمالي النهائي: ${finalTotal.toFixed(2)} ريال
+              الإجمالي النهائي: ${formatCurrency(finalTotal, true)}
             </div>
           </div>
 
@@ -334,8 +340,8 @@ export default function InvoicesPage() {
     const excelData = items.map(item => ({
       'اسم المنتج': item.name,
       'الكمية': item.quantity,
-      'السعر': item.price,
-      'المجموع': item.total
+      'السعر': formatCurrency(item.price, true),
+      'المجموع': formatCurrency(item.total, true)
     }));
 
     // Add summary row
@@ -343,7 +349,7 @@ export default function InvoicesPage() {
       'اسم المنتج': 'المجموع الفرعي',
       'الكمية': '',
       'السعر': '',
-      'المجموع': subtotal
+      'المجموع': formatCurrency(subtotal, true)
     });
 
     if (discount > 0) {
@@ -351,7 +357,7 @@ export default function InvoicesPage() {
         'اسم المنتج': `الخصم (${discount}%)`,
         'الكمية': '',
         'السعر': '',
-        'المجموع': discountAmount
+        'المجموع': formatCurrency(discountAmount, true)
       });
     }
 
@@ -359,7 +365,7 @@ export default function InvoicesPage() {
       'اسم المنتج': 'الإجمالي النهائي',
       'الكمية': '',
       'السعر': '',
-      'المجموع': finalTotal
+      'المجموع': formatCurrency(finalTotal, true)
     });
 
     // Create worksheet
@@ -492,8 +498,8 @@ export default function InvoicesPage() {
                             className="w-20 mx-auto text-center"
                           />
                         </td>
-                        <td className="p-2 text-center">{item.price.toFixed(2)}</td>
-                        <td className="p-2 text-center">{item.total.toFixed(2)}</td>
+                        <td className="p-2 text-center">{formatCurrency(item.price, true)}</td>
+                        <td className="p-2 text-center">{formatCurrency(item.total, true)}</td>
                         <td className="p-2 text-center">
                           <Button
                             variant="ghost"
@@ -547,17 +553,17 @@ export default function InvoicesPage() {
               <div className="space-y-2 border-t pt-4">
                 <div className="flex justify-between text-sm">
                   <span>المجموع الفرعي:</span>
-                  <span>{subtotal.toFixed(2)} ريال</span>
+                  <span>{formatCurrency(subtotal, true)}</span>
                 </div>
                 {discount > 0 && (
                   <div className="flex justify-between text-sm text-green-600">
                     <span>الخصم ({discount}%):</span>
-                    <span>- {discountAmount.toFixed(2)} ريال</span>
+                    <span>- {formatCurrency(discountAmount, true)}</span>
                   </div>
                 )}
                 <div className="flex justify-between font-bold text-lg">
                   <span>الإجمالي النهائي:</span>
-                  <span>{finalTotal.toFixed(2)} ريال</span>
+                  <span>{formatCurrency(finalTotal, true)}</span>
                 </div>
               </div>
 
