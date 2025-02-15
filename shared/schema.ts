@@ -403,24 +403,27 @@ export type InsertExpenseCategory = z.infer<typeof insertExpenseCategorySchema>;
 export type Expense = typeof expenses.$inferSelect;
 export type InsertExpense = z.infer<typeof insertExpenseSchema>;
 
-// Add after the existing code, before the last export statement
 export const databaseConnections = pgTable("database_connections", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
-  type: text("type").notNull(), // 'firestore', 'mysql', 'sqlite', 'postgres'
+  type: text("type").notNull(), // 'firestore', 'mysql', 'sqlite', 'postgres', 'googlecloud'
   host: text("host"),
   port: text("port"),
   database: text("database"),
   username: text("username"),
   password: text("password"),
   connectionString: text("connection_string"),
+  // New fields for Google Cloud SQL
+  projectId: text("project_id"),
+  instanceName: text("instance_name"),
+  region: text("region"),
   isActive: boolean("is_active").notNull().default(false),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
 export const insertDatabaseConnectionSchema = createInsertSchema(databaseConnections).extend({
-  type: z.enum(["firestore", "mysql", "sqlite", "postgres"], {
+  type: z.enum(["firestore", "mysql", "sqlite", "postgres", "googlecloud"], {
     errorMap: () => ({ message: "نوع قاعدة البيانات غير صالح" })
   }),
   host: z.string().optional(),
@@ -429,6 +432,10 @@ export const insertDatabaseConnectionSchema = createInsertSchema(databaseConnect
   username: z.string().optional(),
   password: z.string().optional(),
   connectionString: z.string().optional(),
+  // Add validation for Google Cloud SQL fields
+  projectId: z.string().optional(),
+  instanceName: z.string().optional(),
+  region: z.string().optional(),
 });
 
 export type DatabaseConnection = typeof databaseConnections.$inferSelect;

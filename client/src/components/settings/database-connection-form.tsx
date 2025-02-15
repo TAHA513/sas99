@@ -6,6 +6,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
@@ -41,9 +42,9 @@ export function DatabaseConnectionForm() {
   const onSubmit = async (data: InsertDatabaseConnection) => {
     try {
       await apiRequest("POST", "/api/database-connections", data);
-      
+
       queryClient.invalidateQueries({ queryKey: ["/api/database-connections"] });
-      
+
       toast({
         title: "تم إضافة الاتصال",
         description: "تم إضافة اتصال قاعدة البيانات بنجاح",
@@ -111,6 +112,7 @@ export function DatabaseConnectionForm() {
                   <SelectItem value="mysql">MySQL</SelectItem>
                   <SelectItem value="sqlite">SQLite</SelectItem>
                   <SelectItem value="firestore">Firestore</SelectItem>
+                  <SelectItem value="googlecloud">Google Cloud SQL</SelectItem>
                 </SelectContent>
               </Select>
               <FormMessage />
@@ -118,7 +120,56 @@ export function DatabaseConnectionForm() {
           )}
         />
 
-        {watchType !== 'sqlite' && (
+        {watchType === 'googlecloud' && (
+          <>
+            <FormField
+              control={form.control}
+              name="projectId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>معرف المشروع (Project ID)</FormLabel>
+                  <FormControl>
+                    <Input {...field} placeholder="أدخل معرف مشروع Google Cloud" />
+                  </FormControl>
+                  <FormDescription>
+                    يمكنك العثور على معرف المشروع في لوحة تحكم Google Cloud
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="instanceName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>اسم النسخة (Instance Name)</FormLabel>
+                  <FormControl>
+                    <Input {...field} placeholder="أدخل اسم نسخة قاعدة البيانات" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="region"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>المنطقة (Region)</FormLabel>
+                  <FormControl>
+                    <Input {...field} placeholder="مثال: us-central1" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </>
+        )}
+
+        {(watchType !== 'sqlite' && watchType !== 'googlecloud') && (
           <>
             <FormField
               control={form.control}
