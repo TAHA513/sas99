@@ -14,11 +14,11 @@ import { InsertInstallmentPlan, insertInstallmentPlanSchema } from "@shared/sche
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export function InstallmentForm({ onSuccess }: { onSuccess?: () => void }) {
   const { toast } = useToast();
-  const [isCalculating, setIsCalculating] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
 
   const form = useForm<InsertInstallmentPlan>({
     resolver: zodResolver(insertInstallmentPlanSchema),
@@ -28,39 +28,41 @@ export function InstallmentForm({ onSuccess }: { onSuccess?: () => void }) {
       numberOfInstallments: 1,
       installmentAmount: 0,
       remainingAmount: 0,
+      startDate: new Date().toISOString().split('T')[0],
     },
   });
 
-  // Calculate installment amount when total amount, down payment, or number of installments change
-  const calculateInstallment = (values: Partial<InsertInstallmentPlan>) => {
-    const total = values.totalAmount || 0;
-    const downPayment = values.downPayment || 0;
-    const numberOfInstallments = values.numberOfInstallments || 1;
+  // مراقبة التغييرات في الحقول الرئيسية وحساب الأقساط
+  useEffect(() => {
+    const subscription = form.watch((value, { name }) => {
+      if (isUpdating) return;
 
-    if (total && downPayment && numberOfInstallments) {
-      const remaining = total - downPayment;
-      const installment = remaining / numberOfInstallments;
+      if (name === 'totalAmount' || name === 'downPayment' || name === 'numberOfInstallments') {
+        const total = value.totalAmount || 0;
+        const downPayment = value.downPayment || 0;
+        const numberOfInstallments = value.numberOfInstallments || 1;
 
-      form.setValue("remainingAmount", remaining);
-      form.setValue("installmentAmount", installment);
-    }
-  };
+        if (total && downPayment && numberOfInstallments) {
+          setIsUpdating(true);
+          const remaining = total - downPayment;
+          const installment = remaining / numberOfInstallments;
 
-  // Watch form fields for automatic calculation
-  form.watch((values) => {
-    if (!isCalculating) {
-      setIsCalculating(true);
-      calculateInstallment(values);
-      setIsCalculating(false);
-    }
-  });
+          form.setValue("remainingAmount", remaining);
+          form.setValue("installmentAmount", installment);
+          setIsUpdating(false);
+        }
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [form, isUpdating]);
 
   const onSubmit = async (data: InsertInstallmentPlan) => {
     try {
       await apiRequest("POST", "/api/installment-plans", data);
-      
+
       queryClient.invalidateQueries({ queryKey: ['/api/installment-plans'] });
-      
+
       toast({
         title: "تم إنشاء خطة التقسيط",
         description: "تم إنشاء خطة التقسيط بنجاح",
@@ -156,6 +158,23 @@ export function InstallmentForm({ onSuccess }: { onSuccess?: () => void }) {
                     min="1" 
                     {...field} 
                     onChange={e => field.onChange(Number(e.target.value))}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="startDate"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>تاريخ بداية التقسيط</FormLabel>
+                <FormControl>
+                  <Input 
+                    type="date" 
+                    {...field}
                   />
                 </FormControl>
                 <FormMessage />
