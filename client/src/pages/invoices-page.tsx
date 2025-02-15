@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
 import { queryClient, apiRequest } from "@/lib/queryClient";
+import { formatCurrency } from "@/lib/storage";
 import * as XLSX from 'xlsx';
 
 type InvoiceItem = {
@@ -124,11 +125,6 @@ export default function InvoicesPage() {
     product.barcode.includes(searchQuery)
   );
 
-  // Assuming formatCurrency function is defined elsewhere
-  const formatCurrency = (amount: number, showIQD: boolean = false): string => {
-    //Implementation of formatCurrency,  replace with your actual implementation
-    return amount.toFixed(2) + " ريال"; // Placeholder for now.
-  };
 
   // Update printInvoice function with improved styling
   const printInvoice = () => {
@@ -270,8 +266,6 @@ export default function InvoicesPage() {
           <div class="footer">
             ${storeSettings?.storeName ? `
               <div>شكراً لتسوقكم من ${storeSettings.storeName}</div>
-              ${storeSettings?.storeAddress ? `<div>${storeSettings.storeAddress}</div>` : ''}
-              ${storeSettings?.storePhone ? `<div>هاتف: ${storeSettings.storePhone}</div>` : ''}
             ` : ''}
           </div>
 
