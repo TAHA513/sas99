@@ -85,52 +85,30 @@ export default function InventoryReportsPage() {
           <p className="text-muted-foreground">عرض تفصيلي للسيولة المتوفرة وأرصدة المخزون</p>
         </div>
 
-        {/* قسم السيولة */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {/* بطاقة السيولة المتوفرة بسعر التكلفة */}
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">السيولة بسعر التكلفة</CardTitle>
-              <Wallet className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{formatCurrency(totalInventoryCost)}</div>
-              <p className="text-xs text-muted-foreground mt-1">
-                إجمالي رأس المال المستثمر في المخزون
-              </p>
-            </CardContent>
-          </Card>
-
-          {/* بطاقة السيولة المتوفرة بسعر البيع */}
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">السيولة بسعر البيع</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{formatCurrency(totalInventorySalePrice)}</div>
-              <p className="text-xs text-muted-foreground mt-1">
-                إجمالي القيمة المتوقعة عند بيع كامل المخزون
-              </p>
-            </CardContent>
-          </Card>
-
-          {/* بطاقة الربح المتوقع */}
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">الربح المتوقع</CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-green-600">
-                {formatCurrency(expectedProfit)}
+        {/* قسم السيولة الجديد */}
+        <Card className="bg-primary/5">
+          <CardHeader>
+            <CardTitle>تقرير السيولة المتوفرة</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div>
+                <h3 className="font-semibold mb-2">السيولة بسعر التكلفة</h3>
+                <div className="text-2xl font-bold">{formatCurrency(totalInventoryCost)}</div>
+                <p className="text-sm text-muted-foreground">
+                  إجمالي رأس المال المستثمر في المخزون
+                </p>
               </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                نسبة الربح: {profitMargin}٪
-              </p>
-            </CardContent>
-          </Card>
-        </div>
+              <div>
+                <h3 className="font-semibold mb-2">السيولة بسعر البيع</h3>
+                <div className="text-2xl font-bold">{formatCurrency(totalInventorySalePrice)}</div>
+                <p className="text-sm text-muted-foreground">
+                  إجمالي القيمة المتوقعة عند بيع كامل المخزون
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* قسم احصائيات المخزون */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
