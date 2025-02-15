@@ -28,6 +28,8 @@ import { ar } from "date-fns/locale";
 import { formatCurrency } from "@/lib/utils";
 import type { Expense } from "@shared/schema";
 import { motion } from "framer-motion";
+import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select"
+
 
 const fadeIn = {
   initial: { opacity: 0, y: 20 },
@@ -43,6 +45,7 @@ const tableRowVariants = {
 
 export default function ExpensesPage() {
   const [searchTerm, setSearchTerm] = useState("");
+  const [displayCurrency, setDisplayCurrency] = useState<'USD' | 'IQD'>('USD');
 
   // جلب المصروفات
   const { data: expenses = [] } = useQuery<Expense[]>({
@@ -89,6 +92,18 @@ export default function ExpensesPage() {
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold">المصروفات</h1>
           <div className="flex items-center gap-4">
+            <Select
+              value={displayCurrency}
+              onValueChange={(value: 'USD' | 'IQD') => setDisplayCurrency(value)}
+            >
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="اختر العملة" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="USD">دولار أمريكي ($)</SelectItem>
+                <SelectItem value="IQD">دينار عراقي (د.ع)</SelectItem>
+              </SelectContent>
+            </Select>
             <SearchInput
               placeholder="بحث في المصروفات..."
               value={searchTerm}
@@ -122,7 +137,7 @@ export default function ExpensesPage() {
                 <Calendar className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{formatCurrency(todayTotal, 'USD')}</div>
+                <div className="text-2xl font-bold">{formatCurrency(todayTotal, displayCurrency)}</div>
                 <p className="text-xs text-muted-foreground">
                   {todayExpenses.length} مصروف
                 </p>
@@ -137,7 +152,7 @@ export default function ExpensesPage() {
                 <FileText className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{formatCurrency(monthTotal, 'USD')}</div>
+                <div className="text-2xl font-bold">{formatCurrency(monthTotal, displayCurrency)}</div>
                 <p className="text-xs text-muted-foreground">
                   {monthExpenses.length} مصروف
                 </p>
@@ -153,7 +168,7 @@ export default function ExpensesPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {formatCurrency(totalExpenses, 'USD')}
+                  {formatCurrency(totalExpenses, displayCurrency)}
                 </div>
                 <p className="text-xs text-muted-foreground">
                   {expenses.length} مصروف
@@ -176,6 +191,7 @@ export default function ExpensesPage() {
                 <TableHead>الفئة</TableHead>
                 <TableHead>الوصف</TableHead>
                 <TableHead>المبلغ</TableHead>
+                <TableHead>العملة</TableHead>
                 <TableHead>طريقة الدفع</TableHead>
                 <TableHead>المستلم</TableHead>
                 <TableHead>الحالة</TableHead>
@@ -196,7 +212,10 @@ export default function ExpensesPage() {
                   </TableCell>
                   <TableCell>{expense.categoryId}</TableCell>
                   <TableCell>{expense.description}</TableCell>
-                  <TableCell>{formatCurrency(Number(expense.amount), 'USD')}</TableCell>
+                  <TableCell>{formatCurrency(Number(expense.amount), expense.currency || displayCurrency)}</TableCell>
+                  <TableCell>
+                    {expense.currency === 'USD' ? 'دولار أمريكي' : 'دينار عراقي'}
+                  </TableCell>
                   <TableCell>
                     {expense.paymentMethod === 'cash' ? 'نقداً' :
                      expense.paymentMethod === 'bank_transfer' ? 'تحويل بنكي' : 'شيك'}
@@ -218,7 +237,7 @@ export default function ExpensesPage() {
               ))}
               {filteredExpenses.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                     لا توجد مصروفات حالياً
                   </TableCell>
                 </TableRow>

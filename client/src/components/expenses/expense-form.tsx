@@ -43,6 +43,7 @@ export function ExpenseForm() {
       status: "completed",
       date: new Date(),
       categoryId: 1,
+      currency: "USD"
     },
   });
 
@@ -103,21 +104,47 @@ export function ExpenseForm() {
             />
           </motion.div>
 
-          <motion.div {...inputAnimation} transition={{ delay: 0.2 }}>
-            <FormField
-              control={form.control}
-              name="amount"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>المبلغ</FormLabel>
-                  <FormControl>
-                    <Input type="number" {...field} onChange={e => field.onChange(Number(e.target.value))} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </motion.div>
+          <div className="grid grid-cols-2 gap-4">
+            <motion.div {...inputAnimation} transition={{ delay: 0.2 }}>
+              <FormField
+                control={form.control}
+                name="amount"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>المبلغ</FormLabel>
+                    <FormControl>
+                      <Input type="number" {...field} onChange={e => field.onChange(Number(e.target.value))} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </motion.div>
+
+            <motion.div {...inputAnimation} transition={{ delay: 0.2 }}>
+              <FormField
+                control={form.control}
+                name="currency"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>العملة</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="اختر العملة" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="USD">دولار أمريكي ($)</SelectItem>
+                        <SelectItem value="IQD">دينار عراقي (د.ع)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </motion.div>
+          </div>
 
           <motion.div {...inputAnimation} transition={{ delay: 0.3 }}>
             <FormField

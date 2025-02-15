@@ -15,6 +15,7 @@ import {
   ShoppingCart,
   Truck,
   DollarSign,
+  FolderIcon, // Added import for FolderIcon
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
@@ -69,6 +70,11 @@ const navItems = [
     title: "المصروفات",
     href: "/expenses",
     icon: DollarSign,
+  },
+  {
+    title: "فئات المصروفات",
+    href: "/expense-categories",
+    icon: FolderIcon,
   },
   {
     title: "التقارير",
