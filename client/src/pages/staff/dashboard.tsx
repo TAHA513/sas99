@@ -12,29 +12,83 @@ import { Button } from "@/components/ui/button";
 import { Loader2, AlertCircle, Calendar, DollarSign, Package, Users, Clock, Printer } from "lucide-react";
 import { Link, useLocation } from "wouter";
 
+// Loading skeleton component
+const CardSkeleton = () => (
+  <Card className="p-6 hover:shadow-lg transition-shadow animate-pulse">
+    <div className="flex items-center gap-4">
+      <div className="p-4 bg-muted rounded-full" />
+      <div className="space-y-2">
+        <div className="h-4 w-24 bg-muted rounded" />
+        <div className="h-6 w-16 bg-muted rounded" />
+        <div className="h-3 w-32 bg-muted rounded" />
+      </div>
+    </div>
+  </Card>
+);
+
+const TableRowSkeleton = () => (
+  <TableRow className="animate-pulse">
+    {[...Array(5)].map((_, i) => (
+      <TableCell key={i}>
+        <div className="h-4 w-24 bg-muted rounded" />
+      </TableCell>
+    ))}
+  </TableRow>
+);
+
 export default function StaffDashboard() {
   const [, setLocation] = useLocation();
 
+  // Parallel queries with better caching
   const { data: quickStats, isLoading: statsLoading } = useQuery({
     queryKey: ["/api/staff/quick-stats"],
+    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
   });
 
   const { data: todaySales, isLoading: salesLoading } = useQuery({
     queryKey: ["/api/sales/today"],
+    staleTime: 1000 * 60, // Cache for 1 minute
   });
 
   const { data: appointments, isLoading: appointmentsLoading } = useQuery({
     queryKey: ["/api/appointments/today"],
+    staleTime: 1000 * 60, // Cache for 1 minute
   });
 
   const { data: lowStockProducts, isLoading: productsLoading } = useQuery({
     queryKey: ["/api/products/low-stock"],
+    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
   });
 
-  if (statsLoading || salesLoading || appointmentsLoading || productsLoading) {
+  // Show loading skeleton instead of full-page loader
+  const isInitialLoading = statsLoading && salesLoading && appointmentsLoading && productsLoading;
+
+  if (isInitialLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin" />
+      <div className="container mx-auto p-6 space-y-6">
+        <div className="flex justify-between items-center mb-8">
+          <div>
+            <div className="h-8 w-48 bg-muted rounded animate-pulse" />
+            <div className="h-4 w-64 bg-muted rounded mt-2 animate-pulse" />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {[...Array(4)].map((_, i) => (
+            <CardSkeleton key={i} />
+          ))}
+        </div>
+
+        <Card className="p-6">
+          <div className="animate-pulse mb-6">
+            <div className="h-6 w-32 bg-muted rounded" />
+          </div>
+          <div className="space-y-4">
+            {[...Array(3)].map((_, i) => (
+              <TableRowSkeleton key={i} />
+            ))}
+          </div>
+        </Card>
       </div>
     );
   }
@@ -73,7 +127,13 @@ export default function StaffDashboard() {
             </div>
             <div>
               <h2 className="text-xl font-semibold mb-1">المبيعات اليومية</h2>
-              <div className="text-2xl font-bold">{quickStats?.totalSales?.toLocaleString()} د.ع</div>
+              <div className="text-2xl font-bold">
+                {statsLoading ? (
+                  <div className="h-6 w-24 bg-muted rounded animate-pulse" />
+                ) : (
+                  `${quickStats?.totalSales?.toLocaleString()} د.ع`
+                )}
+              </div>
               <div className="text-sm text-muted-foreground">
                 {quickStats?.salesCount} فاتورة
               </div>
@@ -89,7 +149,13 @@ export default function StaffDashboard() {
             </div>
             <div>
               <h2 className="text-xl font-semibold mb-1">مواعيد اليوم</h2>
-              <div className="text-2xl font-bold">{quickStats?.appointmentsCount}</div>
+              <div className="text-2xl font-bold">
+                {appointmentsLoading ? (
+                  <div className="h-6 w-16 bg-muted rounded animate-pulse" />
+                ) : (
+                  quickStats?.appointmentsCount
+                )}
+              </div>
               <Link href="/appointments" className="text-sm text-primary hover:underline">
                 عرض المواعيد
               </Link>
@@ -122,7 +188,11 @@ export default function StaffDashboard() {
             <div>
               <h2 className="text-xl font-semibold mb-1">تنبيهات المخزون</h2>
               <div className="text-2xl font-bold text-red-500">
-                {quickStats?.lowStockCount}
+                {productsLoading ? (
+                  <div className="h-6 w-16 bg-muted rounded animate-pulse" />
+                ) : (
+                  quickStats?.lowStockCount
+                )}
               </div>
               <div className="text-sm text-muted-foreground">
                 منتجات تحتاج إعادة طلب
@@ -132,55 +202,60 @@ export default function StaffDashboard() {
         </Card>
       </div>
 
-      {/* جدول المبيعات الأخيرة */}
-      <Card className="p-6">
-        <div className="flex justify-between items-center mb-6">
-          <div>
-            <h2 className="text-xl font-semibold">المبيعات الأخيرة</h2>
-            <p className="text-sm text-muted-foreground">آخر المبيعات المسجلة في النظام</p>
+      {/* Tables with loading states */}
+      <div className="space-y-6">
+        {/* Sales Table */}
+        <Card className="p-6">
+          <div className="flex justify-between items-center mb-6">
+            <div>
+              <h2 className="text-xl font-semibold">المبيعات الأخيرة</h2>
+              <p className="text-sm text-muted-foreground">آخر المبيعات المسجلة في النظام</p>
+            </div>
+            <Button variant="outline" onClick={() => setLocation("/invoices")} className="flex items-center gap-2">
+              <DollarSign className="h-4 w-4" />
+              عرض كل المبيعات
+            </Button>
           </div>
-          <Button variant="outline" onClick={() => setLocation("/invoices")} className="flex items-center gap-2">
-            <DollarSign className="h-4 w-4" />
-            عرض كل المبيعات
-          </Button>
-        </div>
-        <div className="rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>رقم الفاتورة</TableHead>
-                <TableHead>اسم العميل</TableHead>
-                <TableHead>المبلغ</TableHead>
-                <TableHead>التاريخ</TableHead>
-                <TableHead>الحالة</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {todaySales?.items?.map((sale: any) => (
-                <TableRow key={sale.id} className="hover:bg-muted/50">
-                  <TableCell className="font-medium">#{sale.id}</TableCell>
-                  <TableCell>{sale.customerName || 'عميل نقدي'}</TableCell>
-                  <TableCell>{Number(sale.amount).toLocaleString()} د.ع</TableCell>
-                  <TableCell>{new Date(sale.date).toLocaleString('ar-IQ')}</TableCell>
-                  <TableCell>
-                    <span className={`px-2 py-1 rounded-full text-sm ${
-                      sale.status === 'completed' ? 'bg-green-100 text-green-800' :
-                      sale.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                      'bg-red-100 text-red-800'
-                    }`}>
-                      {sale.status === 'completed' ? 'مكتمل' :
-                       sale.status === 'pending' ? 'معلق' : 'ملغي'}
-                    </span>
-                  </TableCell>
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>رقم الفاتورة</TableHead>
+                  <TableHead>اسم العميل</TableHead>
+                  <TableHead>المبلغ</TableHead>
+                  <TableHead>التاريخ</TableHead>
+                  <TableHead>الحالة</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      </Card>
+              </TableHeader>
+              <TableBody>
+                {salesLoading ? (
+                  [...Array(3)].map((_, i) => <TableRowSkeleton key={i} />)
+                ) : (
+                  todaySales?.items?.map((sale: any) => (
+                    <TableRow key={sale.id} className="hover:bg-muted/50">
+                      <TableCell className="font-medium">#{sale.id}</TableCell>
+                      <TableCell>{sale.customerName || 'عميل نقدي'}</TableCell>
+                      <TableCell>{Number(sale.amount).toLocaleString()} د.ع</TableCell>
+                      <TableCell>{new Date(sale.date).toLocaleString('ar-IQ')}</TableCell>
+                      <TableCell>
+                        <span className={`px-2 py-1 rounded-full text-sm ${
+                          sale.status === 'completed' ? 'bg-green-100 text-green-800' :
+                          sale.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                          'bg-red-100 text-red-800'
+                        }`}>
+                          {sale.status === 'completed' ? 'مكتمل' :
+                           sale.status === 'pending' ? 'معلق' : 'ملغي'}
+                        </span>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* جدول المواعيد اليوم */}
+        {/* Appointments Table */}
         <Card className="p-6">
           <div className="flex justify-between items-center mb-6">
             <div>
@@ -203,29 +278,33 @@ export default function StaffDashboard() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {appointments?.map((appointment: any) => (
-                  <TableRow key={appointment.id} className="hover:bg-muted/50">
-                    <TableCell>{new Date(appointment.startTime).toLocaleTimeString('ar-IQ')}</TableCell>
-                    <TableCell className="font-medium">{appointment.customerName}</TableCell>
-                    <TableCell dir="ltr">{appointment.customerPhone}</TableCell>
-                    <TableCell>
-                      <span className={`px-2 py-1 rounded-full text-sm ${
-                        appointment.status === 'completed' ? 'bg-green-100 text-green-800' :
-                        appointment.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                        'bg-red-100 text-red-800'
-                      }`}>
-                        {appointment.status === 'completed' ? 'مكتمل' :
-                         appointment.status === 'pending' ? 'معلق' : 'ملغي'}
-                      </span>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {appointmentsLoading ? (
+                  [...Array(3).keys()].map((i) => <TableRowSkeleton key={i} />)
+                ) : (
+                  appointments?.map((appointment: any) => (
+                    <TableRow key={appointment.id} className="hover:bg-muted/50">
+                      <TableCell>{new Date(appointment.startTime).toLocaleTimeString('ar-IQ')}</TableCell>
+                      <TableCell className="font-medium">{appointment.customerName}</TableCell>
+                      <TableCell dir="ltr">{appointment.customerPhone}</TableCell>
+                      <TableCell>
+                        <span className={`px-2 py-1 rounded-full text-sm ${
+                          appointment.status === 'completed' ? 'bg-green-100 text-green-800' :
+                          appointment.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                          'bg-red-100 text-red-800'
+                        }`}>
+                          {appointment.status === 'completed' ? 'مكتمل' :
+                           appointment.status === 'pending' ? 'معلق' : 'ملغي'}
+                        </span>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </div>
         </Card>
 
-        {/* المنتجات منخفضة المخزون */}
+        {/* Low Stock Products Table */}
         <Card className="p-6">
           <div className="flex justify-between items-center mb-6">
             <div>
@@ -248,14 +327,18 @@ export default function StaffDashboard() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {lowStockProducts?.map((product: any) => (
-                  <TableRow key={product.id} className="hover:bg-muted/50">
-                    <TableCell className="font-medium">{product.name}</TableCell>
-                    <TableCell>{product.groupName}</TableCell>
-                    <TableCell className="text-red-500 font-bold">{product.quantity}</TableCell>
-                    <TableCell>{Number(product.sellingPrice).toLocaleString()} د.ع</TableCell>
-                  </TableRow>
-                ))}
+                {productsLoading ? (
+                  [...Array(3).keys()].map((i) => <TableRowSkeleton key={i} />)
+                ) : (
+                  lowStockProducts?.map((product: any) => (
+                    <TableRow key={product.id} className="hover:bg-muted/50">
+                      <TableCell className="font-medium">{product.name}</TableCell>
+                      <TableCell>{product.groupName}</TableCell>
+                      <TableCell className="text-red-500 font-bold">{product.quantity}</TableCell>
+                      <TableCell>{Number(product.sellingPrice).toLocaleString()} د.ع</TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </div>
