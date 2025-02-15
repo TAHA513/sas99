@@ -42,53 +42,106 @@ export function InstallmentDetails({ plan, payments, onRecordPayment }: Installm
       <html dir="rtl">
         <head>
           <title>فاتورة تقسيط - ${plan.customerName}</title>
+          <meta charset="UTF-8">
           <style>
             @font-face {
               font-family: 'Cairo';
               src: url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap');
             }
             body { 
-              font-family: 'Cairo', Arial, sans-serif; 
-              padding: 20px;
+              font-family: 'Cairo', Arial, sans-serif;
+              padding: 40px;
               direction: rtl;
+              line-height: 1.6;
             }
-            .header { 
+            .invoice-header { 
               text-align: center; 
-              margin-bottom: 30px;
+              margin-bottom: 40px;
               border-bottom: 2px solid #eee;
               padding-bottom: 20px;
             }
-            .details { 
-              margin-bottom: 20px;
-              padding: 15px;
+            .invoice-header h1 {
+              color: #1a1a1a;
+              font-size: 28px;
+              margin-bottom: 10px;
+            }
+            .serial-number {
+              font-size: 14px;
+              color: #666;
+              margin-bottom: 10px;
+            }
+            .customer-details { 
+              margin-bottom: 30px;
+              padding: 20px;
               background: #f9f9f9;
               border-radius: 8px;
+              border: 1px solid #eee;
             }
-            .table { 
+            .customer-details h3 {
+              color: #2c3e50;
+              margin-bottom: 15px;
+              font-size: 18px;
+            }
+            .customer-details p {
+              margin: 8px 0;
+              color: #34495e;
+            }
+            .products-table { 
               width: 100%; 
               border-collapse: collapse; 
-              margin-bottom: 20px;
+              margin-bottom: 30px;
+              background: white;
             }
-            .table th, .table td { 
-              border: 1px solid #ddd; 
-              padding: 12px; 
-              text-align: right;
+            .products-table th { 
+              background: #f8f9fa;
+              color: #2c3e50;
+              font-weight: 600;
+              padding: 12px;
+              border: 1px solid #e9ecef;
             }
-            .table th {
-              background: #f5f5f5;
+            .products-table td { 
+              padding: 12px;
+              border: 1px solid #e9ecef;
+              color: #34495e;
             }
-            .total { 
-              text-align: left; 
-              margin-top: 20px;
-              padding: 15px;
+            .payment-details {
+              margin-top: 30px;
+              padding: 20px;
               border-top: 2px solid #eee;
             }
-            .signature {
+            .payment-details h3 {
+              color: #2c3e50;
+              margin-bottom: 15px;
+              font-size: 18px;
+            }
+            .payment-schedule {
+              margin-top: 20px;
+              padding: 20px;
+              background: #f9f9f9;
+              border-radius: 8px;
+              border: 1px solid #eee;
+            }
+            .payment-schedule h4 {
+              color: #2c3e50;
+              margin-bottom: 15px;
+            }
+            .payment-schedule table {
+              width: 100%;
+              border-collapse: collapse;
+              margin-top: 10px;
+            }
+            .payment-schedule th,
+            .payment-schedule td {
+              padding: 8px;
+              border: 1px solid #e9ecef;
+              text-align: right;
+            }
+            .signature-section {
               margin-top: 50px;
               display: flex;
               justify-content: space-between;
             }
-            .signature div {
+            .signature-box {
               width: 200px;
               text-align: center;
             }
@@ -96,28 +149,52 @@ export function InstallmentDetails({ plan, payments, onRecordPayment }: Installm
               border-top: 1px solid #000;
               margin-top: 50px;
             }
+            .total-amount {
+              font-size: 18px;
+              font-weight: bold;
+              color: #2c3e50;
+              margin-top: 20px;
+            }
+            .footer {
+              margin-top: 50px;
+              text-align: center;
+              font-size: 12px;
+              color: #666;
+            }
+            @media print {
+              body {
+                padding: 0;
+                background: white;
+              }
+              .customer-details,
+              .payment-schedule {
+                break-inside: avoid;
+              }
+            }
           </style>
         </head>
         <body>
-          <div class="header">
+          <div class="invoice-header">
             <h1>فاتورة تقسيط</h1>
-            <p>رقم الفاتورة: ${plan.invoiceId}</p>
-            <p>التاريخ: ${format(new Date(plan.startDate), 'dd MMMM yyyy', { locale: ar })}</p>
+            <div class="serial-number">
+              رقم الفاتورة: ${plan.invoiceId}
+            </div>
+            <p>تاريخ الإصدار: ${format(new Date(plan.startDate), 'dd MMMM yyyy', { locale: ar })}</p>
           </div>
 
-          <div class="details">
-            <h3>معلومات العميل:</h3>
-            <p>الاسم: ${plan.customerName}</p>
-            <p>رقم الهاتف: ${plan.phoneNumber}</p>
-            <p>رقم الهوية: ${plan.identityDocument}</p>
+          <div class="customer-details">
+            <h3>معلومات العميل</h3>
+            <p><strong>الاسم:</strong> ${plan.customerName}</p>
+            <p><strong>رقم الهاتف:</strong> ${plan.phoneNumber}</p>
+            <p><strong>رقم الهوية:</strong> ${plan.identityDocument}</p>
             ${plan.guarantorName ? `
-              <h3>معلومات الكفيل:</h3>
-              <p>الاسم: ${plan.guarantorName}</p>
-              <p>رقم الهاتف: ${plan.guarantorPhone}</p>
+              <h3>معلومات الكفيل</h3>
+              <p><strong>الاسم:</strong> ${plan.guarantorName}</p>
+              <p><strong>رقم الهاتف:</strong> ${plan.guarantorPhone}</p>
             ` : ''}
           </div>
 
-          <table class="table">
+          <table class="products-table">
             <thead>
               <tr>
                 <th>المنتج</th>
@@ -138,23 +215,58 @@ export function InstallmentDetails({ plan, payments, onRecordPayment }: Installm
             </tbody>
           </table>
 
-          <div class="total">
-            <p>المبلغ الإجمالي: ${formatCurrency(Number(plan.totalAmount), true)}</p>
-            <p>الدفعة الأولى: ${formatCurrency(Number(plan.downPayment), true)}</p>
-            <p>المبلغ المتبقي: ${formatCurrency(Number(plan.remainingAmount), true)}</p>
-            <p>عدد الأقساط: ${plan.numberOfInstallments}</p>
-            <p>قيمة القسط: ${formatCurrency(Number(plan.installmentAmount), true)}</p>
+          <div class="payment-details">
+            <h3>تفاصيل التقسيط</h3>
+            <p><strong>المبلغ الإجمالي:</strong> ${formatCurrency(Number(plan.totalAmount), true)}</p>
+            <p><strong>الدفعة الأولى:</strong> ${formatCurrency(Number(plan.downPayment), true)}</p>
+            <p><strong>المبلغ المتبقي:</strong> ${formatCurrency(Number(plan.remainingAmount), true)}</p>
+            <p><strong>عدد الأقساط:</strong> ${plan.numberOfInstallments}</p>
+            <p><strong>قيمة القسط الشهري:</strong> ${formatCurrency(Number(plan.installmentAmount), true)}</p>
+
+            <div class="payment-schedule">
+              <h4>جدول السداد</h4>
+              <table>
+                <thead>
+                  <tr>
+                    <th>رقم القسط</th>
+                    <th>تاريخ الاستحقاق</th>
+                    <th>المبلغ</th>
+                    <th>الحالة</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${[...Array(plan.numberOfInstallments)].map((_, index) => {
+                    const dueDate = new Date(plan.startDate);
+                    dueDate.setMonth(dueDate.getMonth() + index);
+                    const payment = payments.find(p => p.paymentNumber === index + 1);
+                    return `
+                      <tr>
+                        <td>${index + 1}</td>
+                        <td>${format(dueDate, 'dd/MM/yyyy')}</td>
+                        <td>${formatCurrency(Number(plan.installmentAmount), true)}</td>
+                        <td>${payment ? 'تم السداد' : 'لم يتم السداد'}</td>
+                      </tr>
+                    `;
+                  }).join('')}
+                </tbody>
+              </table>
+            </div>
           </div>
 
-          <div class="signature">
-            <div>
-              <p class="signature-line"></p>
+          <div class="signature-section">
+            <div class="signature-box">
+              <div class="signature-line"></div>
               <p>توقيع العميل</p>
             </div>
-            <div>
-              <p class="signature-line"></p>
+            <div class="signature-box">
+              <div class="signature-line"></div>
               <p>توقيع الموظف المسؤول</p>
             </div>
+          </div>
+
+          <div class="footer">
+            <p>تم إنشاء هذه الفاتورة بواسطة نظام إدارة التقسيط</p>
+            <p>جميع الحقوق محفوظة © ${new Date().getFullYear()}</p>
           </div>
         </body>
       </html>
