@@ -10,6 +10,7 @@ import {
   Package,
   Barcode,
   Receipt,
+  LineChart,
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
@@ -44,6 +45,11 @@ const navItems = [
     title: "الفواتير",
     href: "/invoices",
     icon: Receipt,
+  },
+  {
+    title: "التقارير",
+    href: "/reports",
+    icon: LineChart,
   },
   {
     title: "التسويق",
