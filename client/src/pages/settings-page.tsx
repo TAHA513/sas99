@@ -214,6 +214,19 @@ export default function SettingsPage() {
     });
   };
 
+  const handleLogoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        storeSettingsMutation.mutate({
+          storeLogo: reader.result as string,
+        });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   return (
     <DashboardLayout>
       <div className="space-y-8">
@@ -719,16 +732,3 @@ export default function SettingsPage() {
     </DashboardLayout>
   );
 }
-
-const handleLogoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-  const file = event.target.files?.[0];
-  if (file) {
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      storeSettingsMutation.mutate({
-        storeLogo: reader.result as string,
-      });
-    };
-    reader.readAsDataURL(file);
-  }
-};
