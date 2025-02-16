@@ -9,164 +9,73 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Loader2, AlertCircle, Calendar, DollarSign, Package, Users, Clock, Printer } from "lucide-react";
+import { Loader2, Calendar, DollarSign, Package, AlertCircle, Printer } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useEffect } from "react";
 
-// Loading skeleton components
-const CardSkeleton = () => (
-  <Card className="p-6 hover:shadow-lg transition-shadow animate-pulse">
-    <div className="flex items-center gap-4">
-      <div className="p-4 bg-muted rounded-full" />
-      <div className="space-y-2">
+// Loading skeleton component
+const SkeletonRow = () => (
+  <TableRow className="animate-pulse">
+    {[...Array(6)].map((_, i) => (
+      <TableCell key={i}>
         <div className="h-4 w-24 bg-muted rounded" />
-        <div className="h-6 w-16 bg-muted rounded" />
-        <div className="h-3 w-32 bg-muted rounded" />
-      </div>
-    </div>
-  </Card>
-);
-
-const TableSkeleton = () => (
-  <Table>
-    <TableHeader>
-      <TableRow>
-        <TableHead></TableHead>
-        <TableHead></TableHead>
-        <TableHead></TableHead>
-        <TableHead></TableHead>
-        <TableHead></TableHead>
-      </TableRow>
-    </TableHeader>
-    <TableBody>
-      {[...Array(3)].map((_, i) => (
-        <TableRow key={i} className="animate-pulse">
-          {[...Array(5)].map((_, j) => (
-            <TableCell key={j}>
-              <div className="h-4 w-24 bg-muted rounded" />
-            </TableCell>
-          ))}
-        </TableRow>
-      ))}
-    </TableBody>
-  </Table>
+      </TableCell>
+    ))}
+  </TableRow>
 );
 
 export default function StaffDashboard() {
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
 
-  // Prefetch data for commonly accessed routes
+  // Prefetch data
   useEffect(() => {
-    // Prefetch products data
     queryClient.prefetchQuery({
-      queryKey: ["/api/products"],
-      staleTime: 1000 * 60 * 5, // 5 minutes
+      queryKey: ["/api/sales/today"],
+      staleTime: 1000 * 60 * 2,
     });
-
-    // Prefetch appointments data
     queryClient.prefetchQuery({
-      queryKey: ["/api/appointments"],
-      staleTime: 1000 * 60 * 2, // 2 minutes
+      queryKey: ["/api/appointments/today"],
+      staleTime: 1000 * 60 * 2,
     });
   }, [queryClient]);
 
-  // Parallel queries with optimized caching
-  const { data: quickStats, isLoading: statsLoading } = useQuery({
-    queryKey: ["/api/staff/quick-stats"],
-    staleTime: 1000 * 60 * 15, // Cache for 15 minutes
-    cacheTime: 1000 * 60 * 30, // Keep in cache for 30 minutes
-  });
-
   const { data: todaySales, isLoading: salesLoading } = useQuery({
     queryKey: ["/api/sales/today"],
-    staleTime: 1000 * 60 * 2, // Cache for 2 minutes
-    cacheTime: 1000 * 60 * 5, // Keep in cache for 5 minutes
+    staleTime: 1000 * 60 * 2,
   });
 
   const { data: appointments, isLoading: appointmentsLoading } = useQuery({
     queryKey: ["/api/appointments/today"],
-    staleTime: 1000 * 60 * 2, // Cache for 2 minutes
-    cacheTime: 1000 * 60 * 5, // Keep in cache for 5 minutes
+    staleTime: 1000 * 60 * 2,
   });
 
-  const { data: lowStockProducts, isLoading: productsLoading } = useQuery({
-    queryKey: ["/api/products/low-stock"],
-    staleTime: 1000 * 60 * 15, // Cache for 15 minutes
-    cacheTime: 1000 * 60 * 30, // Keep in cache for 30 minutes
+  const { data: alerts } = useQuery({
+    queryKey: ["/api/alerts"],
+    staleTime: 1000 * 60 * 5,
   });
 
-  // Pre-fetch data when hovering over navigation buttons
-  const handlePrefetch = (route: string) => {
-    switch (route) {
-      case "/products":
-        queryClient.prefetchQuery({
-          queryKey: ["/api/products"],
-          staleTime: 1000 * 60 * 5,
-        });
-        break;
-      case "/appointments":
-        queryClient.prefetchQuery({
-          queryKey: ["/api/appointments"],
-          staleTime: 1000 * 60 * 2,
-        });
-        break;
-      case "/invoices":
-        queryClient.prefetchQuery({
-          queryKey: ["/api/sales"],
-          staleTime: 1000 * 60 * 2,
-        });
-        break;
-    }
-  };
-
-  // Function to handle invoice printing
+  // Handle invoice printing
   const handlePrintInvoice = (invoice: any) => {
-    // Create a new window for printing
     const printWindow = window.open('', '_blank');
     if (!printWindow) return;
 
-    // Add print styles
     printWindow.document.write(`
       <html dir="rtl">
         <head>
           <title>فاتورة رقم #${invoice.id}</title>
           <style>
             @media print {
-              body {
-                font-family: Arial, sans-serif;
-                padding: 20px;
-              }
-              .invoice-header {
-                text-align: center;
-                margin-bottom: 30px;
-              }
-              .invoice-details {
-                margin-bottom: 20px;
-              }
-              .invoice-table {
-                width: 100%;
-                border-collapse: collapse;
-                margin-bottom: 30px;
-              }
-              .invoice-table th,
-              .invoice-table td {
+              body { font-family: Arial, sans-serif; padding: 20px; }
+              .invoice-header { text-align: center; margin-bottom: 30px; }
+              .invoice-details { margin-bottom: 20px; }
+              .invoice-table { width: 100%; border-collapse: collapse; }
+              .invoice-table th, .invoice-table td {
                 border: 1px solid #ddd;
                 padding: 8px;
                 text-align: right;
               }
-              .invoice-total {
-                text-align: left;
-                margin-top: 20px;
-              }
-              .status-badge {
-                padding: 4px 8px;
-                border-radius: 4px;
-                font-size: 12px;
-              }
-              .status-completed { background: #dcfce7; color: #166534; }
-              .status-pending { background: #fef9c3; color: #854d0e; }
-              .status-cancelled { background: #fee2e2; color: #991b1b; }
+              .total { margin-top: 20px; text-align: left; }
             }
           </style>
         </head>
@@ -181,198 +90,190 @@ export default function StaffDashboard() {
           </div>
           <table class="invoice-table">
             <tr>
-              <th>رقم الفاتورة</th>
-              <th>العميل</th>
-              <th>المبلغ</th>
-              <th>التاريخ</th>
-              <th>الحالة</th>
+              <th>المنتج</th>
+              <th>الكمية</th>
+              <th>السعر</th>
+              <th>المجموع</th>
             </tr>
-            <tr>
-              <td>#${invoice.id}</td>
-              <td>${invoice.customerName || 'عميل نقدي'}</td>
-              <td>${Number(invoice.amount).toLocaleString()} د.ع</td>
-              <td>${new Date(invoice.date).toLocaleString('ar-IQ')}</td>
-              <td>
-                <span class="status-badge status-${invoice.status}">
-                  ${invoice.status === 'completed' ? 'مكتمل' :
-                    invoice.status === 'pending' ? 'معلق' : 'ملغي'}
-                </span>
-              </td>
-            </tr>
+            ${invoice.items?.map((item: any) => `
+              <tr>
+                <td>${item.name}</td>
+                <td>${item.quantity}</td>
+                <td>${item.price} د.ع</td>
+                <td>${item.total} د.ع</td>
+              </tr>
+            `).join('') || ''}
           </table>
-          <div class="invoice-total">
+          <div class="total">
             <h3>المجموع الكلي: ${Number(invoice.amount).toLocaleString()} د.ع</h3>
           </div>
         </body>
       </html>
     `);
 
-    // Print and close the window
     printWindow.document.close();
     printWindow.print();
   };
 
-  // Show loading skeleton instead of full-page loader
-  const isInitialLoading = statsLoading && salesLoading && appointmentsLoading && productsLoading;
-
-  if (isInitialLoading) {
-    return (
-      <div className="container mx-auto p-6 space-y-6">
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <div className="h-8 w-48 bg-muted rounded animate-pulse" />
-            <div className="h-4 w-64 bg-muted rounded mt-2 animate-pulse" />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {[...Array(4)].map((_, i) => (
-            <CardSkeleton key={i} />
-          ))}
-        </div>
-
-        <Card className="p-6">
-          <div className="animate-pulse mb-6">
-            <div className="h-6 w-32 bg-muted rounded" />
-          </div>
-          <div className="rounded-md border">
-            <TableSkeleton />
-          </div>
-        </Card>
-      </div>
-    );
-  }
-
   return (
     <div className="container mx-auto p-6 space-y-6">
-      <div className="flex justify-between items-center mb-8">
-        <div>
-          <h1 className="text-3xl font-bold mb-2">لوحة تحكم الموظفين</h1>
-          <p className="text-muted-foreground">
-            مرحباً بك في نظام إدارة الأعمال، اليوم {new Date().toLocaleDateString('ar-IQ')}
-          </p>
-        </div>
-        <div className="flex gap-4">
+      {/* Header with Quick Actions */}
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold">لوحة تحكم الموظفين</h1>
+        <div className="flex gap-3">
           <Button
-            onClick={() => setLocation("/products")}
-            onMouseEnter={() => handlePrefetch("/products")}
-            className="flex items-center gap-2"
-          >
-            <Package className="h-4 w-4" />
-            إدارة المنتجات
-          </Button>
-          <Button
+            variant="outline"
             onClick={() => setLocation("/appointments")}
-            onMouseEnter={() => handlePrefetch("/appointments")}
             className="flex items-center gap-2"
           >
             <Calendar className="h-4 w-4" />
-            إدارة المواعيد
+            المواعيد
           </Button>
-          <Button variant="outline" onClick={() => window.print()} className="flex items-center gap-2">
-            <Printer className="h-4 w-4" />
-            طباعة التقرير
+          <Button
+            variant="outline"
+            onClick={() => setLocation("/products")}
+            className="flex items-center gap-2"
+          >
+            <Package className="h-4 w-4" />
+            المخزون
           </Button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {/* المبيعات اليومية */}
-        <Card className="p-6 hover:shadow-lg transition-shadow">
-          <div className="flex items-center gap-4">
-            <div className="p-4 bg-primary/10 rounded-full">
-              <DollarSign className="h-6 w-6 text-primary" />
-            </div>
-            <div>
-              <h2 className="text-xl font-semibold mb-1">المبيعات اليومية</h2>
-              <div className="text-2xl font-bold">
-                {statsLoading ? (
-                  <div className="h-6 w-24 bg-muted rounded animate-pulse" />
-                ) : (
-                  `${quickStats?.totalSales?.toLocaleString()} د.ع`
-                )}
-              </div>
-              <div className="text-sm text-muted-foreground">
-                {quickStats?.salesCount} فاتورة
-              </div>
-            </div>
+      {/* Alert Section */}
+      {alerts?.length > 0 && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <div className="flex items-center gap-2 text-red-700 mb-2">
+            <AlertCircle className="h-5 w-5" />
+            <h2 className="font-semibold">تنبيهات هامة</h2>
           </div>
-        </Card>
-        {/* other cards remain the same */}
-      </div>
+          <ul className="space-y-1 text-red-600">
+            {alerts.map((alert: any, index: number) => (
+              <li key={index}>{alert.message}</li>
+            ))}
+          </ul>
+        </div>
+      )}
 
-      <div className="space-y-6">
-        <Card className="p-6">
-          <div className="flex justify-between items-center mb-6">
-            <div>
-              <h2 className="text-xl font-semibold">المبيعات الأخيرة</h2>
-              <p className="text-sm text-muted-foreground">آخر المبيعات المسجلة في النظام</p>
-            </div>
-            <Button variant="outline" onClick={() => setLocation("/invoices")} onMouseEnter={() => handlePrefetch("/invoices")} className="flex items-center gap-2">
-              <DollarSign className="h-4 w-4" />
-              عرض كل المبيعات
-            </Button>
-          </div>
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
+      {/* Today's Sales */}
+      <Card className="p-4">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-lg font-semibold">مبيعات اليوم</h2>
+          <span className="text-muted-foreground text-sm">
+            {new Date().toLocaleDateString('ar-IQ')}
+          </span>
+        </div>
+
+        <div className="rounded-md border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>رقم الفاتورة</TableHead>
+                <TableHead>العميل</TableHead>
+                <TableHead>المبلغ</TableHead>
+                <TableHead>الوقت</TableHead>
+                <TableHead>الحالة</TableHead>
+                <TableHead></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {salesLoading ? (
+                [...Array(3)].map((_, i) => <SkeletonRow key={i} />)
+              ) : todaySales?.length === 0 ? (
                 <TableRow>
-                  <TableHead>رقم الفاتورة</TableHead>
-                  <TableHead>اسم العميل</TableHead>
-                  <TableHead>المبلغ</TableHead>
-                  <TableHead>التاريخ</TableHead>
-                  <TableHead>الحالة</TableHead>
-                  <TableHead>الإجراءات</TableHead>
+                  <TableCell colSpan={6} className="text-center py-4 text-muted-foreground">
+                    لا توجد مبيعات لهذا اليوم
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {salesLoading ? (
-                  [...Array(3)].map((_, i) => (
-                    <TableRow key={i} className="animate-pulse">
-                      {[...Array(6)].map((_, j) => (
-                        <TableCell key={j}>
-                          <div className="h-4 w-24 bg-muted rounded" />
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                  ))
-                ) : (
-                  todaySales?.items?.map((sale: any) => (
-                    <TableRow key={sale.id} className="hover:bg-muted/50">
-                      <TableCell className="font-medium">#{sale.id}</TableCell>
-                      <TableCell>{sale.customerName || 'عميل نقدي'}</TableCell>
-                      <TableCell>{Number(sale.amount).toLocaleString()} د.ع</TableCell>
-                      <TableCell>{new Date(sale.date).toLocaleString('ar-IQ')}</TableCell>
-                      <TableCell>
-                        <span className={`px-2 py-1 rounded-full text-sm ${
-                          sale.status === 'completed' ? 'bg-green-100 text-green-800' :
-                            sale.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                              'bg-red-100 text-red-800'
-                        }`}>
-                          {sale.status === 'completed' ? 'مكتمل' :
-                            sale.status === 'pending' ? 'معلق' : 'ملغي'}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handlePrintInvoice(sale)}
-                          className="flex items-center gap-2"
-                        >
-                          <Printer className="h-4 w-4" />
-                          طباعة
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        </Card>
-        {/* Appointments and Low Stock tables remain unchanged */}
-      </div>
+              ) : (
+                todaySales?.map((sale: any) => (
+                  <TableRow key={sale.id}>
+                    <TableCell>#{sale.id}</TableCell>
+                    <TableCell>{sale.customerName || 'عميل نقدي'}</TableCell>
+                    <TableCell>{Number(sale.amount).toLocaleString()} د.ع</TableCell>
+                    <TableCell>{new Date(sale.date).toLocaleTimeString('ar-IQ')}</TableCell>
+                    <TableCell>
+                      <span className={`px-2 py-1 rounded-full text-sm ${
+                        sale.status === 'completed' ? 'bg-green-100 text-green-800' :
+                        sale.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                        'bg-red-100 text-red-800'
+                      }`}>
+                        {sale.status === 'completed' ? 'مكتمل' :
+                         sale.status === 'pending' ? 'معلق' : 'ملغي'}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handlePrintInvoice(sale)}
+                      >
+                        <Printer className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </Card>
+
+      {/* Today's Appointments */}
+      <Card className="p-4">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-lg font-semibold">مواعيد اليوم</h2>
+          <Button
+            variant="link"
+            onClick={() => setLocation("/appointments")}
+            className="text-primary"
+          >
+            عرض كل المواعيد
+          </Button>
+        </div>
+
+        <div className="rounded-md border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>الوقت</TableHead>
+                <TableHead>العميل</TableHead>
+                <TableHead>الهاتف</TableHead>
+                <TableHead>الحالة</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {appointmentsLoading ? (
+                [...Array(3)].map((_, i) => <SkeletonRow key={i} />)
+              ) : appointments?.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center py-4 text-muted-foreground">
+                    لا توجد مواعيد لهذا اليوم
+                  </TableCell>
+                </TableRow>
+              ) : (
+                appointments?.map((appointment: any) => (
+                  <TableRow key={appointment.id}>
+                    <TableCell>{new Date(appointment.time).toLocaleTimeString('ar-IQ')}</TableCell>
+                    <TableCell>{appointment.customerName}</TableCell>
+                    <TableCell dir="ltr">{appointment.customerPhone}</TableCell>
+                    <TableCell>
+                      <span className={`px-2 py-1 rounded-full text-sm ${
+                        appointment.status === 'completed' ? 'bg-green-100 text-green-800' :
+                        appointment.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                        'bg-red-100 text-red-800'
+                      }`}>
+                        {appointment.status === 'completed' ? 'مكتمل' :
+                         appointment.status === 'pending' ? 'معلق' : 'ملغي'}
+                      </span>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </Card>
     </div>
   );
 }
