@@ -5,9 +5,11 @@ import { Redirect, Route } from "wouter";
 export function ProtectedRoute({
   path,
   component: Component,
+  staffOnly = false,
 }: {
   path: string;
   component: () => React.JSX.Element;
+  staffOnly?: boolean;
 }) {
   const { user, isLoading } = useAuth();
 
@@ -25,6 +27,24 @@ export function ProtectedRoute({
     return (
       <Route path={path}>
         <Redirect to="/auth" />
+      </Route>
+    );
+  }
+
+  // Check for staff access
+  if (staffOnly && user.role !== 'staff') {
+    return (
+      <Route path={path}>
+        <Redirect to="/" />
+      </Route>
+    );
+  }
+
+  // Check for admin access (non-staff routes)
+  if (!staffOnly && user.role === 'staff') {
+    return (
+      <Route path={path}>
+        <Redirect to="/staff" />
       </Route>
     );
   }

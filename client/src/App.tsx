@@ -22,6 +22,9 @@ import SettingsPage from "@/pages/settings-page";
 import InventoryReportsPage from "@/pages/inventory-reports-page";
 import { useEffect } from "react";
 import { loadThemeSettings } from "@/lib/theme";
+import { ProtectedRoute } from "@/lib/protected-route";
+import { AuthProvider } from "@/hooks/use-auth";
+import AuthPage from "@/pages/auth-page";
 
 // Create a client
 const queryClient = new QueryClient({
@@ -41,25 +44,31 @@ function Router() {
 
   return (
     <Switch>
-      {/* المسارات الرئيسية */}
-      <Route path="/" component={DashboardPage} />
-      <Route path="/staff" component={StaffDashboard} />
-      <Route path="/purchases" component={PurchasesPage} />
-      <Route path="/suppliers" component={SuppliersPage} />
-      <Route path="/customers" component={CustomersPage} />
-      <Route path="/appointments" component={AppointmentsPage} />
-      <Route path="/staff-management" component={StaffPage} />
-      <Route path="/marketing" component={MarketingPage} />
-      <Route path="/promotions" component={PromotionsPage} />
-      <Route path="/products" component={ProductsPage} />
-      <Route path="/invoices" component={InvoicesPage} />
-      <Route path="/installments" component={InstallmentsPage} />
-      <Route path="/expenses" component={ExpensesPage} />
-      <Route path="/expense-categories" component={ExpenseCategoriesPage} />
-      <Route path="/reports" component={ReportsPage} />
-      <Route path="/inventory-reports" component={InventoryReportsPage} />
-      <Route path="/barcodes" component={BarcodesPage} />
-      <Route path="/settings" component={SettingsPage} />
+      {/* Auth Route - Public */}
+      <Route path="/auth" component={AuthPage} />
+
+      {/* Staff Routes */}
+      <ProtectedRoute path="/staff" component={StaffDashboard} staffOnly />
+      <ProtectedRoute path="/appointments" component={AppointmentsPage} staffOnly />
+
+      {/* Admin Routes - Protected */}
+      <ProtectedRoute path="/" component={DashboardPage} />
+      <ProtectedRoute path="/purchases" component={PurchasesPage} />
+      <ProtectedRoute path="/suppliers" component={SuppliersPage} />
+      <ProtectedRoute path="/customers" component={CustomersPage} />
+      <ProtectedRoute path="/staff-management" component={StaffPage} />
+      <ProtectedRoute path="/marketing" component={MarketingPage} />
+      <ProtectedRoute path="/promotions" component={PromotionsPage} />
+      <ProtectedRoute path="/products" component={ProductsPage} />
+      <ProtectedRoute path="/invoices" component={InvoicesPage} />
+      <ProtectedRoute path="/installments" component={InstallmentsPage} />
+      <ProtectedRoute path="/expenses" component={ExpensesPage} />
+      <ProtectedRoute path="/expense-categories" component={ExpenseCategoriesPage} />
+      <ProtectedRoute path="/reports" component={ReportsPage} />
+      <ProtectedRoute path="/inventory-reports" component={InventoryReportsPage} />
+      <ProtectedRoute path="/barcodes" component={BarcodesPage} />
+      <ProtectedRoute path="/settings" component={SettingsPage} />
+
       <Route component={NotFound} />
     </Switch>
   );
@@ -68,8 +77,10 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <Router />
-      <Toaster />
+      <AuthProvider>
+        <Router />
+        <Toaster />
+      </AuthProvider>
     </QueryClientProvider>
   );
 }
