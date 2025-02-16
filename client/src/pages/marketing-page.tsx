@@ -152,15 +152,15 @@ export default function MarketingPage() {
                 حملة جديدة
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-xl">
-              <DialogHeader className="space-y-2">
+            <DialogContent className="max-w-xl max-h-[85vh] overflow-y-auto">
+              <DialogHeader className="space-y-2 sticky top-0 bg-background pt-6 pb-2 mb-2">
                 <DialogTitle className="text-xl">إنشاء حملة جديدة</DialogTitle>
                 <DialogDescription className="text-sm">
                   اختر المنصة التي تريد إنشاء الحملة عليها
                 </DialogDescription>
               </DialogHeader>
               {unconfiguredPlatforms.length > 0 && (
-                <Alert variant="default" className="mb-3">
+                <Alert variant="default" className="mb-3 sticky top-[105px] bg-background z-10">
                   <AlertCircle className="h-3 w-3" />
                   <AlertTitle className="text-sm">تنبيه</AlertTitle>
                   <AlertDescription className="text-xs">
@@ -180,104 +180,106 @@ export default function MarketingPage() {
                   </AlertDescription>
                 </Alert>
               )}
-              <Tabs defaultValue="facebook" className="mt-2">
-                <TabsList className="grid grid-cols-4 gap-2">
-                  <TabsTrigger
-                    value="facebook"
-                    className="text-center py-1.5"
-                    disabled={!platformStatus.facebook}
-                  >
-                    <SiFacebook className="h-3 w-3 text-blue-600 mb-1" />
-                    <span className="text-xs">فيسبوك</span>
-                    {!platformStatus.facebook && (
-                      <AlertCircle className="h-2 w-2 text-yellow-500 mr-1" />
-                    )}
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="instagram"
-                    className="text-center py-1.5"
-                    disabled={!platformStatus.instagram}
-                  >
-                    <SiInstagram className="h-3 w-3 text-pink-600 mb-1" />
-                    <span className="text-xs">انستغرام</span>
-                    {!platformStatus.instagram && (
-                      <AlertCircle className="h-2 w-2 text-yellow-500 mr-1" />
-                    )}
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="snapchat"
-                    className="text-center py-1.5"
-                    disabled={!platformStatus.snapchat}
-                  >
-                    <SiSnapchat className="h-3 w-3 text-yellow-500 mb-1" />
-                    <span className="text-xs">سناب شات</span>
-                    {!platformStatus.snapchat && (
-                      <AlertCircle className="h-2 w-2 text-yellow-500 mr-1" />
-                    )}
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="sms"
-                    className="text-center py-1.5"
-                  >
-                    <MessageSquare className="h-3 w-3 text-gray-600 mb-1" />
-                    <span className="text-xs">SMS</span>
-                  </TabsTrigger>
-                </TabsList>
-                <div className="mt-3">
-                  <TabsContent value="facebook">
-                    <Card>
-                      <CardHeader className="pb-2">
-                        <CardTitle className="text-base">حملة إعلانية على فيسبوك</CardTitle>
-                        <CardDescription className="text-xs">
-                          قم بإنشاء حملة إعلانية مستهدفة على فيسبوك
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <CampaignForm platform="facebook" />
-                      </CardContent>
-                    </Card>
-                  </TabsContent>
-                  <TabsContent value="instagram">
-                    <Card>
-                      <CardHeader className="pb-2">
-                        <CardTitle className="text-base">حملة إعلانية على انستغرام</CardTitle>
-                        <CardDescription className="text-xs">
-                          قم بإنشاء حملة إعلانية مستهدفة على انستغرام
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <CampaignForm platform="instagram" />
-                      </CardContent>
-                    </Card>
-                  </TabsContent>
-                  <TabsContent value="snapchat">
-                    <Card>
-                      <CardHeader className="pb-2">
-                        <CardTitle className="text-base">حملة إعلانية على سناب شات</CardTitle>
-                        <CardDescription className="text-xs">
-                          قم بإنشاء حملة إعلانية مستهدفة على سناب شات
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <CampaignForm platform="snapchat" />
-                      </CardContent>
-                    </Card>
-                  </TabsContent>
-                  <TabsContent value="sms">
-                    <Card>
-                      <CardHeader className="pb-2">
-                        <CardTitle className="text-base">حملة رسائل SMS</CardTitle>
-                        <CardDescription className="text-xs">
-                          قم بإنشاء حملة رسائل نصية قصيرة للوصول إلى عملائك
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <CampaignForm platform="sms" />
-                      </CardContent>
-                    </Card>
-                  </TabsContent>
-                </div>
-              </Tabs>
+              <div className="px-1">
+                <Tabs defaultValue="facebook" className="mt-2">
+                  <TabsList className="grid grid-cols-4 gap-2 sticky top-[160px] bg-background z-10">
+                    <TabsTrigger
+                      value="facebook"
+                      className="text-center py-1.5"
+                      disabled={!platformStatus.facebook}
+                    >
+                      <SiFacebook className="h-3 w-3 text-blue-600 mb-1" />
+                      <span className="text-xs">فيسبوك</span>
+                      {!platformStatus.facebook && (
+                        <AlertCircle className="h-2 w-2 text-yellow-500 mr-1" />
+                      )}
+                    </TabsTrigger>
+                    <TabsTrigger
+                      value="instagram"
+                      className="text-center py-1.5"
+                      disabled={!platformStatus.instagram}
+                    >
+                      <SiInstagram className="h-3 w-3 text-pink-600 mb-1" />
+                      <span className="text-xs">انستغرام</span>
+                      {!platformStatus.instagram && (
+                        <AlertCircle className="h-2 w-2 text-yellow-500 mr-1" />
+                      )}
+                    </TabsTrigger>
+                    <TabsTrigger
+                      value="snapchat"
+                      className="text-center py-1.5"
+                      disabled={!platformStatus.snapchat}
+                    >
+                      <SiSnapchat className="h-3 w-3 text-yellow-500 mb-1" />
+                      <span className="text-xs">سناب شات</span>
+                      {!platformStatus.snapchat && (
+                        <AlertCircle className="h-2 w-2 text-yellow-500 mr-1" />
+                      )}
+                    </TabsTrigger>
+                    <TabsTrigger
+                      value="sms"
+                      className="text-center py-1.5"
+                    >
+                      <MessageSquare className="h-3 w-3 text-gray-600 mb-1" />
+                      <span className="text-xs">SMS</span>
+                    </TabsTrigger>
+                  </TabsList>
+                  <div className="mt-3">
+                    <TabsContent value="facebook">
+                      <Card>
+                        <CardHeader className="pb-2">
+                          <CardTitle className="text-base">حملة إعلانية على فيسبوك</CardTitle>
+                          <CardDescription className="text-xs">
+                            قم بإنشاء حملة إعلانية مستهدفة على فيسبوك
+                          </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          <CampaignForm platform="facebook" />
+                        </CardContent>
+                      </Card>
+                    </TabsContent>
+                    <TabsContent value="instagram">
+                      <Card>
+                        <CardHeader className="pb-2">
+                          <CardTitle className="text-base">حملة إعلانية على انستغرام</CardTitle>
+                          <CardDescription className="text-xs">
+                            قم بإنشاء حملة إعلانية مستهدفة على انستغرام
+                          </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          <CampaignForm platform="instagram" />
+                        </CardContent>
+                      </Card>
+                    </TabsContent>
+                    <TabsContent value="snapchat">
+                      <Card>
+                        <CardHeader className="pb-2">
+                          <CardTitle className="text-base">حملة إعلانية على سناب شات</CardTitle>
+                          <CardDescription className="text-xs">
+                            قم بإنشاء حملة إعلانية مستهدفة على سناب شات
+                          </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          <CampaignForm platform="snapchat" />
+                        </CardContent>
+                      </Card>
+                    </TabsContent>
+                    <TabsContent value="sms">
+                      <Card>
+                        <CardHeader className="pb-2">
+                          <CardTitle className="text-base">حملة رسائل SMS</CardTitle>
+                          <CardDescription className="text-xs">
+                            قم بإنشاء حملة رسائل نصية قصيرة للوصول إلى عملائك
+                          </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          <CampaignForm platform="sms" />
+                        </CardContent>
+                      </Card>
+                    </TabsContent>
+                  </div>
+                </Tabs>
+              </div>
             </DialogContent>
           </Dialog>
         </div>
