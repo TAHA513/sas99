@@ -3,6 +3,8 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import express from 'express';
 import { setupAuth } from "./auth";
+import { hashPassword } from "./auth"; // Assuming hashPassword is defined here
+
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Middleware for handling JSON responses
@@ -10,6 +12,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // تكوين المصادقة
   setupAuth(app);
+
+  // إنشاء مستخدم مدير افتراضي إذا لم يكن هناك مستخدمين
+  app.post("/api/setup", async (req, res) => {
+    try {
+      // التحقق من وجود مستخدمين
+      const users = await storage.getUsers();
+      if (users.length > 0) {
+        return res.status(400).json({ message: "تم إعداد النظام بالفعل" });
+      }
+
+      // إنشاء مستخدم مدير جديد
+      const adminUser = await storage.createUser({
+        username: "admin",
+        password: await hashPassword("admin123"),
+        role: "admin",
+        name: "مدير النظام",
+      });
+
+      res.status(201).json({
+        message: "تم إعداد النظام بنجاح",
+        user: {
+          id: adminUser.id,
+          username: adminUser.username,
+          role: adminUser.role,
+          name: adminUser.name
+        }
+      });
+    } catch (error: any) {
+      console.error('Error setting up system:', error);
+      res.status(500).json({
+        message: "حدث خطأ أثناء إعداد النظام",
+        error: error.message
+      });
+    }
+  });
 
   // Staff Dashboard APIs
   app.get("/api/sales/today", async (_req, res) => {
