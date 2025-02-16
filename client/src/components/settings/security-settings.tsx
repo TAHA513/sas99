@@ -52,7 +52,7 @@ import { SYSTEM_ROLES } from "@shared/schema";
 const newStaffSchema = z.object({
   username: z.string().min(3, "اسم المستخدم يجب أن يكون 3 أحرف على الأقل"),
   name: z.string().min(2, "الاسم يجب أن يكون حرفين على الأقل"),
-  password: z.string().min(8, "كلمة المرور يجب أن تكون 8 أحرف على الأقل"),
+  password: z.string().min(6, "كلمة المرور يجب أن تكون 6 أحرف على الأقل"),
   role: z.enum([SYSTEM_ROLES.MANAGER, SYSTEM_ROLES.STAFF]),
 });
 
@@ -323,7 +323,7 @@ export function SecuritySettings() {
                     <div className="flex items-center space-x-4">
                       <UserCheck className="h-6 w-6 text-primary" />
                       <div>
-                        <div className="font-medium">{user.name || user.username}</div>
+                        <div className="font-medium">{user.name}</div>
                         <div className="text-sm text-muted-foreground">
                           {user.role === SYSTEM_ROLES.MANAGER ? "مدير" : "موظف"}
                         </div>

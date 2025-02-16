@@ -8,38 +8,10 @@ export const SYSTEM_ROLES = {
   STAFF: 'موظف',
 } as const;
 
-// تعريف الصلاحيات الافتراضية
-export const DEFAULT_PERMISSIONS = {
-  // إدارة المستخدمين والصلاحيات
-  MANAGE_USERS: 'manage_users',
-  MANAGE_ROLES: 'manage_roles',
-  MANAGE_PERMISSIONS: 'manage_permissions',
-
-  // إدارة المنتجات والمخزون
-  MANAGE_PRODUCTS: 'manage_products',
-  VIEW_PRODUCTS: 'view_products',
-  MANAGE_INVENTORY: 'manage_inventory',
-
-  // إدارة المبيعات والفواتير
-  MANAGE_SALES: 'manage_sales',
-  CREATE_INVOICE: 'create_invoice',
-  VIEW_INVOICES: 'view_invoices',
-  VOID_INVOICE: 'void_invoice',
-
-  // إدارة العملاء
-  MANAGE_CUSTOMERS: 'manage_customers',
-  VIEW_CUSTOMERS: 'view_customers',
-} as const;
-
-// تعريف الصلاحيات الافتراضية لكل دور
+// تعريف الصلاحيات الافتراضية للأدوار
 export const ROLE_PERMISSIONS = {
-  [SYSTEM_ROLES.MANAGER]: Object.values(DEFAULT_PERMISSIONS),
-  [SYSTEM_ROLES.STAFF]: [
-    DEFAULT_PERMISSIONS.VIEW_PRODUCTS,
-    DEFAULT_PERMISSIONS.CREATE_INVOICE,
-    DEFAULT_PERMISSIONS.VIEW_CUSTOMERS,
-    DEFAULT_PERMISSIONS.VIEW_INVOICES,
-  ],
+  [SYSTEM_ROLES.MANAGER]: ["FULL_ACCESS"],
+  [SYSTEM_ROLES.STAFF]: ["LIMITED_ACCESS"],
 } as const;
 
 // جدول المستخدمين
@@ -47,8 +19,8 @@ export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
-  name: text("name"),
-  role: text("role", { enum: Object.values(SYSTEM_ROLES) })
+  name: text("name").notNull(),
+  role: text("role", { enum: [SYSTEM_ROLES.MANAGER, SYSTEM_ROLES.STAFF] })
     .notNull()
     .default(SYSTEM_ROLES.STAFF),
   isActive: boolean("is_active").notNull().default(true),
@@ -68,8 +40,8 @@ export const activityLog = pgTable("activity_log", {
 
 // مخططات إدخال البيانات
 export const insertUserSchema = createInsertSchema(users).extend({
-  password: z.string().min(8, "كلمة المرور يجب أن تكون 8 أحرف على الأقل"),
-  role: z.enum(Object.values(SYSTEM_ROLES)),
+  password: z.string().min(6, "كلمة المرور يجب أن تكون 6 أحرف على الأقل"),
+  role: z.enum([SYSTEM_ROLES.MANAGER, SYSTEM_ROLES.STAFF]),
 });
 
 export const insertActivityLogSchema = createInsertSchema(activityLog);
@@ -84,7 +56,7 @@ export type InsertActivityLog = z.infer<typeof insertActivityLogSchema>;
 export const permissions = pgTable("permissions", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
-  key: text("key", { enum: Object.values(DEFAULT_PERMISSIONS) }).notNull().unique(),
+  key: text("key").notNull().unique(),
   description: text("description"),
   category: text("category").notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
@@ -118,7 +90,6 @@ export type UserPermission = typeof userPermissions.$inferSelect;
 export type InsertUserPermission = z.infer<typeof insertUserPermissionSchema>;
 export type PermissionLog = typeof permissionLog.$inferSelect;
 
-const DEFAULT_PERMISSIONS_ARRAY = Object.values(DEFAULT_PERMISSIONS);
 
 export const customers = pgTable("customers", {
   id: serial("id").primaryKey(),
@@ -447,7 +418,6 @@ export const insertScheduledPostSchema = createInsertSchema(scheduledPosts).exte
   status: z.enum(['pending', 'published', 'failed']).default('pending'),
   mediaUrls: z.array(z.string()).optional(),
 });
-
 
 
 export type Customer = typeof customers.$inferSelect;
