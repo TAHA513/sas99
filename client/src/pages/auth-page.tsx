@@ -6,15 +6,13 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertUserSchema } from "@shared/schema";
 import { useForm } from "react-hook-form";
-import { useLocation } from "wouter";
 
 export default function AuthPage() {
   const { loginMutation, user } = useAuth();
-  const [, setLocation] = useLocation();
 
   // Redirect if already logged in
   if (user) {
-    setLocation("/");
+    window.location.replace("/");
     return null;
   }
 
@@ -32,7 +30,7 @@ export default function AuthPage() {
   const handleLogin = async (data: { username: string; password: string }) => {
     try {
       await loginMutation.mutateAsync(data);
-      setLocation("/"); // Redirect to home after successful login
+      // Redirect will be handled in loginMutation.onSuccess
     } catch (error) {
       console.error("Login error:", error);
     }
