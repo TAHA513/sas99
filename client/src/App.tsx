@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import NotFound from "@/pages/not-found";
 import DashboardPage from "@/pages/dashboard-page";
+import StaffDashboard from "@/pages/staff/dashboard";
 import CustomersPage from "@/pages/customers-page";
 import AppointmentsPage from "@/pages/appointments-page";
 import StaffPage from "@/pages/staff-page";
@@ -22,6 +23,7 @@ import InventoryReportsPage from "@/pages/inventory-reports-page";
 import { useEffect } from "react";
 import { loadThemeSettings } from "@/lib/theme";
 
+// Create a client
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -32,66 +34,33 @@ const queryClient = new QueryClient({
 });
 
 function Router() {
+  // Load theme settings on app initialization
   useEffect(() => {
     loadThemeSettings();
   }, []);
 
   return (
     <Switch>
-      <Route path="/">
-        <DashboardPage />
-      </Route>
-      <Route path="/purchases">
-        <PurchasesPage />
-      </Route>
-      <Route path="/suppliers">
-        <SuppliersPage />
-      </Route>
-      <Route path="/customers">
-        <CustomersPage />
-      </Route>
-      <Route path="/staff">
-        <StaffPage />
-      </Route>
-      <Route path="/marketing">
-        <MarketingPage />
-      </Route>
-      <Route path="/promotions">
-        <PromotionsPage />
-      </Route>
-      <Route path="/products">
-        <ProductsPage />
-      </Route>
-      <Route path="/invoices">
-        <InvoicesPage />
-      </Route>
-      <Route path="/installments">
-        <InstallmentsPage />
-      </Route>
-      <Route path="/expenses">
-        <ExpensesPage />
-      </Route>
-      <Route path="/expense-categories">
-        <ExpenseCategoriesPage />
-      </Route>
-      <Route path="/reports">
-        <ReportsPage />
-      </Route>
-      <Route path="/inventory-reports">
-        <InventoryReportsPage />
-      </Route>
-      <Route path="/barcodes">
-        <BarcodesPage />
-      </Route>
-      <Route path="/settings">
-        <SettingsPage />
-      </Route>
-      <Route path="/appointments">
-        <AppointmentsPage />
-      </Route>
-      <Route>
-        <NotFound />
-      </Route>
+      {/* المسارات الرئيسية */}
+      <Route path="/" component={DashboardPage} />
+      <Route path="/staff" component={StaffDashboard} />
+      <Route path="/purchases" component={PurchasesPage} />
+      <Route path="/suppliers" component={SuppliersPage} />
+      <Route path="/customers" component={CustomersPage} />
+      <Route path="/appointments" component={AppointmentsPage} />
+      <Route path="/staff-management" component={StaffPage} />
+      <Route path="/marketing" component={MarketingPage} />
+      <Route path="/promotions" component={PromotionsPage} />
+      <Route path="/products" component={ProductsPage} />
+      <Route path="/invoices" component={InvoicesPage} />
+      <Route path="/installments" component={InstallmentsPage} />
+      <Route path="/expenses" component={ExpensesPage} />
+      <Route path="/expense-categories" component={ExpenseCategoriesPage} />
+      <Route path="/reports" component={ReportsPage} />
+      <Route path="/inventory-reports" component={InventoryReportsPage} />
+      <Route path="/barcodes" component={BarcodesPage} />
+      <Route path="/settings" component={SettingsPage} />
+      <Route component={NotFound} />
     </Switch>
   );
 }

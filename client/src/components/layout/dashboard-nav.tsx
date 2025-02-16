@@ -16,7 +16,7 @@ import {
   Truck,
   DollarSign,
   FolderIcon,
-  ClipboardList,
+  ClipboardList, // Add import for inventory report icon
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";

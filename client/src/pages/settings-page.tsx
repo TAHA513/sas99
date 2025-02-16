@@ -7,7 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { MessageSquare, Upload, Plus, Building2, Settings as SettingsIcon, Paintbrush, Database, Users, History, KeyRound, UserPlus, Trash2, Loader2, Calendar, Package, Receipt, Sections } from "lucide-react";
+import { MessageSquare, Upload, Plus, Building2, Settings as SettingsIcon, Paintbrush, Database } from "lucide-react";
 import { SiGooglecalendar } from "react-icons/si";
 import { SiFacebook, SiInstagram, SiSnapchat } from "react-icons/si";
 import { Label } from "@/components/ui/label";
@@ -42,18 +42,7 @@ import { DatabaseConnectionForm } from "@/components/settings/database-connectio
 import type { DatabaseConnection } from "@shared/schema";
 import { motion } from "framer-motion";
 import { Table, TableBody, TableCell, TableHeader, TableHead, TableRow } from "@/components/ui/table";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { PermissionsManager } from "@/components/settings/permissions-manager";
+
 
 const socialMediaAccountSchema = z.object({
   platform: z.enum(['facebook', 'instagram', 'snapchat'], {
@@ -111,38 +100,17 @@ const colorOptions = [
 
 const createGradient = (color1: string, color2: string) => `linear-gradient(to right, ${color1}, ${color2})`;
 
-const adminCredentialsSchema = z.object({
-  username: z.string().min(3, "اسم المستخدم يجب أن يكون 3 أحرف على الأقل"),
-  password: z.string().min(6, "كلمة المرور يجب أن تكون 6 أحرف على الأقل"),
-  confirmPassword: z.string()
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "كلمات المرور غير متطابقة",
-  path: ["confirmPassword"],
-});
-
-const staffCredentialsSchema = z.object({
-  username: z.string().min(3, "اسم المستخدم يجب أن يكون 3 أحرف على الأقل"),
-  password: z.string().min(6, "كلمة المرور يجب أن تكون 6 أحرف على الأقل"),
-  confirmPassword: z.string(),
-  staffId: z.string().min(1, "رقم الموظف مطلوب"),
-  role: z.enum(["staff"]),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "كلمات المرور غير متطابقة",
-  path: ["confirmPassword"],
-});
-
-type AdminCredentialsFormData = z.infer<typeof adminCredentialsSchema>;
-type StaffCredentialsFormData = z.infer<typeof staffCredentialsSchema>;
-
 export default function SettingsPage() {
   const { toast } = useToast();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const queryClient = useQueryClient();
 
+  // Load theme settings on mount
   useEffect(() => {
     loadThemeSettings();
   }, []);
 
+  // Queries
   const { data: storeSettings } = useQuery({
     queryKey: ['storeSettings'],
     queryFn: getStoreSettings,
@@ -153,6 +121,7 @@ export default function SettingsPage() {
     queryFn: getSocialAccounts,
   });
 
+  // Forms
   const whatsappForm = useForm<WhatsAppSettings>({
     resolver: zodResolver(whatsappSchema),
     defaultValues: getWhatsAppSettings(),
@@ -172,30 +141,11 @@ export default function SettingsPage() {
     resolver: zodResolver(currencySettingsSchema),
     defaultValues: {
       defaultCurrency: 'USD',
-      usdToIqdRate: 1460,
+      usdToIqdRate: 1460, // Default exchange rate
     }
   });
 
-  const adminForm = useForm<AdminCredentialsFormData>({
-    resolver: zodResolver(adminCredentialsSchema),
-    defaultValues: {
-      username: "",
-      password: "",
-      confirmPassword: "",
-    }
-  });
-
-  const staffForm = useForm<StaffCredentialsFormData>({
-    resolver: zodResolver(staffCredentialsSchema),
-    defaultValues: {
-      username: "",
-      password: "",
-      confirmPassword: "",
-      staffId: "",
-      role: "staff"
-    }
-  });
-
+  // Mutations
   const storeSettingsMutation = useMutation({
     mutationFn: async (data: {
       storeName?: string;
@@ -204,15 +154,8 @@ export default function SettingsPage() {
       fontSize?: string;
       fontFamily?: string;
       currencySettings?: CurrencySettings;
-      enableStaffLogin?: boolean;
-      staffLoginHistory?: any[];
-      restrictStaffAccess?: boolean;
-      trackStaffActivity?: boolean;
-      enableSalesPartition?: boolean;
-      enableAppointmentsPartition?: boolean;
-      enableInventoryPartition?: boolean;
-      enableReportsPartition?: boolean;
     }) => {
+      // Update store settings
       if (data.storeName !== undefined || data.storeLogo !== undefined) {
         const newSettings = {
           ...(data.storeName !== undefined && { storeName: data.storeName }),
@@ -221,10 +164,12 @@ export default function SettingsPage() {
         setStoreSettings(newSettings);
       }
 
+      // Handle color changes
       if (data.primary) {
         updateThemeColors(data.primary);
       }
 
+      // Handle font changes
       if (data.fontSize || data.fontFamily) {
         updateThemeFonts(
           data.fontSize || localStorage.getItem('theme-font-size') || 'medium',
@@ -233,27 +178,6 @@ export default function SettingsPage() {
       }
       if (data.currencySettings) {
         setStoreSettings({ ...storeSettings, currencySettings: data.currencySettings });
-      }
-      if (data.enableStaffLogin !== undefined) {
-        setStoreSettings({ ...storeSettings, enableStaffLogin: data.enableStaffLogin })
-      }
-      if (data.restrictStaffAccess !== undefined) {
-        setStoreSettings({ ...storeSettings, restrictStaffAccess: data.restrictStaffAccess })
-      }
-      if (data.trackStaffActivity !== undefined) {
-        setStoreSettings({ ...storeSettings, trackStaffActivity: data.trackStaffActivity })
-      }
-      if (data.enableSalesPartition !== undefined) {
-        setStoreSettings({ ...storeSettings, enableSalesPartition: data.enableSalesPartition });
-      }
-      if (data.enableAppointmentsPartition !== undefined) {
-        setStoreSettings({ ...storeSettings, enableAppointmentsPartition: data.enableAppointmentsPartition });
-      }
-      if (data.enableInventoryPartition !== undefined) {
-        setStoreSettings({ ...storeSettings, enableInventoryPartition: data.enableInventoryPartition });
-      }
-      if (data.enableReportsPartition !== undefined) {
-        setStoreSettings({ ...storeSettings, enableReportsPartition: data.enableReportsPartition });
       }
     },
     onSuccess: () => {
@@ -334,6 +258,7 @@ export default function SettingsPage() {
   const { data: connections } = useQuery({
     queryKey: ['databaseConnections'],
     queryFn: () => {
+      // Replace with your actual database connection fetching logic
       return Promise.resolve([{
         id: '1',
         name: 'Main Database',
@@ -345,99 +270,6 @@ export default function SettingsPage() {
       }]);
     }
   });
-
-  const adminCredentialsMutation = useMutation({
-    mutationFn: async (data: AdminCredentialsFormData) => {
-      const response = await fetch('/api/admin/credentials', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
-
-      if (!response.ok) {
-        throw new Error(await response.text());
-      }
-      return response.json();
-    },
-    onSuccess: () => {
-      toast({
-        title: "تم الحفظ",
-        description: "تم تحديث بيانات تسجيل دخول المدير بنجاح",
-      });
-      adminForm.reset();
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "خطأ",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
-
-  const staffCredentialsMutation = useMutation({
-    mutationFn: async (data: StaffCredentialsFormData) => {
-      const response = await fetch('/api/staff/credentials', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
-
-      if (!response.ok) {
-        throw new Error(await response.text());
-      }
-      return response.json();
-    },
-    onSuccess: () => {
-      toast({
-        title: "تم الحفظ",
-        description: "تم إضافة بيانات تسجيل دخول الموظف بنجاح",
-      });
-      staffForm.reset();
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "خطأ",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
-
-  // Add this after other queries
-  const { data: users, isLoading: isLoadingUsers } = useQuery({
-    queryKey: ['users'],
-    queryFn: async () => {
-      const res = await fetch('/api/users');
-      if (!res.ok) throw new Error('Failed to fetch users');
-      return res.json();
-    },
-  });
-
-  const deleteUserMutation = useMutation({
-    mutationFn: async (userId: number) => {
-      const res = await fetch(`/api/users/${userId}`, {
-        method: 'DELETE',
-      });
-      if (!res.ok) throw new Error('Failed to delete user');
-      return res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['users'] });
-      toast({
-        title: "تم الحذف",
-        description: "تم حذف الحساب بنجاح",
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "خطأ",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
-
 
   return (
     <DashboardLayout>
@@ -467,6 +299,7 @@ export default function SettingsPage() {
                   variant="outline"
                   className="w-full flex items-center justify-start gap-3 h-14"
                   onClick={() => {
+                    // سيتم إضافة منطق تسجيل الدخول لفيسبوك
                     toast({
                       title: "قريباً",
                       description: "سيتم إضافة خيار تسجيل الدخول بفيسبوك قريباً",
@@ -484,6 +317,7 @@ export default function SettingsPage() {
                   variant="outline"
                   className="w-full flex items-center justify-start gap-3 h-14"
                   onClick={() => {
+                    // سيتم إضافة منطق تسجيل الدخول لانستغرام
                     toast({
                       title: "قريباً",
                       description: "سيتم إضافة خيار تسجيل الدخول بانستغرام قريباً",
@@ -501,6 +335,7 @@ export default function SettingsPage() {
                   variant="outline"
                   className="w-full flex items-center justify-start gap-3 h-14"
                   onClick={() => {
+                    // سيتم إضافة منطق تسجيل الدخول لسناب شات
                     toast({
                       title: "قريباً",
                       description: "سيتم إضافة خيار تسجيل الدخول بسناب شات قريباً",
@@ -591,7 +426,7 @@ export default function SettingsPage() {
         </div>
 
         <Tabs defaultValue="store" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2 lg:grid-cols-6 gap-4">
+          <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4 gap-4">
             <TabsTrigger value="store" className="space-x-2">
               <Building2 className="h-4 w-4" />
               <span>المتجر</span>
@@ -607,10 +442,6 @@ export default function SettingsPage() {
             <TabsTrigger value="database" className="space-x-2">
               <Database className="h-4 w-4" />
               <span>قواعد البيانات</span>
-            </TabsTrigger>
-            <TabsTrigger value="permissions" className="space-x-2">
-              <Users className="h-4 w-4" />
-              <span>الصلاحيات</span>
             </TabsTrigger>
           </TabsList>
 
@@ -880,12 +711,12 @@ export default function SettingsPage() {
               <CardHeader>
                 <div className="flex items-center space-x-4">
                   <div className="flex gap-2">
-                    <SiFacebook className="h-8 w8 text-blue-600" />
+                    <SiFacebook className="h-8 w-8 text-blue-600" />
                     <SiInstagram className="h-8 w-8 text-pink-600" />
                     <SiSnapchat className="h-8 w-8 text-yellow-500" />
                   </div>
                   <div>
-                                        <CardTitle>الحسابات المرتبطة</CardTitle>
+                    <CardTitle>الحسابات المرتبطة</CardTitle>
                     <CardDescription>
                       إدارة حسابات التواصل الاجتماعي المرتبطة بالنظام
                     </CardDescription>
@@ -898,9 +729,9 @@ export default function SettingsPage() {
                     {socialAccounts?.map((account) => (
                       <div key={account.id} className="flex items-center justify-between p-4 border rounded-lg">
                         <div className="flex items-center gap-4">
-                          {account.platform === 'facebook' && <SiFacebook className="h6 w-6 text-blue-600" />}
+                          {account.platform === 'facebook' && <SiFacebook className="h-6 w-6 text-blue-600" />}
                           {account.platform === 'instagram' && <SiInstagram className="h-6 w-6 text-pink-600" />}
-                          {account.platform === 'snapchat' && <SiSnapchat className="h-6 w-6 text-yellow500" />}
+                          {account.platform === 'snapchat' && <SiSnapchat className="h-6 w-6 text-yellow-500" />}
                           <div>
                             <p className="font-medium">{account.username}</p>
                             <p className="text-sm text-muted-foreground">
@@ -919,7 +750,6 @@ export default function SettingsPage() {
               </CardContent>
             </CustomCard>
           </TabsContent>
-
           <TabsContent value="appearance" className="space-y-6">
             <CustomCard>
               <CardHeader>
@@ -934,6 +764,7 @@ export default function SettingsPage() {
                 </div>
               </CardHeader>
               <CardContent className="space-y-6">
+                {/* Theme Color */}
                 <div className="space-y-4">
                   <Label>لون النظام الأساسي</Label>
                   <div className="grid grid-cols-5 gap-2">
@@ -967,6 +798,7 @@ export default function SettingsPage() {
                   </div>
                 </div>
 
+                {/* Font Settings */}
                 <div className="space-y-4">
                   <Label>حجم الخط</Label>
                   <Select
@@ -1027,7 +859,7 @@ export default function SettingsPage() {
                   </div>
                 </div>
               </CardHeader>
-              <CardContent>
+<CardContent>
                 <div className="space-y-6">
                   <Dialog>
                     <DialogTrigger asChild>
@@ -1107,438 +939,6 @@ export default function SettingsPage() {
                       </TableBody>
                     </Table>
                   </motion.div>
-                </div>
-              </CardContent>
-            </CustomCard>
-          </TabsContent>
-          <TabsContent value="staff" className="space-y-6">
-            <CustomCard>
-              <CardHeader>
-                <div className="flex items-center space-x-4">
-                  <Users className="h-8 w-8 text-primary" />
-                  <div>
-                    <CardTitle>إعدادات تسجيل دخول الموظفين</CardTitle>
-                    <CardDescription>
-                      إدارة صلاحيات وتتبع دخول الموظفين للنظام
-                    </CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="flex items-center justify-between space-x-4">
-                  <div>
-                    <Label className="text-base">تفعيل تسجيل دخول الموظفين</Label>
-                    <p className="text-sm text-muted-foreground">
-                      السماح للموظفين بتسجيل الدخول للنظام مع صلاحيات محدودة
-                    </p>
-                  </div>
-                  <Switch
-                    checked={storeSettings?.enableStaffLogin || false}
-                    onCheckedChange={(checked) => {
-                      storeSettingsMutation.mutate({
-                        enableStaffLogin: checked,
-                        storeName: storeSettings?.storeName || "",
-                        storeLogo: storeSettings?.storeLogo || ""
-                      });
-                    }}
-                  />
-                </div>
-
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2">
-                    <History className="h-5 w-5 text-primary" />
-                    <h3 className="font-semibold">سجل تسجيل دخول الموظفين</h3>
-                  </div>
-                  <div className="border rounded-lg">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>الموظف</TableHead>
-                          <TableHead>وقت الدخول</TableHead>
-                          <TableHead>نوع الدخول</TableHead>
-                          <TableHead>الحالة</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {storeSettings?.staffLoginHistory?.map((log: any, index: number) => (
-                          <TableRow key={index}>
-                            <TableCell>{log.staffName}</TableCell>
-                            <TableCell>{new Date(log.loginTime).toLocaleString('ar-IQ')}</TableCell>
-                            <TableCell>
-                              <Badge variant="outline">
-                                {log.loginType === 'web' ? 'متصفح' : 'تطبيق'}
-                              </Badge>
-                            </TableCell>
-                            <TableCell>
-                              <Badge
-                                variant={log.status === 'success' ? 'default' : 'destructive'}
-                              >
-                                {log.status === 'success' ? 'ناجح' : 'فاشل'}
-                              </Badge>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                        {(!storeSettings?.staffLoginHistory || storeSettings.staffLoginHistory.length === 0) && (
-                          <TableRow>
-                            <TableCell colSpan={4} className="text-center py-4 text-muted-foreground">
-                              لا يوجد سجل لتسجيل الدخول
-                            </TableCell>
-                          </TableRow>
-                        )}
-                      </TableBody>
-                    </Table>
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2">
-                    <Shield className="h-5 w-5 text-primary" />
-                    <h3 className="font-semibold">إعدادات الصلاحيات</h3>
-                  </div>
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between space-x-4">
-                      <div>
-                        <Label className="text-base">تقييد الوصول لصفحة الموظفين فقط</Label>
-                        <p className="text-sm text-muted-foreground">
-                          منع الموظفين من الوصول إلى باقي صفحات النظام
-                        </p>
-                      </div>
-                      <Switch
-                        checked={storeSettings?.restrictStaffAccess || false}
-                        onCheckedChange={(checked) => {
-                          storeSettingsMutation.mutate({
-                            restrictStaffAccess: checked,
-                            storeName: storeSettings?.storeName || "",
-                            storeLogo: storeSettings?.storeLogo || ""
-                          });
-                        }}
-                      />
-                    </div>
-                    <div className="flex items-center justify-between space-x-4">
-                      <div>
-                        <Label className="text-base">تتبع نشاط الموظفين</Label>
-                        <p className="text-sm text-muted-foreground">
-                          تسجيل جميع عمليات تسجيل الدخول والخروج للموظفين
-                        </p>
-                      </div>
-                      <Switch
-                        checked={storeSettings?.trackStaffActivity || false}
-                        onCheckedChange={(checked) => {
-                          storeSettingsMutation.mutate({
-                            trackStaffActivity: checked,
-                            storeName: storeSettings?.storeName || "",
-                            storeLogo: storeSettings?.storeLogo || ""
-                          });
-                        }}
-                      />
-                    </div>
-                  </div>
-                </div>
-                <CustomCard>
-                  <CardHeader>
-                    <div className="flex items-center space-x-4">
-                      <KeyRound className="h-8 w-8 text-primary" />
-                      <div>
-                        <CardTitle>بيانات تسجيل دخول المدير</CardTitle>
-                        <CardDescription>
-                          تعيين بيانات تسجيل الدخول للمدير مع صلاحيات كاملة للنظام
-                        </CardDescription>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <Form {...adminForm}>
-                      <form onSubmit={adminForm.handleSubmit((data) => {
-                        const { confirmPassword, ...adminData } = data;
-                        adminCredentialsMutation.mutate(adminData);
-                      })} className="space-y-4">
-                        <FormField
-                          control={adminForm.control}
-                          name="username"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>اسم المستخدم</FormLabel>
-                              <FormControl>
-                                <Input {...field} placeholder="أدخل اسم المستخدم" />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={adminForm.control}
-                          name="password"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>كلمة المرور</FormLabel>
-                              <FormControl>
-                                <Input type="password" {...field} placeholder="أدخل كلمة المرور" />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={adminForm.control}
-                          name="confirmPassword"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>تأكيد كلمة المرور</FormLabel>
-                              <FormControl>
-                                <Input type="password" {...field} placeholder="أعد إدخال كلمة المرور" />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <Button
-                          type="submit"
-                          disabled={adminCredentialsMutation.isPending}
-                          className="w-full"
-                        >
-                          {adminCredentialsMutation.isPending ? "جاري الحفظ..." : "حفظ بيانات المدير"}
-                        </Button>
-                      </form>
-                    </Form>
-                  </CardContent>
-                </CustomCard>
-
-                <CustomCard className="mt-6">
-                  <CardHeader>
-                    <div className="flex items-center space-x-4">
-                      <UserPlus className="h-8 w-8 text-primary" />
-                      <div>
-                        <CardTitle>إضافة حساب موظف جديد</CardTitle>
-                        <CardDescription>
-                          إنشاء حساب جديد للموظف مع صلاحيات محدودة
-                        </CardDescription>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <Form {...staffForm}>
-                      <form onSubmit={staffForm.handleSubmit((data) => {
-                        const { confirmPassword, ...staffData } = data;
-                        staffCredentialsMutation.mutate(staffData);
-                      })} className="space-y-4">
-                        <FormField
-                          control={staffForm.control}
-                          name="staffId"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>رقم الموظف</FormLabel>
-                              <FormControl>
-                                <Input {...field} placeholder="أدخل رقم الموظف" />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={staffForm.control}
-                          name="username"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>اسم المستخدم</FormLabel>
-                              <FormControl>
-                                <Input {...field} placeholder="أدخل اسم المستخدم" />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={staffForm.control}
-                          name="password"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>كلمة المرور</FormLabel>
-                              <FormControl>
-                                <Input type="password" {...field} placeholder="أدخل كلمة المرور" />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={staffForm.control}
-                          name="confirmPassword"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>تأكيد كلمة المرور</FormLabel>
-                              <FormControl>
-                                <Input type="password" {...field} placeholder="أعد إدخال كلمة المرور" />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <Button
-                          type="submit"
-                          disabled={staffCredentialsMutation.isPending}
-                          className="w-full"
-                        >
-                          {staffCredentialsMutation.isPending ? "جاري الإضافة..." : "إضافة حساب موظف"}
-                        </Button>
-                      </form>
-                    </Form>
-                  </CardContent>
-                </CustomCard>
-
-                <div className="mt-6">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Users className="h-5 w-5 text-primary" />
-                      <h3 className="text-lg font-medium">قائمة المستخدمين</h3>
-                    </div>
-                  </div>
-
-                  {isLoadingUsers ? (
-                    <div className="flex items-center justify-center p-8">
-                      <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                    </div>
-                  ) : (
-                    <Table className="mt-4">
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>اسم المستخدم</TableHead>
-                          <TableHead>الدور</TableHead>
-                          <TableHead>رقم الموظف</TableHead>
-                          <TableHead>تاريخ الإنشاء</TableHead>
-                          <TableHead>الإجراءات</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {users?.map((user) => (
-                          <TableRow key={user.id}>
-                            <TableCell>{user.username}</TableCell>
-                            <TableCell>
-                              <Badge variant={user.role === 'admin' ? 'destructive' : 'default'}>
-                                {user.role === 'admin' ? 'مدير' : 'موظف'}
-                              </Badge>
-                            </TableCell>
-                            <TableCell>{user.staffId || '-'}</TableCell>
-                            <TableCell>{new Date(user.createdAt).toLocaleDateString('ar')}</TableCell>
-                            <TableCell>
-                              <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                  <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive/90">
-                                    <Trash2 className="h-4 w-4" />
-                                  </Button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                  <AlertDialogHeader>
-                                    <AlertDialogTitle>هل أنت متأكد من حذف هذا الحساب؟</AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                      سيتم حذف الحساب نهائياً ولن يتمكن المستخدم من الوصول إلى النظام.
-                                    </AlertDialogDescription>
-                                  </AlertDialogHeader>
-                                  <AlertDialogFooter>
-                                    <AlertDialogCancel>إلغاء</AlertDialogCancel>
-                                    <AlertDialogAction
-                                      onClick={() => deleteUserMutation.mutate(user.id)}
-                                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                    >
-                                      حذف الحساب
-                                    </AlertDialogAction>
-                                  </AlertDialogFooter>
-                                </AlertDialogContent>
-                              </AlertDialog>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  )}
-                </div>
-
-              </CardContent>
-            </CustomCard>
-          </TabsContent>
-          <TabsContent value="permissions" className="space-y-6">
-            <CustomCard>
-              <CardHeader>
-                <div className="flex items-center space-x-4">
-                  <Shield className="h-8 w-8 text-primary" />
-                  <div>
-                    <CardTitle>صلاحيات النظام</CardTitle>
-                    <CardDescription>
-                      إدارة صلاحيات المستخدمين والموظفين
-                    </CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-8">
-                  <PermissionsManager />
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-semibold">بارتشن الموظفين</h3>
-                    <div className="grid gap-4">
-                      <div className="flex items-center justify-between p-4 border rounded-lg">
-                        <div className="flex items-center gap-3">
-                          <Users className="h-5 w-5 text-muted-foreground" />
-                          <div>
-                            <p className="font-medium">قسم المبيعات</p>
-                            <p className="text-sm text-muted-foreground">الوصول إلى المبيعات والفواتير</p>
-                          </div>
-                        </div>
-                        <Switch
-                          checked={storeSettings?.enableSalesPartition}
-                          onCheckedChange={(checked) => {
-                            storeSettingsMutation.mutate({ enableSalesPartition: checked })
-                          }}
-                        />
-                      </div>
-
-                      <div className="flex items-center justify-between p-4 border rounded-lg">
-                        <div className="flex items-center gap-3">
-                          <Calendar className="h-5 w-5 text-muted-foreground" />
-                          <div>
-                            <p className="font-medium">قسم المواعيد</p>
-                            <p className="text-sm text-muted-foreground">إدارة مواعيد العملاء</p>
-                          </div>
-                        </div>
-                        <Switch
-                          checked={storeSettings?.enableAppointmentsPartition}
-                          onCheckedChange={(checked) => {
-                            storeSettingsMutation.mutate({ enableAppointmentsPartition: checked })
-                          }}
-                        />
-                      </div>
-
-                      <div className="flex items-center justify-between p-4 border rounded-lg">
-                        <div className="flex items-center gap-3">
-                          <Package className="h-5 w-5 text-muted-foreground" />
-                          <div>
-                            <p className="font-medium">قسم المخزون</p>
-                            <p className="text-sm text-muted-foreground">إدارة المنتجات والمخزون</p>
-                          </div>
-                        </div>
-                        <Switch
-                          checked={storeSettings?.enableInventoryPartition}
-                          onCheckedChange={(checked) => {
-                            storeSettingsMutation.mutate({ enableInventoryPartition: checked })
-                          }}
-                        />
-                      </div>
-
-                      <div className="flex items-center justify-between p-4 border rounded-lg">
-                        <div className="flex items-center gap-3">
-                          <Receipt className="h-5 w-5 text-muted-foreground" />
-                          <div>
-                            <p className="font-medium">قسم التقارير</p>
-                            <p className="text-sm text-muted-foreground">عرض التقارير والإحصائيات</p>
-                          </div>
-                        </div>
-                        <Switch
-                          checked={storeSettings?.enableReportsPartition}
-                          onCheckedChange={(checked) => {
-                            storeSettingsMutation.mutate({ enableReportsPartition: checked })
-                          }}
-                        />
-                      </div>
-                    </div>
-                  </div>
                 </div>
               </CardContent>
             </CustomCard>
