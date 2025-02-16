@@ -14,7 +14,8 @@ import {
   Target,
   ArrowUpRight,
   ArrowDownRight,
-  Percent,
+  Megaphone,
+  Bell
 } from "lucide-react";
 import {
   AreaChart,
@@ -36,6 +37,8 @@ import {
 import { ar } from "date-fns/locale";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import type { MarketingCampaign } from "@shared/schema";
 
 // Sample data - replace with actual API data
 const salesData = [
@@ -81,6 +84,24 @@ const DashboardPage: React.FC = () => {
     queryKey: ["/api/products"],
   });
 
+  // Add campaign data query
+  const { data: campaigns } = useQuery<MarketingCampaign[]>({
+    queryKey: ["/api/marketing-campaigns"],
+  });
+
+  // Get active campaigns
+  const activeCampaigns = campaigns?.filter(c => 
+    new Date(c.endDate) > new Date() && c.status === 'active'
+  ) || [];
+
+  // Get campaigns ending soon (within 7 days)
+  const campaignsEndingSoon = campaigns?.filter(c => {
+    const endDate = new Date(c.endDate);
+    const sevenDaysFromNow = new Date();
+    sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
+    return endDate <= sevenDaysFromNow && endDate > new Date();
+  }) || [];
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('ar-IQ', {
       style: 'currency',
@@ -89,11 +110,11 @@ const DashboardPage: React.FC = () => {
     }).format(amount);
   };
 
-  // Sample KPI calculations - replace with actual data
-  const salesGrowth = 15.2; // % نسبة نمو المبيعات
-  const targetProgress = 78; // % نسبة تحقيق الأهداف
-  const stockStatus = 85; // % حالة المخزون
-  const dailySalesTarget = 92; // % تحقيق هدف المبيعات اليومي
+  // Sample KPI calculations
+  const salesGrowth = 15.2;
+  const targetProgress = 78;
+  const stockStatus = 85;
+  const dailySalesTarget = 92;
 
   return (
     <DashboardLayout>
@@ -107,6 +128,17 @@ const DashboardPage: React.FC = () => {
             {new Date().toLocaleDateString('ar-IQ', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
           </Badge>
         </div>
+
+        {/* Campaign Alerts */}
+        {campaignsEndingSoon.length > 0 && (
+          <Alert>
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle>تنبيه الحملات</AlertTitle>
+            <AlertDescription>
+              لديك {campaignsEndingSoon.length} حملات تنتهي خلال 7 أيام
+            </AlertDescription>
+          </Alert>
+        )}
 
         {/* KPI Cards - New Interactive Design */}
         <div className="grid gap-4 md:grid-cols-4">
@@ -174,6 +206,32 @@ const DashboardPage: React.FC = () => {
               <p className="text-xs text-muted-foreground mt-1">
                 من هدف اليوم
               </p>
+            </CardContent>
+          </Card>
+
+          {/* Add Campaign Performance Card */}
+          <Card className="relative overflow-hidden">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">أداء الحملات</CardTitle>
+              <Megaphone className="h-4 w-4 text-blue-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{activeCampaigns.length}</div>
+              <p className="text-xs text-muted-foreground mt-1">
+                حملات نشطة حالياً
+              </p>
+              {activeCampaigns.length > 0 && (
+                <div className="mt-4 space-y-2">
+                  {activeCampaigns.slice(0, 2).map(campaign => (
+                    <div key={campaign.id} className="flex justify-between items-center">
+                      <span className="text-sm truncate">{campaign.name}</span>
+                      <Badge variant="outline" className="text-xs">
+                        {new Date(campaign.endDate).toLocaleDateString('ar-IQ')}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -334,6 +392,40 @@ const DashboardPage: React.FC = () => {
             </CardContent>
           </Card>
         </div>
+
+        {/* Add Campaign Performance Chart */}
+        <Card className="col-span-2">
+          <CardHeader>
+            <CardTitle>أداء الحملات التسويقية</CardTitle>
+          </CardHeader>
+          <CardContent className="h-[300px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={campaigns?.map(c => ({
+                name: c.name,
+                مشاهدات: c.campaignMetrics?.impressions || 0,
+                تفاعلات: c.campaignMetrics?.engagement || 0,
+                نقرات: c.campaignMetrics?.clicks || 0
+              })) || []}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                <XAxis
+                  dataKey="name"
+                  stroke="#64748b"
+                  tick={{ fill: '#64748b', fontSize: 12 }}
+                />
+                <YAxis
+                  stroke="#64748b"
+                  tick={{ fill: '#64748b', fontSize: 12 }}
+                />
+                <Tooltip />
+                <Legend />
+                <Line type="monotone" dataKey="مشاهدات" stroke="#8884d8" />
+                <Line type="monotone" dataKey="تفاعلات" stroke="#82ca9d" />
+                <Line type="monotone" dataKey="نقرات" stroke="#ffc658" />
+              </LineChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
       </div>
     </DashboardLayout>
   );
