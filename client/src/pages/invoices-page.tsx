@@ -328,73 +328,83 @@ export default function InvoicesPage() {
 
   // Add new function to export to Excel
   const exportToExcel = () => {
-    const workbook = XLSX.utils.book_new();
-
-    // Convert items to Excel format
-    const excelData = items.map(item => ({
-      'اسم المنتج': item.name,
-      'الكمية': item.quantity,
-      'السعر': formatCurrency(item.price, true),
-      'المجموع': formatCurrency(item.total, true)
-    }));
-
-    // Add summary row
-    excelData.push({
-      'اسم المنتج': 'المجموع الفرعي',
-      'الكمية': '',
-      'السعر': '',
-      'المجموع': formatCurrency(subtotal, true)
-    });
-
-    if (discount > 0) {
-      excelData.push({
-        'اسم المنتج': `الخصم (${discount}%)`,
-        'الكمية': '',
-        'السعر': '',
-        'المجموع': formatCurrency(discountAmount, true)
+    if (!items || items.length === 0) {
+      toast({
+        title: "لا يمكن تصدير الفاتورة",
+        description: "الفاتورة لا تحتوي على أي منتجات",
+        variant: "destructive",
       });
+      return;
     }
 
-    excelData.push({
-      'اسم المنتج': 'الإجمالي النهائي',
-      'الكمية': '',
-      'السعر': '',
-      'المجموع': formatCurrency(finalTotal, true)
-    });
+    try {
+      const workbook = XLSX.utils.book_new();
 
-    // Create worksheet
-    const worksheet = XLSX.utils.json_to_sheet(excelData, { RTL: true });
+      // Convert items to Excel format with proper formatting
+      const excelData = items.map(item => ({
+        'اسم المنتج': item.name,
+        'الكمية': item.quantity,
+        'السعر': `${formatCurrency(item.price, true)}`,
+        'المجموع': `${formatCurrency(item.total, true)}`
+      }));
 
-    // Set column widths
-    const colWidths = [
-      { wch: 30 }, // Product name
-      { wch: 10 }, // Quantity
-      { wch: 10 }, // Price
-      { wch: 10 }, // Total
-    ];
-    worksheet['!cols'] = colWidths;
+      // Add summary rows
+      excelData.push(
+        {
+          'اسم المنتج': 'المجموع الفرعي',
+          'الكمية': '',
+          'السعر': '',
+          'المجموع': `${formatCurrency(subtotal, true)}`
+        }
+      );
 
-    // Add the worksheet to workbook
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'الفاتورة');
+      if (discount > 0) {
+        excelData.push({
+          'اسم المنتج': `الخصم (${discount}%)`,
+          'الكمية': '',
+          'السعر': '',
+          'المجموع': `${formatCurrency(discountAmount, true)}`
+        });
+      }
 
-    // Generate Excel file
-    const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
-    const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      excelData.push({
+        'اسم المنتج': 'الإجمالي النهائي',
+        'الكمية': '',
+        'السعر': '',
+        'المجموع': `${formatCurrency(finalTotal, true)}`
+      });
 
-    // Create download link
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `فاتورة_${format(new Date(), 'yyyy-MM-dd_HH-mm')}.xlsx`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+      // Create worksheet with RTL support
+      const worksheet = XLSX.utils.json_to_sheet(excelData, { RTL: true });
 
-    toast({
-      title: "تم تصدير الفاتورة",
-      description: "تم تصدير الفاتورة بنجاح إلى ملف Excel",
-    });
+      // Set column widths
+      const colWidths = [
+        { wch: 30 }, // Product name
+        { wch: 10 }, // Quantity
+        { wch: 15 }, // Price
+        { wch: 15 }, // Total
+      ];
+      worksheet['!cols'] = colWidths;
+
+      // Add the worksheet to workbook
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'الفاتورة');
+
+      // Generate Excel file
+      const fileName = `فاتورة_${format(new Date(), 'yyyy-MM-dd_HH-mm')}.xlsx`;
+      XLSX.writeFile(workbook, fileName);
+
+      toast({
+        title: "تم تصدير الفاتورة",
+        description: "تم تصدير الفاتورة بنجاح إلى ملف Excel",
+      });
+    } catch (error) {
+      console.error('Error exporting to Excel:', error);
+      toast({
+        title: "خطأ في التصدير",
+        description: "حدث خطأ أثناء تصدير الفاتورة. الرجاء المحاولة مرة أخرى.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
