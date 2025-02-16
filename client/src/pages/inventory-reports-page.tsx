@@ -10,7 +10,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useQuery } from "@tanstack/react-query";
-import { Package2, DollarSign, LineChart, TrendingUp, Wallet } from "lucide-react";
+import { Package2, DollarSign, LineChart, TrendingUp, Wallet, BarChart } from "lucide-react";
 import type { Product } from "@shared/schema";
 import {
   PieChart,
@@ -22,7 +22,7 @@ import {
   CartesianGrid,
   Tooltip,
   Legend,
-  BarChart,
+  BarChart as RechartsBarChart,
   Bar,
   ResponsiveContainer,
   Cell
@@ -140,7 +140,7 @@ export default function InventoryReportsPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">منتجات المفرد</CardTitle>
-              <BarChart3 className="h-4 w-4 text-muted-foreground" />
+              <BarChart className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{retailProducts.length}</div>
@@ -244,7 +244,7 @@ export default function InventoryReportsPage() {
             </CardHeader>
             <CardContent className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={products.slice(0, 5).map(product => ({ name: product.name, 'سعر التكلفة': Number(product.costPrice), 'سعر البيع': Number(product.sellingPrice) }))}>
+                <RechartsBarChart data={products.slice(0, 5).map(product => ({ name: product.name, 'سعر التكلفة': Number(product.costPrice), 'سعر البيع': Number(product.sellingPrice) }))}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                   <XAxis
                     dataKey="name"
@@ -275,7 +275,7 @@ export default function InventoryReportsPage() {
                     radius={[4, 4, 0, 0]}
                     animationDuration={1500}
                   />
-                </BarChart>
+                </RechartsBarChart>
               </ResponsiveContainer>
             </CardContent>
           </Card>
