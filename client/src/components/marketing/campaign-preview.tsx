@@ -1,15 +1,94 @@
 import { Card, CardContent } from "@/components/ui/card";
-import { SiFacebook, SiInstagram, SiSnapchat, SiWhatsapp } from "react-icons/si";
-import { MessageSquare } from "lucide-react";
+import { SiFacebook, SiInstagram, SiSnapchat } from "react-icons/si";
+import { MessageSquare, Target } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 interface CampaignPreviewProps {
   platform: 'facebook' | 'instagram' | 'snapchat' | 'sms';
   content: string;
   name?: string;
+  mediaFiles?: string[];
+  targeting?: {
+    ageRange: string[];
+    gender: 'all' | 'male' | 'female';
+    locations: string[];
+    interests: string[];
+    languages: string[];
+    devices: string[];
+  };
 }
 
-export function CampaignPreview({ platform, content, name }: CampaignPreviewProps) {
+export function CampaignPreview({ platform, content, name, mediaFiles, targeting }: CampaignPreviewProps) {
   const getPreviewContent = () => {
+    const mediaPreview = mediaFiles && mediaFiles.length > 0 ? (
+      <div className={`grid ${mediaFiles.length === 1 ? 'grid-cols-1' : 'grid-cols-2'} gap-1 mt-2`}>
+        {mediaFiles.map((file, index) => (
+          <img
+            key={index}
+            src={file}
+            alt={`Preview ${index + 1}`}
+            className="w-full h-32 object-cover rounded"
+          />
+        ))}
+      </div>
+    ) : null;
+
+    const targetingPreview = targeting && (
+      <div className="mt-2 p-2 bg-muted/50 rounded-md space-y-1">
+        <div className="flex items-center gap-1 text-[10px] text-muted-foreground mb-1">
+          <Target className="h-3 w-3" />
+          <span>معلومات الاستهداف</span>
+        </div>
+        <div className="flex flex-wrap gap-1">
+          {/* Age Range */}
+          {targeting.ageRange.length > 0 && (
+            <Badge variant="secondary" className="text-[10px]">
+              العمر: {targeting.ageRange.join(', ')}
+            </Badge>
+          )}
+
+          {/* Gender */}
+          <Badge variant="secondary" className="text-[10px]">
+            الجنس: {
+              targeting.gender === 'all' ? 'الجميع' :
+              targeting.gender === 'male' ? 'ذكور' : 'إناث'
+            }
+          </Badge>
+
+          {/* Locations */}
+          {targeting.locations.length > 0 && (
+            <Badge variant="secondary" className="text-[10px]">
+              المواقع: {targeting.locations.join(', ')}
+            </Badge>
+          )}
+
+          {/* Languages */}
+          {targeting.languages.length > 0 && (
+            <Badge variant="secondary" className="text-[10px]">
+              اللغات: {targeting.languages.join(', ')}
+            </Badge>
+          )}
+
+          {/* Devices */}
+          {targeting.devices.length > 0 && (
+            <Badge variant="secondary" className="text-[10px]">
+              الأجهزة: {targeting.devices.map(d => 
+                d === 'mobile' ? 'الجوال' :
+                d === 'desktop' ? 'الكمبيوتر' : 'الأجهزة اللوحية'
+              ).join(', ')}
+            </Badge>
+          )}
+
+          {/* Interests */}
+          {targeting.interests.length > 0 && (
+            <Badge variant="secondary" className="text-[10px]">
+              الاهتمامات: {targeting.interests.join(', ')}
+            </Badge>
+          )}
+        </div>
+      </div>
+    );
+
     switch (platform) {
       case 'facebook':
         return (
@@ -25,6 +104,8 @@ export function CampaignPreview({ platform, content, name }: CampaignPreviewProp
                 </div>
               </div>
               <p className="text-sm mb-3 whitespace-pre-wrap">{content || "محتوى الإعلان"}</p>
+              {mediaPreview}
+              {targetingPreview}
             </div>
           </div>
         );
@@ -43,6 +124,8 @@ export function CampaignPreview({ platform, content, name }: CampaignPreviewProp
                 </div>
               </div>
               <p className="text-sm mb-3 whitespace-pre-wrap">{content || "محتوى الإعلان"}</p>
+              {mediaPreview}
+              {targetingPreview}
             </div>
           </div>
         );
@@ -61,6 +144,8 @@ export function CampaignPreview({ platform, content, name }: CampaignPreviewProp
                 </div>
               </div>
               <p className="text-sm mb-3 whitespace-pre-wrap">{content || "محتوى الإعلان"}</p>
+              {mediaPreview}
+              {targetingPreview}
             </div>
           </div>
         );
@@ -81,6 +166,7 @@ export function CampaignPreview({ platform, content, name }: CampaignPreviewProp
                 </div>
               </div>
               <p className="text-sm mb-3 whitespace-pre-wrap">{content || "محتوى الرسالة"}</p>
+              {targetingPreview}
             </div>
           </div>
         );

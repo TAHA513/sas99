@@ -18,10 +18,28 @@ import { insertMarketingCampaignSchema } from "@shared/schema";
 import { Slider } from "@/components/ui/slider";
 import { useState } from "react";
 import { CampaignPreview } from "./campaign-preview";
+import { FileUpload } from "@/components/ui/file-upload";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const campaignFormSchema = insertMarketingCampaignSchema.extend({
   startDate: z.string(),
   endDate: z.string(),
+  // Add targeting validation
+  targeting: z.object({
+    ageRange: z.array(z.string()),
+    gender: z.enum(['all', 'male', 'female']),
+    locations: z.array(z.string()),
+    interests: z.array(z.string()),
+    languages: z.array(z.string()),
+    devices: z.array(z.string()),
+  }),
 });
 
 type CampaignFormData = z.infer<typeof campaignFormSchema>;
@@ -47,12 +65,15 @@ export function CampaignForm({ platform, onSuccess }: CampaignFormProps) {
       endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
       description: "",
       content: "",
-      targetAudience: JSON.stringify({
-        age: "18-35",
-        gender: "all",
-        location: "المملكة العربية السعودية",
-        interests: []
-      }),
+      mediaFiles: [],
+      targeting: {
+        ageRange: ['18-24'],
+        gender: 'all',
+        locations: ['المملكة العربية السعودية'],
+        interests: [],
+        languages: ['العربية'],
+        devices: ['mobile', 'desktop'],
+      },
       campaignMetrics: {
         impressions: 0,
         clicks: 0,
@@ -94,6 +115,26 @@ export function CampaignForm({ platform, onSuccess }: CampaignFormProps) {
 
   const watchContent = form.watch('content');
   const watchName = form.watch('name');
+  const watchMediaFiles = form.watch('mediaFiles');
+  const watchTargeting = form.watch('targeting');
+
+  // Available interests list
+  const availableInterests = [
+    'التسوق', 'الرياضة', 'السفر', 'التقنية', 'الطعام',
+    'الموضة', 'الصحة', 'التعليم', 'الترفيه', 'الأعمال',
+  ];
+
+  // Available locations
+  const availableLocations = [
+    'المملكة العربية السعودية', 'الإمارات', 'الكويت', 'قطر', 'البحرين', 'عمان',
+    'مصر', 'الأردن', 'لبنان', 'العراق', 'المغرب', 'تونس',
+  ];
+
+  // Available languages
+  const availableLanguages = ['العربية', 'الإنجليزية'];
+
+  // Available age ranges
+  const availableAgeRanges = ['13-17', '18-24', '25-34', '35-44', '45-54', '55-64', '65+'];
 
   return (
     <Form {...form}>
@@ -207,6 +248,188 @@ export function CampaignForm({ platform, onSuccess }: CampaignFormProps) {
           />
         </div>
 
+        {/* Targeting Options */}
+        <div className="space-y-3">
+          <h3 className="text-sm font-medium">خيارات الاستهداف</h3>
+
+          {/* Gender */}
+          <FormField
+            control={form.control}
+            name="targeting.gender"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-xs font-medium">الجنس</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SelectTrigger className="h-7 text-xs">
+                      <SelectValue placeholder="اختر الجنس" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="all">الجميع</SelectItem>
+                    <SelectItem value="male">ذكور</SelectItem>
+                    <SelectItem value="female">إناث</SelectItem>
+                  </SelectContent>
+                </Select>
+              </FormItem>
+            )}
+          />
+
+          {/* Age Ranges */}
+          <FormField
+            control={form.control}
+            name="targeting.ageRange"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-xs font-medium">الفئة العمرية</FormLabel>
+                <div className="grid grid-cols-3 gap-2">
+                  {availableAgeRanges.map((range) => (
+                    <label
+                      key={range}
+                      className="flex items-center space-x-2 space-x-reverse text-xs"
+                    >
+                      <Checkbox
+                        checked={field.value.includes(range)}
+                        onCheckedChange={(checked) => {
+                          const newValue = checked
+                            ? [...field.value, range]
+                            : field.value.filter((v) => v !== range);
+                          field.onChange(newValue);
+                        }}
+                      />
+                      <span>{range}</span>
+                    </label>
+                  ))}
+                </div>
+              </FormItem>
+            )}
+          />
+
+          {/* Locations */}
+          <FormField
+            control={form.control}
+            name="targeting.locations"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-xs font-medium">المواقع</FormLabel>
+                <div className="grid grid-cols-2 gap-2">
+                  {availableLocations.map((location) => (
+                    <label
+                      key={location}
+                      className="flex items-center space-x-2 space-x-reverse text-xs"
+                    >
+                      <Checkbox
+                        checked={field.value.includes(location)}
+                        onCheckedChange={(checked) => {
+                          const newValue = checked
+                            ? [...field.value, location]
+                            : field.value.filter((v) => v !== location);
+                          field.onChange(newValue);
+                        }}
+                      />
+                      <span>{location}</span>
+                    </label>
+                  ))}
+                </div>
+              </FormItem>
+            )}
+          />
+
+          {/* Interests */}
+          <FormField
+            control={form.control}
+            name="targeting.interests"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-xs font-medium">الاهتمامات</FormLabel>
+                <div className="grid grid-cols-2 gap-2">
+                  {availableInterests.map((interest) => (
+                    <label
+                      key={interest}
+                      className="flex items-center space-x-2 space-x-reverse text-xs"
+                    >
+                      <Checkbox
+                        checked={field.value.includes(interest)}
+                        onCheckedChange={(checked) => {
+                          const newValue = checked
+                            ? [...field.value, interest]
+                            : field.value.filter((v) => v !== interest);
+                          field.onChange(newValue);
+                        }}
+                      />
+                      <span>{interest}</span>
+                    </label>
+                  ))}
+                </div>
+              </FormItem>
+            )}
+          />
+
+          {/* Languages */}
+          <FormField
+            control={form.control}
+            name="targeting.languages"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-xs font-medium">اللغات</FormLabel>
+                <div className="grid grid-cols-2 gap-2">
+                  {availableLanguages.map((language) => (
+                    <label
+                      key={language}
+                      className="flex items-center space-x-2 space-x-reverse text-xs"
+                    >
+                      <Checkbox
+                        checked={field.value.includes(language)}
+                        onCheckedChange={(checked) => {
+                          const newValue = checked
+                            ? [...field.value, language]
+                            : field.value.filter((v) => v !== language);
+                          field.onChange(newValue);
+                        }}
+                      />
+                      <span>{language}</span>
+                    </label>
+                  ))}
+                </div>
+              </FormItem>
+            )}
+          />
+
+          {/* Devices */}
+          <FormField
+            control={form.control}
+            name="targeting.devices"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-xs font-medium">الأجهزة</FormLabel>
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { id: 'mobile', label: 'الجوال' },
+                    { id: 'desktop', label: 'الكمبيوتر' },
+                    { id: 'tablet', label: 'الأجهزة اللوحية' },
+                  ].map((device) => (
+                    <label
+                      key={device.id}
+                      className="flex items-center space-x-2 space-x-reverse text-xs"
+                    >
+                      <Checkbox
+                        checked={field.value.includes(device.id)}
+                        onCheckedChange={(checked) => {
+                          const newValue = checked
+                            ? [...field.value, device.id]
+                            : field.value.filter((v) => v !== device.id);
+                          field.onChange(newValue);
+                        }}
+                      />
+                      <span>{device.label}</span>
+                    </label>
+                  ))}
+                </div>
+              </FormItem>
+            )}
+          />
+        </div>
+
         <FormField
           control={form.control}
           name="content"
@@ -225,15 +448,36 @@ export function CampaignForm({ platform, onSuccess }: CampaignFormProps) {
           )}
         />
 
-        <CampaignPreview 
+        <FormField
+          control={form.control}
+          name="mediaFiles"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-xs font-medium">صور الإعلان</FormLabel>
+              <FormControl>
+                <FileUpload
+                  value={field.value}
+                  onChange={field.onChange}
+                  accept="image/*"
+                  maxFiles={4}
+                  maxSize={2}
+                />
+              </FormControl>
+            </FormItem>
+          )}
+        />
+
+        <CampaignPreview
           platform={platform}
           content={watchContent}
           name={watchName}
+          mediaFiles={watchMediaFiles}
+          targeting={watchTargeting}
         />
 
-        <Button 
-          type="submit" 
-          disabled={createCampaign.isPending} 
+        <Button
+          type="submit"
+          disabled={createCampaign.isPending}
           className="w-full h-7 text-xs font-medium"
         >
           {createCampaign.isPending ? "جاري الإنشاء..." : "إنشاء الحملة"}

@@ -67,6 +67,7 @@ export const marketingCampaigns = pgTable("marketing_campaigns", {
   targetAudience: text("target_audience"),
   budget: integer("budget"),
   messageCount: integer("message_count").notNull().default(0),
+  mediaFiles: text("media_files").array(), // New field for media files
   adCreatives: text("ad_creatives").array(),
   campaignMetrics: json("campaign_metrics").$type<{
     impressions: number;
@@ -212,9 +213,10 @@ export const insertStoreSettingsSchema = createInsertSchema(storeSettings).pick(
 });
 export const insertMarketingCampaignSchema = createInsertSchema(marketingCampaigns).extend({
   platforms: z.array(z.enum(['facebook', 'instagram', 'snapchat', 'whatsapp', 'email', 'sms'])),
-  type: z.enum(['promotional', 'awareness', 'engagement', 'sales', 'seasonal']),
+  type: z.enum(['promotional', 'awareness', 'engagement', 'sales', 'seasonal', 'sms']),
   socialMediaSettings: z.string().optional(),
   targetAudience: z.string().optional(),
+  mediaFiles: z.array(z.string()).optional(), // New validation for media files
   adCreatives: z.array(z.string()).optional(),
   budget: z.number().optional(),
   campaignMetrics: z.object({
@@ -315,7 +317,6 @@ export type InstallmentPlan = typeof installmentPlans.$inferSelect;
 export type InsertInstallmentPlan = z.infer<typeof insertInstallmentPlanSchema>;
 export type InstallmentPayment = typeof installmentPayments.$inferSelect;
 export type InsertInstallmentPayment = z.infer<typeof insertInstallmentPaymentSchema>;
-
 
 
 export const suppliers = pgTable("suppliers", {
