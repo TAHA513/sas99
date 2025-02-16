@@ -13,7 +13,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Loader2 } from "lucide-react";
-import { Redirect, useLocation } from "wouter";
+import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 
 const loginSchema = z.object({
@@ -26,7 +26,7 @@ type LoginFormData = z.infer<typeof loginSchema>;
 export default function LoginPage() {
   const { user, loginMutation } = useAuth();
   const { toast } = useToast();
-  const [location, setLocation] = useLocation();
+  const [, setLocation] = useLocation();
 
   const {
     register,
@@ -38,11 +38,13 @@ export default function LoginPage() {
 
   // إذا كان المستخدم مسجل الدخول بالفعل، قم بتوجيهه إلى الصفحة المناسبة
   if (user) {
+    // التوجيه بناءً على دور المستخدم
     if (user.role === "admin") {
-      return <Redirect to="/" />;
+      setLocation("/");
     } else {
-      return <Redirect to="/staff" />;
+      setLocation("/staff");
     }
+    return null;
   }
 
   const onSubmit = async (data: LoginFormData) => {
