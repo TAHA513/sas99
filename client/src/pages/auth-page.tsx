@@ -2,12 +2,13 @@ import { useAuth } from "@/hooks/use-auth";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertUserSchema } from "@shared/schema";
 import { useForm } from "react-hook-form";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useLocation } from "wouter";
+import type { LoginData } from "@/hooks/use-auth";
 
 export default function AuthPage() {
   const { loginMutation, registerMutation, user } = useAuth();
@@ -18,12 +19,21 @@ export default function AuthPage() {
     return null;
   }
 
-  const loginForm = useForm({
+  const loginForm = useForm<LoginData>({
     resolver: zodResolver(insertUserSchema.omit({ name: true })),
+    defaultValues: {
+      username: "",
+      password: ""
+    }
   });
 
-  const registerForm = useForm({
+  const registerForm = useForm<typeof insertUserSchema._type>({
     resolver: zodResolver(insertUserSchema),
+    defaultValues: {
+      name: "",
+      username: "",
+      password: ""
+    }
   });
 
   return (
@@ -52,6 +62,7 @@ export default function AuthPage() {
                           <FormControl>
                             <Input {...field} />
                           </FormControl>
+                          <FormMessage />
                         </FormItem>
                       )}
                     />
@@ -64,6 +75,7 @@ export default function AuthPage() {
                           <FormControl>
                             <Input type="password" {...field} />
                           </FormControl>
+                          <FormMessage />
                         </FormItem>
                       )}
                     />
@@ -86,6 +98,7 @@ export default function AuthPage() {
                           <FormControl>
                             <Input {...field} />
                           </FormControl>
+                          <FormMessage />
                         </FormItem>
                       )}
                     />
@@ -98,6 +111,7 @@ export default function AuthPage() {
                           <FormControl>
                             <Input {...field} />
                           </FormControl>
+                          <FormMessage />
                         </FormItem>
                       )}
                     />
@@ -110,6 +124,7 @@ export default function AuthPage() {
                           <FormControl>
                             <Input type="password" {...field} />
                           </FormControl>
+                          <FormMessage />
                         </FormItem>
                       )}
                     />
