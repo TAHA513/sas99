@@ -15,19 +15,17 @@ import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { MessageSquare, Upload, Plus, Building2, Settings as SettingsIcon, Paintbrush, Database } from "lucide-react";
-import { SiGooglecalendar, SiFacebook, SiInstagram, SiSnapchat } from "react-icons/si";
+import { Building2, Settings as SettingsIcon, Paintbrush, Database } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useState, useEffect } from "react";
 import { Switch } from "@/components/ui/switch";
-import { Slider } from "@/components/ui/slider";
-import { updateThemeColors, updateThemeFonts, loadThemeSettings } from "@/lib/theme";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { loadThemeSettings } from "@/lib/theme";
+import { useQueryClient } from "@tanstack/react-query";
 import { DatabaseConnectionForm } from "@/components/settings/database-connection-form";
 import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Slider } from "@/components/ui/slider";
 
 const storeSettingsSchema = z.object({
   storeName: z.string().min(1, "اسم المتجر مطلوب"),
@@ -38,7 +36,6 @@ const storeSettingsSchema = z.object({
 
 export default function SettingsPage() {
   const { toast } = useToast();
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const queryClient = useQueryClient();
 
   const storeForm = useForm({
@@ -198,51 +195,9 @@ export default function SettingsPage() {
               <CardHeader>
                 <CardTitle>التكاملات</CardTitle>
                 <CardDescription>
-                  إدارة التكاملات مع الخدمات الخارجية
+                  قريباً
                 </CardDescription>
               </CardHeader>
-              <CardContent>
-                <div className="grid gap-4">
-                  <div className="flex items-center justify-between p-4 border rounded-lg">
-                    <div className="flex items-center space-x-4">
-                      <SiFacebook className="h-8 w-8 text-blue-600" />
-                      <div>
-                        <h3 className="font-medium">فيسبوك</h3>
-                        <p className="text-sm text-muted-foreground">
-                          ربط حساب الفيسبوك للتسويق
-                        </p>
-                      </div>
-                    </div>
-                    <Button variant="outline">ربط</Button>
-                  </div>
-
-                  <div className="flex items-center justify-between p-4 border rounded-lg">
-                    <div className="flex items-center space-x-4">
-                      <SiInstagram className="h-8 w-8 text-pink-600" />
-                      <div>
-                        <h3 className="font-medium">انستغرام</h3>
-                        <p className="text-sm text-muted-foreground">
-                          ربط حساب الانستغرام للتسويق
-                        </p>
-                      </div>
-                    </div>
-                    <Button variant="outline">ربط</Button>
-                  </div>
-
-                  <div className="flex items-center justify-between p-4 border rounded-lg">
-                    <div className="flex items-center space-x-4">
-                      <SiSnapchat className="h-8 w-8 text-yellow-400" />
-                      <div>
-                        <h3 className="font-medium">سناب شات</h3>
-                        <p className="text-sm text-muted-foreground">
-                          ربط حساب سناب شات للتسويق
-                        </p>
-                      </div>
-                    </div>
-                    <Button variant="outline">ربط</Button>
-                  </div>
-                </div>
-              </CardContent>
             </Card>
           </TabsContent>
 
