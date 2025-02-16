@@ -2,6 +2,7 @@ import { pgTable, text, serial, integer, boolean, timestamp, decimal, json } fro
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
+// النماذج الحالية تبقى كما هي
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
@@ -12,17 +13,41 @@ export const users = pgTable("users", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
-export const insertUserSchema = createInsertSchema(users, {
-  role: z.enum(["admin", "staff"]).default("staff"),
-  name: z.string().optional(),
-  staffId: z.string().optional(),
-}).pick({
-  username: true,
-  password: true,
-  role: true,
-  name: true,
-  staffId: true,
+// إضافة جدول الصلاحيات
+export const permissions = pgTable("permissions", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  key: text("key").notNull().unique(),
+  description: text("description"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
 });
+
+// جدول ربط المستخدمين بالصلاحيات
+export const userPermissions = pgTable("user_permissions", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  permissionId: integer("permission_id").notNull(),
+  granted: boolean("granted").notNull().default(false),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// تحديث مخطط إدخال المستخدم
+export const insertUserSchema = createInsertSchema(users).extend({
+  permissions: z.array(z.number()).optional(),
+});
+
+// مخطط الصلاحيات
+export const insertPermissionSchema = createInsertSchema(permissions);
+
+// مخطط ربط الصلاحيات
+export const insertUserPermissionSchema = createInsertSchema(userPermissions);
+
+// تصدير الأنواع
+export type Permission = typeof permissions.$inferSelect;
+export type InsertPermission = z.infer<typeof insertPermissionSchema>;
+export type UserPermission = typeof userPermissions.$inferSelect;
+export type InsertUserPermission = z.infer<typeof insertUserPermissionSchema>;
 
 export const customers = pgTable("customers", {
   id: serial("id").primaryKey(),
@@ -59,10 +84,19 @@ export const settings = pgTable("settings", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
+// تحديث جدول إعدادات المتجر
 export const storeSettings = pgTable("store_settings", {
   id: serial("id").primaryKey(),
   storeName: text("store_name").notNull(),
   storeLogo: text("store_logo"),
+  enableStaffLogin: boolean("enable_staff_login").notNull().default(false),
+  restrictStaffAccess: boolean("restrict_staff_access").notNull().default(false),
+  trackStaffActivity: boolean("track_staff_activity").notNull().default(false),
+  staffLoginHistory: json("staff_login_history").$type<Array<{
+    username: string;
+    timestamp: string;
+    success: boolean;
+  }>>(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -238,9 +272,15 @@ export const insertSettingSchema = createInsertSchema(settings).pick({
   key: true,
   value: true,
 });
+
+// تحديث مخطط إدخال إعدادات المتجر
 export const insertStoreSettingsSchema = createInsertSchema(storeSettings).pick({
   storeName: true,
   storeLogo: true,
+  enableStaffLogin: true,
+  restrictStaffAccess: true,
+  trackStaffActivity: true,
+  staffLoginHistory: true,
 });
 export const insertMarketingCampaignSchema = createInsertSchema(marketingCampaigns).extend({
   platforms: z.array(z.enum(['facebook', 'instagram', 'snapchat', 'whatsapp', 'email', 'sms'])),
@@ -351,6 +391,7 @@ export type Staff = typeof staff.$inferSelect;
 export type InsertStaff = z.infer<typeof insertStaffSchema>;
 export type Setting = typeof settings.$inferSelect;
 export type InsertSetting = z.infer<typeof insertSettingSchema>;
+// تحديث النوع المستخدم في واجهة المستخدم
 export type StoreSetting = typeof storeSettings.$inferSelect;
 export type InsertStoreSetting = z.infer<typeof insertStoreSettingsSchema>;
 export type MarketingCampaign = typeof marketingCampaigns.$inferSelect;

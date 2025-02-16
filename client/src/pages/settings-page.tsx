@@ -53,6 +53,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { PermissionsManager } from "@/components/settings/permissions-manager";
 
 
 const socialMediaAccountSchema = z.object({
@@ -576,7 +577,7 @@ export default function SettingsPage() {
         </div>
 
         <Tabs defaultValue="store" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2 lg:grid-cols-5 gap-4">
+          <TabsList className="grid w-full grid-cols-2 lg:grid-cols-6 gap-4">
             <TabsTrigger value="store" className="space-x-2">
               <Building2 className="h-4 w-4" />
               <span>المتجر</span>
@@ -596,6 +597,10 @@ export default function SettingsPage() {
             <TabsTrigger value="staff" className="space-x-2">
               <Users className="h-4 w-4" />
               <span>الموظفين</span>
+            </TabsTrigger>
+            <TabsTrigger value="permissions" className="space-x-2">
+              <Shield className="h-4 w-4" />
+              <span>الصلاحيات</span>
             </TabsTrigger>
           </TabsList>
 
@@ -883,7 +888,7 @@ export default function SettingsPage() {
                     {socialAccounts?.map((account) => (
                       <div key={account.id} className="flex items-center justify-between p-4 border rounded-lg">
                         <div className="flex items-center gap-4">
-                          {account.platform === 'facebook' && <SiFacebook className="h-6 w-6 text-blue-600" />}
+                          {account.platform === 'facebook' && <SiFacebook className="h6 w-6 text-blue-600" />}
                           {account.platform === 'instagram' && <SiInstagram className="h-6 w-6 text-pink-600" />}
                           {account.platform === 'snapchat' && <SiSnapchat className="h-6 w-6 text-yellow500" />}
                           <div>
@@ -1370,7 +1375,6 @@ export default function SettingsPage() {
                   </CardContent>
                 </CustomCard>
 
-                {/* Add users list table in the staff tab */}
                 <div className="mt-6">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
@@ -1438,6 +1442,96 @@ export default function SettingsPage() {
                   )}
                 </div>
 
+              </CardContent>
+            </CustomCard>
+          </TabsContent>
+          {/* Add the new tab content here */}
+          <TabsContent value="permissions" className="space-y-6">
+            <CustomCard>
+              <CardHeader>
+                <div className="flex items-center space-x-4">
+                  <Shield className="h-8 w-8 text-primary" />
+                  <div>
+                    <CardTitle>صلاحيات الموظفين</CardTitle>
+                    <CardDescription>
+                      إدارة صلاحيات الوصول للموظفين
+                    </CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="staff-login"
+                      checked={storeSettings?.enableStaffLogin}
+                      onCheckedChange={(checked) => {
+                        storeSettingsMutation.mutate({ enableStaffLogin: checked });
+                      }}
+                    />
+                    <Label htmlFor="staff-login">
+                      تمكين تسجيل دخول الموظفين
+                    </Label>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="restrict-staff"
+                      checked={storeSettings?.restrictStaffAccess}
+                      onCheckedChange={(checked) => {
+                        storeSettingsMutation.mutate({ restrictStaffAccess: checked });
+                      }}
+                    />
+                    <Label htmlFor="restrict-staff">
+                      تقييد وصول الموظفين حسب الصلاحيات
+                    </Label>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="track-activity"
+                      checked={storeSettings?.trackStaffActivity}
+                      onCheckedChange={(checked) => {
+                        storeSettingsMutation.mutate({ trackStaffActivity: checked });
+                      }}
+                    />
+                    <Label htmlFor="track-activity">
+                      تتبع نشاط الموظفين
+                    </Label>
+                  </div>
+
+                  {storeSettings?.staffLoginHistory && storeSettings.staffLoginHistory.length > 0 && (
+                    <div className="mt-6">
+                      <h3 className="text-lg font-semibold mb-4">سجل تسجيل الدخول</h3>
+                      <div className="border rounded-lg">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>الموظف</TableHead>
+                              <TableHead>التاريخ والوقت</TableHead>
+                              <TableHead>الحالة</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {storeSettings.staffLoginHistory.map((entry, index) => (
+                              <TableRow key={index}>
+                                <TableCell>{entry.username}</TableCell>
+                                <TableCell>
+                                  {new Date(entry.timestamp).toLocaleString('ar-IQ')}
+                                </TableCell>
+                                <TableCell>
+                                  <Badge variant={entry.success ? "success" : "destructive"}>
+                                    {entry.success ? "نجاح" : "فشل"}
+                                  </Badge>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </CardContent>
             </CustomCard>
           </TabsContent>

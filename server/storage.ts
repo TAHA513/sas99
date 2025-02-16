@@ -3,7 +3,6 @@ import { eq, and, sql } from 'drizzle-orm';
 import { db } from './db';
 import * as schema from '@shared/schema';
 import session from "express-session";
-import createMemoryStore from "memorystore";
 import connectPg from "connect-pg-simple";
 
 const PostgresSessionStore = connectPg(session);
@@ -16,6 +15,13 @@ export interface IStorage {
   createUser(user: schema.InsertUser): Promise<schema.User>;
   deleteUser(id: number): Promise<void>;
   getUsers(): Promise<schema.User[]>;
+
+  // Permission operations
+  getPermissions(): Promise<schema.Permission[]>;
+  getPermission(id: number): Promise<schema.Permission | undefined>;
+  createPermission(permission: schema.InsertPermission): Promise<schema.Permission>;
+  getUserPermissions(userId: number): Promise<schema.UserPermission[]>;
+  updateUserPermission(userId: number, permissionId: number, granted: boolean): Promise<void>;
 
   // Customer operations
   getCustomers(): Promise<schema.Customer[]>;
@@ -181,6 +187,42 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(schema.users);
   }
 
+  // Permission operations
+  async getPermissions(): Promise<schema.Permission[]> {
+    return await db.select().from(schema.permissions);
+  }
+
+  async getPermission(id: number): Promise<schema.Permission | undefined> {
+    const [permission] = await db.select().from(schema.permissions).where(eq(schema.permissions.id, id));
+    return permission;
+  }
+
+  async createPermission(permission: schema.InsertPermission): Promise<schema.Permission> {
+    const [newPermission] = await db.insert(schema.permissions).values(permission).returning();
+    return newPermission;
+  }
+
+  async getUserPermissions(userId: number): Promise<schema.UserPermission[]> {
+    return await db.select()
+      .from(schema.userPermissions)
+      .where(eq(schema.userPermissions.userId, userId));
+  }
+
+  async updateUserPermission(userId: number, permissionId: number, granted: boolean): Promise<void> {
+    await db.insert(schema.userPermissions)
+      .values({
+        userId,
+        permissionId,
+        granted,
+      })
+      .onConflictDoUpdate({
+        target: [schema.userPermissions.userId, schema.userPermissions.permissionId],
+        set: { 
+          granted,
+          updatedAt: new Date()
+        },
+      });
+  }
   // Customer operations
   async getCustomers(): Promise<schema.Customer[]> {
     return await db.select().from(schema.customers);
@@ -732,8 +774,7 @@ export class DatabaseStorage implements IStorage {
     post: Partial<schema.InsertScheduledPost>
   ): Promise<schema.ScheduledPost> {
     const [updatedPost] = await db
-      .update(schema.scheduledPosts)
-      .set(post)
+      .update(schema.scheduledPosts)      .set(post)
       .where(eq(schema.scheduledPosts.id, id))
       .returning();
     return updatedPost;

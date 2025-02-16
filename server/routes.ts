@@ -322,6 +322,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // إضافة API للصلاحيات
+
+  // جلب كل الصلاحيات
+  app.get("/api/permissions", async (_req, res) => {
+    try {
+      const permissions = await storage.getPermissions();
+      res.json(permissions);
+    } catch (error) {
+      console.error('Error fetching permissions:', error);
+      res.status(500).json({ error: "حدث خطأ أثناء جلب الصلاحيات" });
+    }
+  });
+
+  // جلب صلاحيات مستخدم محدد
+  app.get("/api/users/:userId/permissions", async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const userPermissions = await storage.getUserPermissions(userId);
+      res.json(userPermissions);
+    } catch (error) {
+      console.error('Error fetching user permissions:', error);
+      res.status(500).json({ error: "حدث خطأ أثناء جلب صلاحيات المستخدم" });
+    }
+  });
+
+  // تحديث صلاحية مستخدم
+  app.put("/api/users/:userId/permissions/:permissionId", async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const permissionId = parseInt(req.params.permissionId);
+      const { granted } = req.body;
+
+      // التحقق من وجود المستخدم
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ error: "المستخدم غير موجود" });
+      }
+
+      // التحقق من وجود الصلاحية
+      const permission = await storage.getPermission(permissionId);
+      if (!permission) {
+        return res.status(404).json({ error: "الصلاحية غير موجودة" });
+      }
+
+      // تحديث الصلاحية
+      await storage.updateUserPermission(userId, permissionId, granted);
+      res.json({ message: "تم تحديث الصلاحية بنجاح" });
+    } catch (error) {
+      console.error('Error updating user permission:', error);
+      res.status(500).json({ error: "حدث خطأ أثناء تحديث الصلاحية" });
+    }
+  });
+
+
   const httpServer = createServer(app);
   return httpServer;
 }
