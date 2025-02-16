@@ -14,6 +14,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Loader2 } from "lucide-react";
 import { Redirect } from "wouter";
+import { useToast } from "@/hooks/use-toast";
 
 const loginSchema = z.object({
   username: z.string().min(1, "اسم المستخدم مطلوب"),
@@ -24,6 +25,7 @@ type LoginFormData = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
   const { user, loginMutation } = useAuth();
+  const { toast } = useToast();
   const {
     register,
     handleSubmit,
@@ -37,8 +39,21 @@ export default function LoginPage() {
     return <Redirect to="/" />;
   }
 
-  const onSubmit = (data: LoginFormData) => {
-    loginMutation.mutate(data);
+  const onSubmit = async (data: LoginFormData) => {
+    try {
+      await loginMutation.mutateAsync(data);
+      toast({
+        title: "تم تسجيل الدخول بنجاح",
+        description: "مرحباً بك في النظام",
+      });
+    } catch (error) {
+      console.error("Login error:", error);
+      toast({
+        title: "خطأ في تسجيل الدخول",
+        description: error instanceof Error ? error.message : "حدث خطأ غير متوقع",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -59,6 +74,7 @@ export default function LoginPage() {
                 type="text"
                 {...register("username")}
                 placeholder="أدخل اسم المستخدم"
+                disabled={loginMutation.isPending}
               />
               {errors.username && (
                 <p className="text-sm text-destructive">
@@ -73,6 +89,7 @@ export default function LoginPage() {
                 type="password"
                 {...register("password")}
                 placeholder="أدخل كلمة المرور"
+                disabled={loginMutation.isPending}
               />
               {errors.password && (
                 <p className="text-sm text-destructive">
