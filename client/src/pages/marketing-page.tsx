@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/table";
 import { useQuery } from "@tanstack/react-query";
 import { MarketingCampaign, SocialMediaAccount } from "@shared/schema";
-import { Megaphone, AlertCircle, Check } from "lucide-react";
+import { Megaphone, AlertCircle, Check, MessageSquare } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { SearchInput } from "@/components/ui/search-input";
 import { format } from "date-fns";
@@ -70,6 +70,7 @@ export default function MarketingPage() {
     instagram: socialAccounts?.some(acc => acc.platform === 'instagram' && acc.status === 'active'),
     snapchat: socialAccounts?.some(acc => acc.platform === 'snapchat' && acc.status === 'active'),
     whatsapp: socialAccounts?.some(acc => acc.platform === 'whatsapp' && acc.status === 'active'),
+    sms: socialAccounts?.some(acc => acc.platform === 'sms' && acc.status === 'active'), // Added SMS
   };
 
   const getPlatformIcons = (platforms?: string[]) => {
@@ -84,6 +85,7 @@ export default function MarketingPage() {
             instagram: SiInstagram,
             snapchat: SiSnapchat,
             whatsapp: SiWhatsapp,
+            sms: () => <MessageSquare className="h-4 w-4" />,
           }[platform];
 
           if (!Icon) return null;
@@ -94,6 +96,7 @@ export default function MarketingPage() {
                 platform === 'facebook' ? 'text-blue-600' :
                 platform === 'instagram' ? 'text-pink-600' :
                 platform === 'snapchat' ? 'text-yellow-500' :
+                platform === 'sms' ? 'text-gray-600' :
                 'text-green-600'
               } ${!isConfigured ? 'opacity-50' : ''}`} />
               {!isConfigured && (
@@ -168,6 +171,7 @@ export default function MarketingPage() {
                         {platform === 'facebook' ? 'فيسبوك' :
                          platform === 'instagram' ? 'انستغرام' :
                          platform === 'snapchat' ? 'سناب شات' :
+                         platform === 'sms' ? 'رسائل SMS' : //Added SMS
                          'واتساب'}
                       </Badge>
                     ))}
@@ -177,9 +181,9 @@ export default function MarketingPage() {
                 </Alert>
               )}
               <Tabs defaultValue="facebook" className="mt-4">
-                <TabsList className="grid grid-cols-3 gap-4">
-                  <TabsTrigger 
-                    value="facebook" 
+                <TabsList className="grid grid-cols-4 gap-4"> {/* Changed to grid-cols-4 */}
+                  <TabsTrigger
+                    value="facebook"
                     className="text-center"
                     disabled={!platformStatus.facebook}
                   >
@@ -189,8 +193,8 @@ export default function MarketingPage() {
                       <AlertCircle className="h-4 w-4 text-yellow-500 mr-2" />
                     )}
                   </TabsTrigger>
-                  <TabsTrigger 
-                    value="instagram" 
+                  <TabsTrigger
+                    value="instagram"
                     className="text-center"
                     disabled={!platformStatus.instagram}
                   >
@@ -200,8 +204,8 @@ export default function MarketingPage() {
                       <AlertCircle className="h-4 w-4 text-yellow-500 mr-2" />
                     )}
                   </TabsTrigger>
-                  <TabsTrigger 
-                    value="snapchat" 
+                  <TabsTrigger
+                    value="snapchat"
                     className="text-center"
                     disabled={!platformStatus.snapchat}
                   >
@@ -210,6 +214,13 @@ export default function MarketingPage() {
                     {!platformStatus.snapchat && (
                       <AlertCircle className="h-4 w-4 text-yellow-500 mr-2" />
                     )}
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="sms"
+                    className="text-center"
+                  >
+                    <MessageSquare className="h-4 w-4 text-gray-600 mb-2" />
+                    رسائل SMS
                   </TabsTrigger>
                 </TabsList>
                 <div className="mt-6">
@@ -249,6 +260,19 @@ export default function MarketingPage() {
                       </CardHeader>
                       <CardContent>
                         <CampaignForm platform="snapchat" />
+                      </CardContent>
+                    </Card>
+                  </TabsContent>
+                  <TabsContent value="sms">
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>حملة رسائل SMS</CardTitle>
+                        <CardDescription>
+                          قم بإنشاء حملة رسائل نصية قصيرة للوصول إلى عملائك
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <CampaignForm platform="sms" />
                       </CardContent>
                     </Card>
                   </TabsContent>
@@ -302,7 +326,7 @@ export default function MarketingPage() {
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    {campaign.budget ? formatCurrency(campaign.budget, true) : "غير محدد"}
+                    {campaign.budget ? `$${(campaign.budget).toLocaleString()}` : "غير محدد"}
                   </TableCell>
                   <TableCell>
                     {format(new Date(campaign.startDate), 'dd MMMM yyyy', { locale: ar })}

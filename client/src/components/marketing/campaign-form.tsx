@@ -27,25 +27,25 @@ const campaignFormSchema = insertMarketingCampaignSchema.extend({
 type CampaignFormData = z.infer<typeof campaignFormSchema>;
 
 interface CampaignFormProps {
-  platform: 'facebook' | 'instagram' | 'snapchat';
+  platform: 'facebook' | 'instagram' | 'snapchat' | 'sms';
   onSuccess?: () => void;
 }
 
 export function CampaignForm({ platform, onSuccess }: CampaignFormProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [budget, setBudget] = useState(1000);
+  const [budget, setBudget] = useState(100);
 
   const form = useForm<CampaignFormData>({
     resolver: zodResolver(campaignFormSchema),
     defaultValues: {
-      type: "promotional", // Changed from platform name to actual campaign type
+      type: "promotional",
       platforms: [platform],
       status: 'draft',
-      budget: 1000,
+      budget: 100,
       startDate: new Date().toISOString().split('T')[0],
       endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-      description: "", // Initialize with empty string instead of undefined
+      description: "",
       content: "",
       targetAudience: JSON.stringify({
         age: "18-35",
@@ -71,7 +71,7 @@ export function CampaignForm({ platform, onSuccess }: CampaignFormProps) {
         ...data,
         startDate: new Date(data.startDate),
         endDate: new Date(data.endDate),
-        budget: budget * 100, // Convert to cents
+        budget: budget, // Already in USD
       });
       return res.json();
     },
@@ -117,7 +117,7 @@ export function CampaignForm({ platform, onSuccess }: CampaignFormProps) {
               <FormControl>
                 <Textarea
                   {...field}
-                  value={field.value || ""} // Ensure value is never null/undefined
+                  value={field.value || ""}
                   placeholder="اكتب وصفاً مختصراً للحملة"
                 />
               </FormControl>
@@ -141,6 +141,7 @@ export function CampaignForm({ platform, onSuccess }: CampaignFormProps) {
                   <option value="engagement">تفاعلية</option>
                   <option value="sales">مبيعات</option>
                   <option value="seasonal">موسمية</option>
+                  <option value="sms">رسائل SMS</option>
                 </select>
               </FormControl>
             </FormItem>
@@ -180,23 +181,23 @@ export function CampaignForm({ platform, onSuccess }: CampaignFormProps) {
           name="budget"
           render={() => (
             <FormItem>
-              <FormLabel>الميزانية (ريال)</FormLabel>
+              <FormLabel>الميزانية (دولار)</FormLabel>
               <FormControl>
                 <div className="space-y-2">
                   <Slider
                     value={[budget]}
                     onValueChange={([value]) => setBudget(value)}
-                    min={100}
-                    max={10000}
-                    step={100}
+                    min={10}
+                    max={1000}
+                    step={10}
                   />
                   <div className="text-muted-foreground text-sm text-center">
-                    {budget.toLocaleString()} ريال
+                    ${budget.toLocaleString()}
                   </div>
                 </div>
               </FormControl>
               <FormDescription>
-                الحد الأدنى للميزانية 100 ريال
+                الحد الأدنى للميزانية 10 دولار
               </FormDescription>
             </FormItem>
           )}
@@ -211,7 +212,7 @@ export function CampaignForm({ platform, onSuccess }: CampaignFormProps) {
               <FormControl>
                 <Textarea
                   {...field}
-                  value={field.value || ""} // Ensure value is never null/undefined
+                  value={field.value || ""}
                   placeholder="اكتب نص الإعلان هنا"
                   className="h-32"
                 />
