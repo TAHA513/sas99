@@ -39,18 +39,29 @@ export function CampaignForm({ platform, onSuccess }: CampaignFormProps) {
   const form = useForm<CampaignFormData>({
     resolver: zodResolver(campaignFormSchema),
     defaultValues: {
-      type: platform,
+      type: "promotional", // Changed from platform name to actual campaign type
       platforms: [platform],
       status: 'draft',
       budget: 1000,
       startDate: new Date().toISOString().split('T')[0],
       endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      description: "", // Initialize with empty string instead of undefined
+      content: "",
       targetAudience: JSON.stringify({
         age: "18-35",
         gender: "all",
         location: "المملكة العربية السعودية",
         interests: []
-      })
+      }),
+      campaignMetrics: {
+        impressions: 0,
+        clicks: 0,
+        engagement: 0,
+        reach: 0,
+        conversion: 0,
+        roi: 0
+      },
+      scheduledPosts: []
     },
   });
 
@@ -106,8 +117,31 @@ export function CampaignForm({ platform, onSuccess }: CampaignFormProps) {
               <FormControl>
                 <Textarea
                   {...field}
+                  value={field.value || ""} // Ensure value is never null/undefined
                   placeholder="اكتب وصفاً مختصراً للحملة"
                 />
+              </FormControl>
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="type"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>نوع الحملة</FormLabel>
+              <FormControl>
+                <select
+                  {...field}
+                  className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <option value="promotional">ترويجية</option>
+                  <option value="awareness">توعوية</option>
+                  <option value="engagement">تفاعلية</option>
+                  <option value="sales">مبيعات</option>
+                  <option value="seasonal">موسمية</option>
+                </select>
               </FormControl>
             </FormItem>
           )}
@@ -177,6 +211,7 @@ export function CampaignForm({ platform, onSuccess }: CampaignFormProps) {
               <FormControl>
                 <Textarea
                   {...field}
+                  value={field.value || ""} // Ensure value is never null/undefined
                   placeholder="اكتب نص الإعلان هنا"
                   className="h-32"
                 />

@@ -68,6 +68,21 @@ export const marketingCampaigns = pgTable("marketing_campaigns", {
   budget: integer("budget"),
   messageCount: integer("message_count").notNull().default(0),
   adCreatives: text("ad_creatives").array(),
+  campaignMetrics: json("campaign_metrics").$type<{
+    impressions: number;
+    clicks: number;
+    engagement: number;
+    reach: number;
+    conversion: number;
+    roi: number;
+  }>(),
+  scheduledPosts: json("scheduled_posts").$type<{
+    platformId: number;
+    content: string;
+    scheduledTime: string;
+    status: 'pending' | 'published' | 'failed';
+    mediaUrls?: string[];
+  }[]>(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -196,11 +211,27 @@ export const insertStoreSettingsSchema = createInsertSchema(storeSettings).pick(
   storeLogo: true,
 });
 export const insertMarketingCampaignSchema = createInsertSchema(marketingCampaigns).extend({
-  platforms: z.array(z.enum(['facebook', 'instagram', 'snapchat', 'whatsapp', 'email', 'sms'])).optional(),
+  platforms: z.array(z.enum(['facebook', 'instagram', 'snapchat', 'whatsapp', 'email', 'sms'])),
+  type: z.enum(['promotional', 'awareness', 'engagement', 'sales', 'seasonal']),
   socialMediaSettings: z.string().optional(),
   targetAudience: z.string().optional(),
   adCreatives: z.array(z.string()).optional(),
   budget: z.number().optional(),
+  campaignMetrics: z.object({
+    impressions: z.number().default(0),
+    clicks: z.number().default(0),
+    engagement: z.number().default(0),
+    reach: z.number().default(0),
+    conversion: z.number().default(0),
+    roi: z.number().default(0),
+  }).optional(),
+  scheduledPosts: z.array(z.object({
+    platformId: z.number(),
+    content: z.string(),
+    scheduledTime: z.string(),
+    status: z.enum(['pending', 'published', 'failed']),
+    mediaUrls: z.array(z.string()).optional(),
+  })).optional(),
 });
 export const insertPromotionSchema = createInsertSchema(promotions);
 export const insertDiscountCodeSchema = createInsertSchema(discountCodes);
@@ -284,6 +315,7 @@ export type InstallmentPlan = typeof installmentPlans.$inferSelect;
 export type InsertInstallmentPlan = z.infer<typeof insertInstallmentPlanSchema>;
 export type InstallmentPayment = typeof installmentPayments.$inferSelect;
 export type InsertInstallmentPayment = z.infer<typeof insertInstallmentPaymentSchema>;
+
 
 
 export const suppliers = pgTable("suppliers", {
