@@ -7,7 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { MessageSquare, Upload, Plus, Building2, Settings as SettingsIcon, Paintbrush, Database } from "lucide-react";
+import { MessageSquare, Upload, Plus, Building2, Settings as SettingsIcon, Paintbrush, Database, Users, History, Shield } from "lucide-react";
 import { SiGooglecalendar } from "react-icons/si";
 import { SiFacebook, SiInstagram, SiSnapchat } from "react-icons/si";
 import { Label } from "@/components/ui/label";
@@ -154,6 +154,10 @@ export default function SettingsPage() {
       fontSize?: string;
       fontFamily?: string;
       currencySettings?: CurrencySettings;
+      enableStaffLogin?: boolean;
+      staffLoginHistory?: any[];
+      restrictStaffAccess?: boolean;
+      trackStaffActivity?: boolean;
     }) => {
       // Update store settings
       if (data.storeName !== undefined || data.storeLogo !== undefined) {
@@ -179,6 +183,16 @@ export default function SettingsPage() {
       if (data.currencySettings) {
         setStoreSettings({ ...storeSettings, currencySettings: data.currencySettings });
       }
+      if(data.enableStaffLogin !== undefined){
+        setStoreSettings({...storeSettings, enableStaffLogin: data.enableStaffLogin})
+      }
+      if(data.restrictStaffAccess !== undefined){
+        setStoreSettings({...storeSettings, restrictStaffAccess: data.restrictStaffAccess})
+      }
+      if(data.trackStaffActivity !== undefined){
+        setStoreSettings({...storeSettings, trackStaffActivity: data.trackStaffActivity})
+      }
+
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['storeSettings'] });
@@ -426,7 +440,7 @@ export default function SettingsPage() {
         </div>
 
         <Tabs defaultValue="store" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4 gap-4">
+          <TabsList className="grid w-full grid-cols-2 lg:grid-cols-5 gap-4">
             <TabsTrigger value="store" className="space-x-2">
               <Building2 className="h-4 w-4" />
               <span>المتجر</span>
@@ -442,6 +456,10 @@ export default function SettingsPage() {
             <TabsTrigger value="database" className="space-x-2">
               <Database className="h-4 w-4" />
               <span>قواعد البيانات</span>
+            </TabsTrigger>
+            <TabsTrigger value="staff" className="space-x-2">
+              <Users className="h-4 w-4" />
+              <span>الموظفين</span>
             </TabsTrigger>
           </TabsList>
 
@@ -750,6 +768,7 @@ export default function SettingsPage() {
               </CardContent>
             </CustomCard>
           </TabsContent>
+
           <TabsContent value="appearance" className="space-y-6">
             <CustomCard>
               <CardHeader>
@@ -859,7 +878,7 @@ export default function SettingsPage() {
                   </div>
                 </div>
               </CardHeader>
-<CardContent>
+              <CardContent>
                 <div className="space-y-6">
                   <Dialog>
                     <DialogTrigger asChild>
@@ -939,6 +958,135 @@ export default function SettingsPage() {
                       </TableBody>
                     </Table>
                   </motion.div>
+                </div>
+              </CardContent>
+            </CustomCard>
+          </TabsContent>
+          <TabsContent value="staff" className="space-y-6">
+            <CustomCard>
+              <CardHeader>
+                <div className="flex items-center space-x-4">
+                  <Users className="h-8 w-8 text-primary" />
+                  <div>
+                    <CardTitle>إعدادات تسجيل دخول الموظفين</CardTitle>
+                    <CardDescription>
+                      إدارة صلاحيات وتتبع دخول الموظفين للنظام
+                    </CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* تفعيل/تعطيل تسجيل دخول الموظفين */}
+                <div className="flex items-center justify-between space-x-4">
+                  <div>
+                    <Label className="text-base">تفعيل تسجيل دخول الموظفين</Label>
+                    <p className="text-sm text-muted-foreground">
+                      السماح للموظفين بتسجيل الدخول للنظام مع صلاحيات محدودة
+                    </p>
+                  </div>
+                  <Switch
+                    checked={storeSettings?.enableStaffLogin || false}
+                    onCheckedChange={(checked) => {
+                      storeSettingsMutation.mutate({
+                        enableStaffLogin: checked,
+                        storeName: storeSettings?.storeName || "",
+                        storeLogo: storeSettings?.storeLogo || ""
+                      });
+                    }}
+                  />
+                </div>
+
+                {/* سجل تسجيل الدخول */}
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2">
+                    <History className="h-5 w-5 text-primary" />
+                    <h3 className="font-semibold">سجل تسجيل دخول الموظفين</h3>
+                  </div>
+                  <div className="border rounded-lg">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>الموظف</TableHead>
+                          <TableHead>وقت الدخول</TableHead>
+                          <TableHead>نوع الدخول</TableHead>
+                          <TableHead>الحالة</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {storeSettings?.staffLoginHistory?.map((log: any, index: number) => (
+                          <TableRow key={index}>
+                            <TableCell>{log.staffName}</TableCell>
+                            <TableCell>{new Date(log.loginTime).toLocaleString('ar-IQ')}</TableCell>
+                            <TableCell>
+                              <Badge variant="outline">
+                                {log.loginType === 'web' ? 'متصفح' : 'تطبيق'}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <Badge
+                                variant={log.status === 'success' ? 'default' : 'destructive'}
+                              >
+                                {log.status === 'success' ? 'ناجح' : 'فاشل'}
+                              </Badge>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                        {(!storeSettings?.staffLoginHistory || storeSettings.staffLoginHistory.length === 0) && (
+                          <TableRow>
+                            <TableCell colSpan={4} className="text-center py-4 text-muted-foreground">
+                              لا يوجد سجل لتسجيل الدخول
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
+
+                {/* إعدادات الصلاحيات */}
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2">
+                    <Shield className="h-5 w-5 text-primary" />
+                    <h3 className="font-semibold">إعدادات الصلاحيات</h3>
+                  </div>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between space-x-4">
+                      <div>
+                        <Label className="text-base">تقييد الوصول لصفحة الموظفين فقط</Label>
+                        <p className="text-sm text-muted-foreground">
+                          منع الموظفين من الوصول إلى باقي صفحات النظام
+                        </p>
+                      </div>
+                      <Switch
+                        checked={storeSettings?.restrictStaffAccess || false}
+                        onCheckedChange={(checked) => {
+                          storeSettingsMutation.mutate({
+                            restrictStaffAccess: checked,
+                            storeName: storeSettings?.storeName || "",
+                            storeLogo: storeSettings?.storeLogo || ""
+                          });
+                        }}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between space-x-4">
+                      <div>
+                        <Label className="text-base">تتبع نشاط الموظفين</Label>
+                        <p className="text-sm text-muted-foreground">
+                          تسجيل جميع عمليات تسجيل الدخول والخروج للموظفين
+                        </p>
+                      </div>
+                      <Switch
+                        checked={storeSettings?.trackStaffActivity || false}
+                        onCheckedChange={(checked) => {
+                          storeSettingsMutation.mutate({
+                            trackStaffActivity: checked,
+                            storeName: storeSettings?.storeName || "",
+                            storeLogo: storeSettings?.storeLogo || ""
+                          });
+                        }}
+                      />
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </CustomCard>
