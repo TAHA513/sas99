@@ -25,6 +25,7 @@ import { loadThemeSettings } from "@/lib/theme";
 import { AuthProvider } from "@/hooks/use-auth";
 import { ProtectedRoute } from "@/lib/protected-route";
 import AuthPage from "@/pages/auth-page";
+import SecurityPage from "@/pages/security-page";
 
 // Create a client
 const queryClient = new QueryClient({
@@ -66,6 +67,7 @@ function Router() {
       <ProtectedRoute path="/inventory-reports" component={InventoryReportsPage} />
       <ProtectedRoute path="/barcodes" component={BarcodesPage} />
       <ProtectedRoute path="/settings" component={SettingsPage} />
+      <ProtectedRoute path="/security" component={SecurityPage} requiredRole="admin" />
       <Route component={NotFound} />
     </Switch>
   );
