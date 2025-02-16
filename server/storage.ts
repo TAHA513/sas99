@@ -442,8 +442,9 @@ export class DatabaseStorage implements IStorage {
       ...product,
       costPrice: product.costPrice.toString(),
       sellingPrice: product.sellingPrice.toString(),
+      quantity: product.quantity.toString(),
     };
-    const [newProduct] = await db.insert(schema.products).values([productWithStringNumbers]).returning();
+    const [newProduct] = await db.insert(schema.products).values(productWithStringNumbers).returning();
     return newProduct;
   }
 
@@ -452,6 +453,7 @@ export class DatabaseStorage implements IStorage {
       ...updates,
       ...(updates.costPrice && { costPrice: updates.costPrice.toString() }),
       ...(updates.sellingPrice && { sellingPrice: updates.sellingPrice.toString() }),
+      ...(updates.quantity && { quantity: updates.quantity.toString() }),
     };
     const [updatedProduct] = await db
       .update(schema.products)
@@ -459,6 +461,10 @@ export class DatabaseStorage implements IStorage {
       .where(eq(schema.products.id, id))
       .returning();
     return updatedProduct;
+  }
+
+  async deleteProduct(id: number): Promise<void> {
+    await db.delete(schema.products).where(eq(schema.products.id, id));
   }
 
   // Invoice operations
@@ -558,7 +564,7 @@ export class DatabaseStorage implements IStorage {
     };
     const [updatedPurchaseOrder] = await db
       .update(schema.purchaseOrders)
-      .set(updatesWithStringNumbers)
+      .set({ ...updatesWithStringNumbers })
       .where(eq(schema.purchaseOrders.id, id))
       .returning();
     return updatedPurchaseOrder;
@@ -617,7 +623,7 @@ export class DatabaseStorage implements IStorage {
     };
     const [updatedExpense] = await db
       .update(schema.expenses)
-      .set(updatesWithStringNumbers)
+      .set({ ...updatesWithStringNumbers })
       .where(eq(schema.expenses.id, id))
       .returning();
     return updatedExpense;
