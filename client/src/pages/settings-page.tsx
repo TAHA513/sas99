@@ -7,7 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { MessageSquare, Upload, Plus, Building2, Settings as SettingsIcon, Paintbrush, Database, Download } from "lucide-react";
+import { MessageSquare, Upload, Plus, Building2, Settings as SettingsIcon, Paintbrush, Database, Download, Shield, Key, History, LogOut } from "lucide-react";
 import { SiGooglecalendar } from "react-icons/si";
 import { SiFacebook, SiInstagram, SiSnapchat } from "react-icons/si";
 import { Label } from "@/components/ui/label";
@@ -214,7 +214,7 @@ export default function SettingsPage() {
         setStoreSettings({ ...storeSettings, currencySettings: data.currencySettings });
       }
       if (data.backupSchedule) {
-          setStoreSettings({...storeSettings, backupSchedule: data.backupSchedule})
+        setStoreSettings({ ...storeSettings, backupSchedule: data.backupSchedule })
       }
     },
     onSuccess: () => {
@@ -463,7 +463,7 @@ export default function SettingsPage() {
         </div>
 
         <Tabs defaultValue="store" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2 lg:grid-cols-5 gap-4">
+          <TabsList className="grid w-full grid-cols-2 lg:grid-cols-6 gap-4">
             <TabsTrigger value="store" className="space-x-2">
               <Building2 className="h-4 w-4" />
               <span>المتجر</span>
@@ -483,6 +483,10 @@ export default function SettingsPage() {
             <TabsTrigger value="backup" className="space-x-2">
               <Download className="h-4 w-4" />
               <span>النسخ الاحتياطي</span>
+            </TabsTrigger>
+            <TabsTrigger value="security" className="space-x-2">
+              <Shield className="h-4 w-4" />
+              <span>الأمان</span>
             </TabsTrigger>
           </TabsList>
 
@@ -1181,6 +1185,123 @@ export default function SettingsPage() {
                 </div>
               </CardContent>
             </CardComponent>
+          </TabsContent>
+          <TabsContent value="security" className="space-y-6">
+            <CustomCard>
+              <CardHeader>
+                <div className="flex items-center space-x-4">
+                  <Shield className="h-8 w-8 text-primary" />
+                  <div>
+                    <CardTitle>إعدادات الأمان</CardTitle>
+                    <CardDescription>
+                      إدارة إعدادات الأمان وحماية حسابك
+                    </CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* تغيير كلمة المرور */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <div className="flex items-center gap-2">
+                        <Key className="h-4 w-4" />
+                        <h3 className="font-medium">تغيير كلمة المرور</h3>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        تحديث كلمة المرور الخاصة بك بشكل دوري يساعد في حماية حسابك
+                      </p>
+                    </div>
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        // سيتم إضافة منطق تغيير كلمة المرور
+                        toast({
+                          title: "قريباً",
+                          description: "سيتم إضافة خيار تغيير كلمة المرور قريباً",
+                        });
+                      }}
+                    >
+                      تغيير كلمة المرور
+                    </Button>
+                  </div>
+                </div>
+
+                <Separator />
+
+                {/* المصادقة الثنائية */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <div className="flex items-center gap-2">
+                        <Shield className="h-4 w-4" />
+                        <h3 className="font-medium">المصادقة الثنائية</h3>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        تفعيل طبقة إضافية من الحماية لحسابك
+                      </p>
+                    </div>
+                    <Switch
+                      checked={false}
+                      onCheckedChange={() => {
+                        toast({
+                          title: "قريباً",
+                          description: "سيتم إضافة خيار المصادقة الثنائية قريباً",
+                        });
+                      }}
+                    />
+                  </div>
+                </div>
+
+                <Separator />
+
+                {/* سجل الأنشطة */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <div className="flex items-center gap-2">
+                        <History className="h-4 w-4" />
+                        <h3 className="font-medium">سجل الأنشطة</h3>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        مراجعة آخر عمليات تسجيل الدخول والأنشطة المشبوهة
+                      </p>
+                    </div>
+                    <Button variant="outline">
+                      عرض السجل
+                    </Button>
+                  </div>
+                </div>
+
+                <Separator />
+
+                {/* إنهاء جميع الجلسات */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <div className="flex items-center gap-2">
+                        <LogOut className="h-4 w-4" />
+                        <h3 className="font-medium">جلسات تسجيل الدخول</h3>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        إنهاء جميع جلسات تسجيل الدخول على جميع الأجهزة
+                      </p>
+                    </div>
+                    <Button
+                      variant="destructive"
+                      onClick={() => {
+                        toast({
+                          title: "قريباً",
+                          description: "سيتم إضافة خيار إنهاء الجلسات قريباً",
+                        });
+                      }}
+                    >
+                      إنهاء جميع الجلسات
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </CustomCard>
           </TabsContent>
         </Tabs>
       </div>
