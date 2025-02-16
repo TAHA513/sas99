@@ -63,7 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         title: "تم تسجيل الدخول بنجاح",
         description: `مرحباً بك ${user.name || user.username}`,
       });
-      window.location.href = '/'; // إعادة التوجيه مباشرة للصفحة الرئيسية
+      window.location.replace('/'); // تغيير إلى replace لضمان التوجيه الصحيح
     },
     onError: (error: Error) => {
       toast({
@@ -91,7 +91,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       toast({
         title: "تم تسجيل الخروج بنجاح",
       });
-      window.location.href = '/auth'; // إعادة التوجيه لصفحة تسجيل الدخول
+      window.location.replace('/auth'); // تغيير إلى replace لضمان التوجيه الصحيح
     },
     onError: (error: Error) => {
       toast({
