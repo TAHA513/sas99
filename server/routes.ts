@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import express from 'express';
+import { hashPassword } from "./auth";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Staff Dashboard APIs
@@ -28,6 +29,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
         customerName: invoice.customerName
       }))
     });
+  });
+
+  // Admin credentials management
+  app.post("/api/admin/credentials", async (req, res) => {
+    try {
+      const { username, password } = req.body;
+
+      // Check if admin already exists
+      const existingAdmin = await storage.getUserByUsername(username);
+      if (existingAdmin) {
+        return res.status(400).json({ message: "اسم المستخدم موجود بالفعل" });
+      }
+
+      // Create new admin user
+      const hashedPassword = await hashPassword(password);
+      const adminUser = await storage.createUser({
+        username,
+        password: hashedPassword,
+        role: 'admin',
+        createdAt: new Date(),
+      });
+
+      res.status(201).json({ message: "تم إنشاء حساب المدير بنجاح" });
+    } catch (error) {
+      console.error('Error creating admin:', error);
+      res.status(500).json({ message: "حدث خطأ أثناء إنشاء حساب المدير" });
+    }
+  });
+
+  // Staff credentials management
+  app.post("/api/staff/credentials", async (req, res) => {
+    try {
+      const { username, password, staffId } = req.body;
+
+      // Check if staff username already exists
+      const existingStaff = await storage.getUserByUsername(username);
+      if (existingStaff) {
+        return res.status(400).json({ message: "اسم المستخدم موجود بالفعل" });
+      }
+
+      // Create new staff user
+      const hashedPassword = await hashPassword(password);
+      const staffUser = await storage.createUser({
+        username,
+        password: hashedPassword,
+        role: 'staff',
+        staffId,
+        createdAt: new Date(),
+      });
+
+      res.status(201).json({ message: "تم إنشاء حساب الموظف بنجاح" });
+    } catch (error) {
+      console.error('Error creating staff:', error);
+      res.status(500).json({ message: "حدث خطأ أثناء إنشاء حساب الموظف" });
+    }
   });
 
   app.get("/api/appointments/today", async (_req, res) => {

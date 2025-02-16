@@ -171,10 +171,22 @@ export default function SettingsPage() {
 
   const adminForm = useForm<AdminCredentialsFormData>({
     resolver: zodResolver(adminCredentialsSchema),
+    defaultValues: {
+      username: "",
+      password: "",
+      confirmPassword: "",
+    }
   });
 
   const staffForm = useForm<StaffCredentialsFormData>({
     resolver: zodResolver(staffCredentialsSchema),
+    defaultValues: {
+      username: "",
+      password: "",
+      confirmPassword: "",
+      staffId: "",
+      role: "staff"
+    }
   });
 
 
@@ -1180,149 +1192,157 @@ export default function SettingsPage() {
                   </div>
                 </div>
                 <CustomCard>
-  <CardHeader>
-    <div className="flex items-center space-x-4">
-      <KeyRound className="h-8 w-8 text-primary" />
-      <div>
-        <CardTitle>بيانات تسجيل دخول المدير</CardTitle>
-        <CardDescription>
-          تعيين بيانات تسجيل الدخول للمدير مع صلاحيات كاملة للنظام
-        </CardDescription>
-      </div>
-    </div>
-  </CardHeader>
-  <CardContent>
-    <Form {...adminForm}>
-      <form onSubmit={adminForm.handleSubmit((data) => adminCredentialsMutation.mutate(data))} className="space-y-4">
-        <FormField
-          control={adminForm.control}
-          name="username"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>اسم المستخدم</FormLabel>
-              <FormControl>
-                <Input {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={adminForm.control}
-          name="password"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>كلمة المرور</FormLabel>
-              <FormControl>
-                <Input type="password" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={adminForm.control}
-          name="confirmPassword"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>تأكيد كلمة المرور</FormLabel>
-              <FormControl>
-                <Input type="password" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <Button 
-          type="submit"
-          disabled={adminCredentialsMutation.isPending}
-          className="w-full"
-        >
-          {adminCredentialsMutation.isPending ? "جاري الحفظ..." : "حفظ بيانات المدير"}
-        </Button>
-      </form>
-    </Form>
-  </CardContent>
-</CustomCard>
+                  <CardHeader>
+                    <div className="flex items-center space-x-4">
+                      <KeyRound className="h-8 w-8 text-primary" />
+                      <div>
+                        <CardTitle>بيانات تسجيل دخول المدير</CardTitle>
+                        <CardDescription>
+                          تعيين بيانات تسجيل الدخول للمدير مع صلاحيات كاملة للنظام
+                        </CardDescription>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <Form {...adminForm}>
+                      <form onSubmit={adminForm.handleSubmit((data) => {
+                        // Remove confirmPassword before sending
+                        const { confirmPassword, ...adminData } = data;
+                        adminCredentialsMutation.mutate(adminData);
+                      })} className="space-y-4">
+                        <FormField
+                          control={adminForm.control}
+                          name="username"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>اسم المستخدم</FormLabel>
+                              <FormControl>
+                                <Input {...field} placeholder="أدخل اسم المستخدم" />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={adminForm.control}
+                          name="password"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>كلمة المرور</FormLabel>
+                              <FormControl>
+                                <Input type="password" {...field} placeholder="أدخل كلمة المرور" />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={adminForm.control}
+                          name="confirmPassword"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>تأكيد كلمة المرور</FormLabel>
+                              <FormControl>
+                                <Input type="password" {...field} placeholder="أعد إدخال كلمة المرور" />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <Button 
+                          type="submit"
+                          disabled={adminCredentialsMutation.isPending}
+                          className="w-full"
+                        >
+                          {adminCredentialsMutation.isPending ? "جاري الحفظ..." : "حفظ بيانات المدير"}
+                        </Button>
+                      </form>
+                    </Form>
+                  </CardContent>
+                </CustomCard>
 
-<CustomCard className="mt-6">
-  <CardHeader>
-    <div className="flex items-center space-x-4">
-      <UserPlus className="h-8 w-8 text-primary" />
-      <div>
-        <CardTitle>إضافة حساب موظف جديد</CardTitle>
-        <CardDescription>
-          إنشاء حساب جديد للموظف مع صلاحيات محدودة
-        </CardDescription>
-      </div>
-    </div>
-  </CardHeader>
-  <CardContent>
-    <Form {...staffForm}>
-      <form onSubmit={staffForm.handleSubmit((data) => staffCredentialsMutation.mutate(data))} className="space-y-4">
-        <FormField
-          control={staffForm.control}
-          name="staffId"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>رقم الموظف</FormLabel>
-              <FormControl>
-                <Input {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={staffForm.control}
-          name="username"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>اسم المستخدم</FormLabel>
-              <FormControl>
-                <Input {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={staffForm.control}
-          name="password"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>كلمة المرور</FormLabel>
-              <FormControl>
-                <Input type="password" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={staffForm.control}
-          name="confirmPassword"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>تأكيد كلمة المرور</FormLabel>
-              <FormControl>
-                <Input type="password" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <Button 
-          type="submit"
-          disabled={staffCredentialsMutation.isPending}
-          className="w-full"
-        >
-          {staffCredentialsMutation.isPending ? "جاري الإضافة..." : "إضافة حساب موظف"}
-        </Button>
-      </form>
-    </Form>
-  </CardContent>
-</CustomCard>
+                <CustomCard className="mt-6">
+                  <CardHeader>
+                    <div className="flex items-center space-x-4">
+                      <UserPlus className="h-8 w-8 text-primary" />
+                      <div>
+                        <CardTitle>إضافة حساب موظف جديد</CardTitle>
+                        <CardDescription>
+                          إنشاء حساب جديد للموظف مع صلاحيات محدودة
+                        </CardDescription>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <Form {...staffForm}>
+                      <form onSubmit={staffForm.handleSubmit((data) => {
+                        // Remove confirmPassword before sending
+                        const { confirmPassword, ...staffData } = data;
+                        staffCredentialsMutation.mutate(staffData);
+                      })} className="space-y-4">
+                        <FormField
+                          control={staffForm.control}
+                          name="staffId"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>رقم الموظف</FormLabel>
+                              <FormControl>
+                                <Input {...field} placeholder="أدخل رقم الموظف" />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={staffForm.control}
+                          name="username"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>اسم المستخدم</FormLabel>
+                              <FormControl>
+                                <Input {...field} placeholder="أدخل اسم المستخدم" />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={staffForm.control}
+                          name="password"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>كلمة المرور</FormLabel>
+                              <FormControl>
+                                <Input type="password" {...field} placeholder="أدخل كلمة المرور" />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={staffForm.control}
+                          name="confirmPassword"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>تأكيد كلمة المرور</FormLabel>
+                              <FormControl>
+                                <Input type="password" {...field} placeholder="أعد إدخال كلمة المرور" />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <Button 
+                          type="submit"
+                          disabled={staffCredentialsMutation.isPending}
+                          className="w-full"
+                        >
+                          {staffCredentialsMutation.isPending ? "جاري الإضافة..." : "إضافة حساب موظف"}
+                        </Button>
+                      </form>
+                    </Form>
+                  </CardContent>
+                </CustomCard>
 
               </CardContent>
             </CustomCard>
