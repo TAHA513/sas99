@@ -305,7 +305,7 @@ export default function ProductsPage() {
                 إضافة منتج جديد
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[600px]">
+            <DialogContent className="sm:max-w-[500px]">
               <DialogHeader>
                 <DialogTitle>{selectedProduct ? "تعديل المنتج" : "إضافة منتج جديد"}</DialogTitle>
               </DialogHeader>

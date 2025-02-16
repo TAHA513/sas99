@@ -44,11 +44,13 @@ export function ProductForm({ product, groups }: ProductFormProps) {
       barcode: "",
       type: "piece",
       quantity: 0,
-      minimumQuantity: 0, // Add minimum quantity
+      minimumQuantity: 0,
       costPrice: 0,
       sellingPrice: 0,
       groupId: groups[0]?.id,
       isWeighted: false,
+      productionDate: new Date().toISOString().split('T')[0],
+      expiryDate: "",
     },
   });
 
@@ -108,58 +110,55 @@ export function ProductForm({ product, groups }: ProductFormProps) {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-        <FormField
-          control={form.control}
-          name="name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>اسم المنتج</FormLabel>
-              <FormControl>
-                <Input {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <div className="grid gap-4 md:grid-cols-2">
+          <FormField
+            control={form.control}
+            name="name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>اسم المنتج</FormLabel>
+                <FormControl>
+                  <Input {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-        <div className="flex items-center gap-4">
           <FormField
             control={form.control}
             name="barcode"
             render={({ field }) => (
-              <FormItem className="flex-1">
+              <FormItem>
                 <FormLabel>الباركود</FormLabel>
                 <FormControl>
                   <div className="flex gap-2">
                     <Input {...field} />
                     <Dialog>
                       <DialogTrigger asChild>
-                        <Button type="button" variant="outline">
-                          <Scan className="h-4 w-4 ml-2" />
-                          مسح
+                        <Button type="button" variant="outline" size="icon">
+                          <Scan className="h-4 w-4" />
                         </Button>
                       </DialogTrigger>
-                      <DialogContent>
+                      <DialogContent className="sm:max-w-[400px]">
                         <DialogHeader>
                           <DialogTitle>مسح الباركود</DialogTitle>
                         </DialogHeader>
-                        <div className="flex items-center justify-center h-64 border-2 border-dashed rounded-lg">
-                          {/* هنا يمكن إضافة مكتبة مسح الباركود */}
+                        <div className="flex items-center justify-center h-48 border-2 border-dashed rounded-lg">
                           <p className="text-muted-foreground">جاري تطوير ميزة مسح الباركود...</p>
                         </div>
                       </DialogContent>
                     </Dialog>
                   </div>
                 </FormControl>
-                <FormDescription>اختياري - أدخل الباركود يدوياً أو استخدم الماسح</FormDescription>
                 <FormMessage />
               </FormItem>
             )}
           />
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid gap-4 md:grid-cols-3">
           <FormField
             control={form.control}
             name="type"
@@ -184,29 +183,6 @@ export function ProductForm({ product, groups }: ProductFormProps) {
 
           <FormField
             control={form.control}
-            name="isWeighted"
-            render={({ field }) => (
-              <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                <div className="space-y-0.5">
-                  <FormLabel className="text-base">منتج وزني</FormLabel>
-                  <FormDescription>
-                    تفعيل القراءة المباشرة للوزن عند المسح
-                  </FormDescription>
-                </div>
-                <FormControl>
-                  <Switch
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                  />
-                </FormControl>
-              </FormItem>
-            )}
-          />
-        </div>
-
-        <div className="grid gap-4 md:grid-cols-3">
-          <FormField
-            control={form.control}
             name="quantity"
             render={({ field }) => (
               <FormItem>
@@ -224,18 +200,53 @@ export function ProductForm({ product, groups }: ProductFormProps) {
             name="minimumQuantity"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>الحد الأدنى للكمية</FormLabel>
+                <FormLabel>الحد الأدنى</FormLabel>
                 <FormControl>
                   <Input type="number" {...field} onChange={e => field.onChange(parseFloat(e.target.value))} />
                 </FormControl>
-                <FormDescription>
-                  سيتم التنبيه عند اقتراب الكمية من هذا الحد
-                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2">
+          <FormField
+            control={form.control}
+            name="productionDate"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>تاريخ الإنتاج</FormLabel>
+                <FormControl>
+                  <Input 
+                    type="date" 
+                    {...field}
+                  />
+                </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
 
+          <FormField
+            control={form.control}
+            name="expiryDate"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>تاريخ الانتهاء</FormLabel>
+                <FormControl>
+                  <Input 
+                    type="date" 
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2">
           <FormField
             control={form.control}
             name="costPrice"
@@ -287,12 +298,11 @@ export function ProductForm({ product, groups }: ProductFormProps) {
                       ))}
                     </SelectContent>
                   </Select>
-                  <FormDescription className="flex items-center gap-2">
-                    لا توجد المجموعة المطلوبة؟
-                    <Button type="button" variant="link" className="p-0 h-auto" onClick={() => setIsNewGroup(true)}>
+                  <div className="flex items-center gap-2 mt-1">
+                    <Button type="button" variant="link" className="p-0 h-auto text-sm" onClick={() => setIsNewGroup(true)}>
                       إنشاء مجموعة جديدة
                     </Button>
-                  </FormDescription>
+                  </div>
                   <FormMessage />
                 </FormItem>
               )}
@@ -310,9 +320,32 @@ export function ProductForm({ product, groups }: ProductFormProps) {
           )}
         </div>
 
-        <Button type="submit" disabled={productMutation.isPending || groupMutation.isPending}>
-          {productMutation.isPending || groupMutation.isPending ? "جاري الحفظ..." : product ? "تحديث المنتج" : "إضافة المنتج"}
-        </Button>
+        <FormField
+          control={form.control}
+          name="isWeighted"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-center justify-between space-x-2 rounded-lg border p-3">
+              <div className="space-y-0.5">
+                <FormLabel>منتج وزني</FormLabel>
+                <FormDescription className="text-xs">
+                  تفعيل القراءة المباشرة للوزن عند المسح
+                </FormDescription>
+              </div>
+              <FormControl>
+                <Switch
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              </FormControl>
+            </FormItem>
+          )}
+        />
+
+        <div className="flex justify-end gap-2">
+          <Button type="submit" disabled={productMutation.isPending || groupMutation.isPending}>
+            {productMutation.isPending || groupMutation.isPending ? "جاري الحفظ..." : product ? "تحديث المنتج" : "إضافة المنتج"}
+          </Button>
+        </div>
       </form>
     </Form>
   );
