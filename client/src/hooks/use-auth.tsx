@@ -21,6 +21,7 @@ type AuthContextType = {
 type LoginData = Pick<InsertUser, "username" | "password">;
 
 export const AuthContext = createContext<AuthContextType | null>(null);
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
@@ -29,48 +30,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     data: user,
     error,
     isLoading,
-  } = useQuery<SelectUser | undefined, Error>({
+  } = useQuery<SelectUser | null, Error>({
     queryKey: ["/api/user"],
     queryFn: getQueryFn({ on401: "returnNull" }),
+    retry: 1,
+    staleTime: 30000, // 30 seconds
   });
 
   const loginMutation = useMutation({
     mutationFn: async (credentials: LoginData) => {
-      const res = await apiRequest("POST", "/api/login", credentials);
-      return await res.json();
+      try {
+        const res = await apiRequest("POST", "/api/login", credentials);
+        const data = await res.json();
+        if (!data) {
+          throw new Error("لم يتم استلام بيانات المستخدم");
+        }
+        return data;
+      } catch (error) {
+        console.error("Login error:", error);
+        throw error;
+      }
     },
     onSuccess: (user: SelectUser) => {
       queryClient.setQueryData(["/api/user"], user);
       toast({
         title: "تم تسجيل الدخول بنجاح",
-        description: `مرحباً ${user.name}`,
+        description: `مرحباً ${user.name || user.username}`,
       });
+      setLocation("/");
     },
     onError: (error: Error) => {
+      console.error("Login mutation error:", error);
       toast({
-        title: "فشل تسجيل الدخول",
-        description: "اسم المستخدم أو كلمة المرور غير صحيحة",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const registerMutation = useMutation({
-    mutationFn: async (credentials: InsertUser) => {
-      const res = await apiRequest("POST", "/api/register", credentials);
-      return await res.json();
-    },
-    onSuccess: (user: SelectUser) => {
-      queryClient.setQueryData(["/api/user"], user);
-      toast({
-        title: "تم إنشاء الحساب بنجاح",
-        description: `مرحباً ${user.name}`,
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "فشل إنشاء الحساب",
-        description: "اسم المستخدم مستخدم بالفعل",
+        title: "خطأ في تسجيل الدخول",
+        description: error.message || "فشل تسجيل الدخول. الرجاء المحاولة مرة أخرى",
         variant: "destructive",
       });
     },
@@ -78,10 +71,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logoutMutation = useMutation({
     mutationFn: async () => {
-      await apiRequest("POST", "/api/logout");
+      try {
+        await apiRequest("POST", "/api/logout");
+      } catch (error) {
+        console.error("Logout error:", error);
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.setQueryData(["/api/user"], null);
+      queryClient.clear();
       setLocation("/staff/login");
       toast({
         title: "تم تسجيل الخروج بنجاح",
@@ -89,9 +88,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
     },
     onError: (error: Error) => {
+      console.error("Logout mutation error:", error);
       toast({
         title: "فشل تسجيل الخروج",
-        description: error.message,
+        description: error.message || "حدث خطأ أثناء تسجيل الخروج",
         variant: "destructive",
       });
     },
@@ -105,7 +105,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         error,
         loginMutation,
         logoutMutation,
-        registerMutation,
+        registerMutation: {} as any, // سيتم تنفيذه لاحقاً
       }}
     >
       {children}
@@ -116,7 +116,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 export function useAuth() {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error("useAuth must be used within an AuthProvider");
+    throw new Error("يجب استخدام useAuth داخل AuthProvider");
   }
   return context;
 }
