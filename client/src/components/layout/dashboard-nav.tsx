@@ -21,8 +21,7 @@ import {
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
-import { useMutation } from "@tanstack/react-query";
-import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
 
 const navItems = [
   {
@@ -113,35 +112,8 @@ const navItems = [
 ];
 
 export function DashboardNav() {
-  const [location, setLocation] = useLocation();
-  const { toast } = useToast();
-
-  const logoutMutation = useMutation({
-    mutationFn: async () => {
-      const response = await fetch('/api/logout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-      });
-
-      if (!response.ok) {
-        throw new Error(await response.text());
-      }
-    },
-    onSuccess: () => {
-      setLocation('/staff/login');
-      toast({
-        title: "تم تسجيل الخروج",
-        description: "تم تسجيل خروجك من النظام بنجاح",
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "خطأ",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
+  const [location] = useLocation();
+  const { logoutMutation, toast } = useAuth();
 
   const handleLogout = () => {
     logoutMutation.mutate();
@@ -172,7 +144,6 @@ export function DashboardNav() {
         ))}
       </nav>
 
-      {/* زر تسجيل الخروج */}
       <Button
         variant="ghost"
         className="w-full mt-4 flex items-center justify-start gap-3 px-3 py-2 h-10 text-destructive hover:text-destructive hover:bg-destructive/10"
