@@ -79,7 +79,7 @@ export function CampaignAnalytics({ campaign }: CampaignAnalyticsProps) {
             <CardTitle className="text-sm font-medium">حالة الحملة</CardTitle>
           </CardHeader>
           <CardContent>
-            <Badge 
+            <Badge
               variant={campaign.status === 'active' ? 'default' : 'secondary'}
               className="text-lg"
             >
@@ -150,20 +150,23 @@ export function CampaignAnalytics({ campaign }: CampaignAnalyticsProps) {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {campaign.targetAudience && Object.entries(JSON.parse(campaign.targetAudience).regions || {}).map(([region, percentage]: [string, number]) => (
-                <div key={region} className="flex items-center gap-2">
-                  <div className="text-sm">{region}</div>
-                  <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
-                    <div
-                      className="h-full bg-primary"
-                      style={{ width: `${percentage}%` }}
-                    />
+              {campaign.targetAudience && Object.entries(JSON.parse(campaign.targetAudience).regions || {}).map(([region, value]) => {
+                const percentage = typeof value === 'number' ? value : 0;
+                return (
+                  <div key={region} className="flex items-center gap-2">
+                    <div className="text-sm">{region}</div>
+                    <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
+                      <div
+                        className="h-full bg-primary"
+                        style={{ width: `${percentage}%` }}
+                      />
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      {percentage}%
+                    </div>
                   </div>
-                  <div className="text-sm text-muted-foreground">
-                    {percentage}%
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </CardContent>
         </Card>
