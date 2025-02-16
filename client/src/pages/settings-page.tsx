@@ -7,7 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { MessageSquare, Upload, Plus, Building2, Settings as SettingsIcon, Paintbrush, Database, Users, History, Shield } from "lucide-react";
+import { MessageSquare, Upload, Plus, Building2, Settings as SettingsIcon, Paintbrush, Database, Users, History, Shield, KeyRound, UserPlus } from "lucide-react";
 import { SiGooglecalendar } from "react-icons/si";
 import { SiFacebook, SiInstagram, SiSnapchat } from "react-icons/si";
 import { Label } from "@/components/ui/label";
@@ -100,6 +100,30 @@ const colorOptions = [
 
 const createGradient = (color1: string, color2: string) => `linear-gradient(to right, ${color1}, ${color2})`;
 
+// Add new schema for admin credentials
+const adminCredentialsSchema = z.object({
+  username: z.string().min(3, "اسم المستخدم يجب أن يكون 3 أحرف على الأقل"),
+  password: z.string().min(6, "كلمة المرور يجب أن تكون 6 أحرف على الأقل"),
+  confirmPassword: z.string()
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "كلمات المرور غير متطابقة",
+  path: ["confirmPassword"],
+});
+
+const staffCredentialsSchema = z.object({
+  username: z.string().min(3, "اسم المستخدم يجب أن يكون 3 أحرف على الأقل"),
+  password: z.string().min(6, "كلمة المرور يجب أن تكون 6 أحرف على الأقل"),
+  confirmPassword: z.string(),
+  staffId: z.string().min(1, "رقم الموظف مطلوب"),
+  role: z.enum(["staff"]),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "كلمات المرور غير متطابقة",
+  path: ["confirmPassword"],
+});
+
+type AdminCredentialsFormData = z.infer<typeof adminCredentialsSchema>;
+type StaffCredentialsFormData = z.infer<typeof staffCredentialsSchema>;
+
 export default function SettingsPage() {
   const { toast } = useToast();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -144,6 +168,15 @@ export default function SettingsPage() {
       usdToIqdRate: 1460, // Default exchange rate
     }
   });
+
+  const adminForm = useForm<AdminCredentialsFormData>({
+    resolver: zodResolver(adminCredentialsSchema),
+  });
+
+  const staffForm = useForm<StaffCredentialsFormData>({
+    resolver: zodResolver(staffCredentialsSchema),
+  });
+
 
   // Mutations
   const storeSettingsMutation = useMutation({
@@ -283,6 +316,64 @@ export default function SettingsPage() {
         createdAt: new Date().toISOString()
       }]);
     }
+  });
+
+  const adminCredentialsMutation = useMutation({
+    mutationFn: async (data: AdminCredentialsFormData) => {
+      const response = await fetch('/api/admin/credentials', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        throw new Error(await response.text());
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "تم الحفظ",
+        description: "تم تحديث بيانات تسجيل دخول المدير بنجاح",
+      });
+      adminForm.reset();
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "خطأ",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const staffCredentialsMutation = useMutation({
+    mutationFn: async (data: StaffCredentialsFormData) => {
+      const response = await fetch('/api/staff/credentials', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        throw new Error(await response.text());
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "تم الحفظ",
+        description: "تم إضافة بيانات تسجيل دخول الموظف بنجاح",
+      });
+      staffForm.reset();
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "خطأ",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
   });
 
   return (
@@ -1088,6 +1179,151 @@ export default function SettingsPage() {
                     </div>
                   </div>
                 </div>
+                <CustomCard>
+  <CardHeader>
+    <div className="flex items-center space-x-4">
+      <KeyRound className="h-8 w-8 text-primary" />
+      <div>
+        <CardTitle>بيانات تسجيل دخول المدير</CardTitle>
+        <CardDescription>
+          تعيين بيانات تسجيل الدخول للمدير مع صلاحيات كاملة للنظام
+        </CardDescription>
+      </div>
+    </div>
+  </CardHeader>
+  <CardContent>
+    <Form {...adminForm}>
+      <form onSubmit={adminForm.handleSubmit((data) => adminCredentialsMutation.mutate(data))} className="space-y-4">
+        <FormField
+          control={adminForm.control}
+          name="username"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>اسم المستخدم</FormLabel>
+              <FormControl>
+                <Input {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={adminForm.control}
+          name="password"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>كلمة المرور</FormLabel>
+              <FormControl>
+                <Input type="password" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={adminForm.control}
+          name="confirmPassword"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>تأكيد كلمة المرور</FormLabel>
+              <FormControl>
+                <Input type="password" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <Button 
+          type="submit"
+          disabled={adminCredentialsMutation.isPending}
+          className="w-full"
+        >
+          {adminCredentialsMutation.isPending ? "جاري الحفظ..." : "حفظ بيانات المدير"}
+        </Button>
+      </form>
+    </Form>
+  </CardContent>
+</CustomCard>
+
+<CustomCard className="mt-6">
+  <CardHeader>
+    <div className="flex items-center space-x-4">
+      <UserPlus className="h-8 w-8 text-primary" />
+      <div>
+        <CardTitle>إضافة حساب موظف جديد</CardTitle>
+        <CardDescription>
+          إنشاء حساب جديد للموظف مع صلاحيات محدودة
+        </CardDescription>
+      </div>
+    </div>
+  </CardHeader>
+  <CardContent>
+    <Form {...staffForm}>
+      <form onSubmit={staffForm.handleSubmit((data) => staffCredentialsMutation.mutate(data))} className="space-y-4">
+        <FormField
+          control={staffForm.control}
+          name="staffId"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>رقم الموظف</FormLabel>
+              <FormControl>
+                <Input {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={staffForm.control}
+          name="username"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>اسم المستخدم</FormLabel>
+              <FormControl>
+                <Input {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={staffForm.control}
+          name="password"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>كلمة المرور</FormLabel>
+              <FormControl>
+                <Input type="password" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={staffForm.control}
+          name="confirmPassword"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>تأكيد كلمة المرور</FormLabel>
+              <FormControl>
+                <Input type="password" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <Button 
+          type="submit"
+          disabled={staffCredentialsMutation.isPending}
+          className="w-full"
+        >
+          {staffCredentialsMutation.isPending ? "جاري الإضافة..." : "إضافة حساب موظف"}
+        </Button>
+      </form>
+    </Form>
+  </CardContent>
+</CustomCard>
+
               </CardContent>
             </CustomCard>
           </TabsContent>

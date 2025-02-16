@@ -8,29 +8,60 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { UserCircle, ShieldCheck } from "lucide-react";
 
-const staffLoginSchema = z.object({
+const loginSchema = z.object({
   username: z.string().min(1, "اسم المستخدم مطلوب"),
   password: z.string().min(1, "كلمة المرور مطلوبة"),
 });
 
-type StaffLoginData = z.infer<typeof staffLoginSchema>;
+type LoginData = z.infer<typeof loginSchema>;
 
-export default function StaffLoginPage() {
+export default function LoginPage() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
 
-  // Check if staff login is enabled
   const { data: settings } = useQuery({
     queryKey: ['/api/settings'],
   });
 
-  const form = useForm<StaffLoginData>({
-    resolver: zodResolver(staffLoginSchema),
+  const adminForm = useForm<LoginData>({
+    resolver: zodResolver(loginSchema),
   });
 
-  const loginMutation = useMutation({
-    mutationFn: async (data: StaffLoginData) => {
+  const staffForm = useForm<LoginData>({
+    resolver: zodResolver(loginSchema),
+  });
+
+  const adminLoginMutation = useMutation({
+    mutationFn: async (data: LoginData) => {
+      const response = await fetch('/api/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        throw new Error(await response.text());
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      setLocation("/");
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "خطأ في تسجيل الدخول",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const staffLoginMutation = useMutation({
+    mutationFn: async (data: LoginData) => {
       const response = await fetch('/api/staff/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -38,8 +69,7 @@ export default function StaffLoginPage() {
       });
 
       if (!response.ok) {
-        const error = await response.text();
-        throw new Error(error);
+        throw new Error(await response.text());
       }
 
       return response.json();
@@ -56,7 +86,11 @@ export default function StaffLoginPage() {
     },
   });
 
-  const onSubmit = (data: StaffLoginData) => {
+  const onAdminSubmit = (data: LoginData) => {
+    adminLoginMutation.mutate(data);
+  };
+
+  const onStaffSubmit = (data: LoginData) => {
     if (!settings?.enableStaffLogin) {
       toast({
         title: "تسجيل دخول الموظفين معطل",
@@ -65,7 +99,7 @@ export default function StaffLoginPage() {
       });
       return;
     }
-    loginMutation.mutate(data);
+    staffLoginMutation.mutate(data);
   };
 
   return (
@@ -73,50 +107,105 @@ export default function StaffLoginPage() {
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-2">
           <CardTitle className="text-2xl font-bold text-center">
-            تسجيل دخول الموظفين
+            تسجيل الدخول
           </CardTitle>
           <CardDescription className="text-center">
-            قم بتسجيل الدخول للوصول إلى لوحة تحكم الموظفين
+            قم بتسجيل الدخول للوصول إلى النظام
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <FormField
-                control={form.control}
-                name="username"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>اسم المستخدم</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>كلمة المرور</FormLabel>
-                    <FormControl>
-                      <Input type="password" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <Button 
-                type="submit" 
-                className="w-full"
-                disabled={loginMutation.isPending}
-              >
-                {loginMutation.isPending ? "جاري تسجيل الدخول..." : "تسجيل الدخول"}
-              </Button>
-            </form>
-          </Form>
+          <Tabs defaultValue="admin" className="space-y-4">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="admin" className="space-x-2">
+                <ShieldCheck className="h-4 w-4" />
+                <span>مدير النظام</span>
+              </TabsTrigger>
+              <TabsTrigger value="staff" className="space-x-2">
+                <UserCircle className="h-4 w-4" />
+                <span>موظف</span>
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="admin">
+              <Form {...adminForm}>
+                <form onSubmit={adminForm.handleSubmit(onAdminSubmit)} className="space-y-4">
+                  <FormField
+                    control={adminForm.control}
+                    name="username"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>اسم المستخدم</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={adminForm.control}
+                    name="password"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>كلمة المرور</FormLabel>
+                        <FormControl>
+                          <Input type="password" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <Button 
+                    type="submit" 
+                    className="w-full"
+                    disabled={adminLoginMutation.isPending}
+                  >
+                    {adminLoginMutation.isPending ? "جاري تسجيل الدخول..." : "دخول كمدير"}
+                  </Button>
+                </form>
+              </Form>
+            </TabsContent>
+
+            <TabsContent value="staff">
+              <Form {...staffForm}>
+                <form onSubmit={staffForm.handleSubmit(onStaffSubmit)} className="space-y-4">
+                  <FormField
+                    control={staffForm.control}
+                    name="username"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>اسم المستخدم</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={staffForm.control}
+                    name="password"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>كلمة المرور</FormLabel>
+                        <FormControl>
+                          <Input type="password" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <Button 
+                    type="submit" 
+                    className="w-full"
+                    disabled={staffLoginMutation.isPending}
+                  >
+                    {staffLoginMutation.isPending ? "جاري تسجيل الدخول..." : "دخول كموظف"}
+                  </Button>
+                </form>
+              </Form>
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
     </div>
