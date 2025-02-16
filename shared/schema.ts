@@ -8,6 +8,10 @@ export const users = pgTable("users", {
   password: text("password").notNull(),
   role: text("role").notNull().default("staff"),
   name: text("name").notNull(),
+  email: text("email"),
+  lastLoginAt: timestamp("last_login_at"),
+  loginAttempts: integer("login_attempts").notNull().default(0),
+  lockedUntil: timestamp("locked_until"),
 });
 
 export const customers = pgTable("customers", {

@@ -2,12 +2,20 @@ import { useAuth } from "@/hooks/use-auth";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertUserSchema } from "@shared/schema";
 import { useForm } from "react-hook-form";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useLocation } from "wouter";
+import { z } from "zod";
+
+const loginSchema = insertUserSchema.omit({ name: true }).extend({
+  identifier: z.string().min(1, "يرجى إدخال اسم المستخدم أو البريد الإلكتروني"),
+  password: z.string().min(1, "يرجى إدخال كلمة المرور"),
+});
+
+type LoginFormData = z.infer<typeof loginSchema>;
 
 export default function AuthPage() {
   const { loginMutation, registerMutation, user } = useAuth();
@@ -18,13 +26,29 @@ export default function AuthPage() {
     return null;
   }
 
-  const loginForm = useForm({
-    resolver: zodResolver(insertUserSchema.omit({ name: true })),
+  const loginForm = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      identifier: "",
+      password: "",
+    },
   });
 
   const registerForm = useForm({
     resolver: zodResolver(insertUserSchema),
+    defaultValues: {
+      username: "",
+      password: "",
+      name: "",
+    },
   });
+
+  const onLoginSubmit = (data: LoginFormData) => {
+    loginMutation.mutate({
+      username: data.identifier,
+      password: data.password,
+    });
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
@@ -42,16 +66,17 @@ export default function AuthPage() {
 
               <TabsContent value="login">
                 <Form {...loginForm}>
-                  <form onSubmit={loginForm.handleSubmit((data) => loginMutation.mutate(data))} className="space-y-4">
+                  <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-4">
                     <FormField
                       control={loginForm.control}
-                      name="username"
+                      name="identifier"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>اسم المستخدم</FormLabel>
+                          <FormLabel>اسم المستخدم / البريد الإلكتروني</FormLabel>
                           <FormControl>
                             <Input {...field} />
                           </FormControl>
+                          <FormMessage />
                         </FormItem>
                       )}
                     />
@@ -64,6 +89,7 @@ export default function AuthPage() {
                           <FormControl>
                             <Input type="password" {...field} />
                           </FormControl>
+                          <FormMessage />
                         </FormItem>
                       )}
                     />
@@ -86,6 +112,7 @@ export default function AuthPage() {
                           <FormControl>
                             <Input {...field} />
                           </FormControl>
+                          <FormMessage />
                         </FormItem>
                       )}
                     />
@@ -98,6 +125,7 @@ export default function AuthPage() {
                           <FormControl>
                             <Input {...field} />
                           </FormControl>
+                          <FormMessage />
                         </FormItem>
                       )}
                     />
@@ -110,6 +138,7 @@ export default function AuthPage() {
                           <FormControl>
                             <Input type="password" {...field} />
                           </FormControl>
+                          <FormMessage />
                         </FormItem>
                       )}
                     />
