@@ -51,18 +51,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw new Error(errorData.error || 'فشل تسجيل الدخول');
       }
 
-      const userData = await res.json();
-      return userData;
-    },
-    onSuccess: (userData: SelectUser) => {
-      queryClient.setQueryData(["/api/user"], userData);
-      toast({
-        title: "تم تسجيل الدخول بنجاح",
-        description: `مرحباً ${userData.name || userData.username}`,
-      });
+      return await res.json();
     },
     onError: (error: Error) => {
-      console.error("Login error:", error);
       toast({
         title: "خطأ في تسجيل الدخول",
         description: error.message,
@@ -86,10 +77,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     onSuccess: () => {
       queryClient.setQueryData(["/api/user"], null);
       queryClient.clear();
-      toast({
-        title: "تم تسجيل الخروج بنجاح",
-        description: "تم تسجيل خروجك من النظام",
-      });
+      window.location.href = '/staff/login';
     },
     onError: (error: Error) => {
       toast({

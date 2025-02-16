@@ -14,8 +14,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Loader2 } from "lucide-react";
 import { useLocation } from "wouter";
-import { useEffect } from "react";
-import { useToast } from "@/hooks/use-toast";
 
 const loginSchema = z.object({
   username: z.string().min(1, "اسم المستخدم مطلوب"),
@@ -25,9 +23,8 @@ const loginSchema = z.object({
 type LoginFormData = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
-  const { user, loginMutation } = useAuth();
-  const { toast } = useToast();
-  const [, setLocation] = useLocation();
+  const { loginMutation } = useAuth();
+  const [, navigate] = useLocation();
 
   const {
     register,
@@ -37,29 +34,15 @@ export default function LoginPage() {
     resolver: zodResolver(loginSchema),
   });
 
-  useEffect(() => {
-    // التحقق من حالة المستخدم وتوجيهه عند التغيير
-    if (user) {
-      if (user.role === "admin") {
-        setLocation("/");
-      } else {
-        setLocation("/staff");
-      }
-    }
-  }, [user, setLocation]);
-
-  const onSubmit = async (data: LoginFormData) => {
+  const onSubmit = handleSubmit(async (data) => {
     try {
-      await loginMutation.mutateAsync(data);
+      const user = await loginMutation.mutateAsync(data);
+      // التوجيه المباشر بناءً على دور المستخدم
+      window.location.href = user.role === "admin" ? "/" : "/staff";
     } catch (error) {
-      console.error("Login error:", error);
-      toast({
-        title: "خطأ في تسجيل الدخول",
-        description: error instanceof Error ? error.message : "حدث خطأ غير متوقع",
-        variant: "destructive",
-      });
+      console.error("خطأ في تسجيل الدخول:", error);
     }
-  };
+  });
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
@@ -71,7 +54,7 @@ export default function LoginPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={onSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="username">اسم المستخدم</Label>
               <Input
