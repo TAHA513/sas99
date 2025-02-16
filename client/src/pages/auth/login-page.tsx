@@ -13,7 +13,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Loader2 } from "lucide-react";
-import { Redirect } from "wouter";
+import { Redirect, useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 
 const loginSchema = z.object({
@@ -26,6 +26,8 @@ type LoginFormData = z.infer<typeof loginSchema>;
 export default function LoginPage() {
   const { user, loginMutation } = useAuth();
   const { toast } = useToast();
+  const [location, setLocation] = useLocation();
+
   const {
     register,
     handleSubmit,
@@ -34,18 +36,24 @@ export default function LoginPage() {
     resolver: zodResolver(loginSchema),
   });
 
-  // إذا كان المستخدم مسجل الدخول بالفعل، قم بتوجيهه إلى الصفحة الرئيسية
+  // إذا كان المستخدم مسجل الدخول بالفعل، قم بتوجيهه إلى الصفحة المناسبة
   if (user) {
-    return <Redirect to="/" />;
+    if (user.role === "admin") {
+      return <Redirect to="/" />;
+    } else {
+      return <Redirect to="/staff" />;
+    }
   }
 
   const onSubmit = async (data: LoginFormData) => {
     try {
-      await loginMutation.mutateAsync(data);
-      toast({
-        title: "تم تسجيل الدخول بنجاح",
-        description: "مرحباً بك في النظام",
-      });
+      const result = await loginMutation.mutateAsync(data);
+      // التوجيه بناءً على دور المستخدم
+      if (result.role === "admin") {
+        setLocation("/");
+      } else {
+        setLocation("/staff");
+      }
     } catch (error) {
       console.error("Login error:", error);
       toast({
