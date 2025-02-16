@@ -1,7 +1,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MarketingCampaign } from "@shared/schema";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
-import { formatNumber } from "@/lib/utils";
+import { formatNumber, formatCurrency } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
 
 interface CampaignAnalyticsProps {
   campaign: MarketingCampaign;
@@ -18,63 +19,23 @@ export function CampaignAnalytics({ campaign }: CampaignAnalyticsProps) {
     { name: 'وصول', value: campaign.campaignMetrics?.reach || 0 },
   ];
 
-  // Calculate engagement rate
-  const engagementRate = campaign.campaignMetrics?.engagement && campaign.campaignMetrics?.impressions
-    ? ((campaign.campaignMetrics.engagement / campaign.campaignMetrics.impressions) * 100).toFixed(2)
-    : 0;
-
-  // Calculate CTR (Click Through Rate)
-  const ctr = campaign.campaignMetrics?.clicks && campaign.campaignMetrics?.impressions
-    ? ((campaign.campaignMetrics.clicks / campaign.campaignMetrics.impressions) * 100).toFixed(2)
-    : 0;
-
-  // Format ROI
+  // Calculate ROI and conversion metrics
   const roi = campaign.campaignMetrics?.roi
     ? `${campaign.campaignMetrics.roi > 0 ? '+' : ''}${campaign.campaignMetrics.roi.toFixed(2)}%`
     : '0%';
+
+  const conversionRate = campaign.campaignMetrics?.clicks && campaign.campaignMetrics?.conversion
+    ? ((campaign.campaignMetrics.conversion / campaign.campaignMetrics.clicks) * 100).toFixed(2)
+    : '0';
+
+  const costPerClick = campaign.budget && campaign.campaignMetrics?.clicks
+    ? (campaign.budget / campaign.campaignMetrics.clicks).toFixed(2)
+    : '0';
 
   return (
     <div className="space-y-6">
       {/* Key Performance Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">نسبة التفاعل</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{engagementRate}%</div>
-            <p className="text-xs text-muted-foreground">
-              معدل التفاعل مع المحتوى
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">معدل النقر</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{ctr}%</div>
-            <p className="text-xs text-muted-foreground">
-              نسبة النقر إلى المشاهدات
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">الوصول</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {formatNumber(campaign.campaignMetrics?.reach || 0)}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              عدد الأشخاص الذين شاهدوا الإعلان
-            </p>
-          </CardContent>
-        </Card>
-
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">العائد على الاستثمار</CardTitle>
@@ -86,12 +47,55 @@ export function CampaignAnalytics({ campaign }: CampaignAnalyticsProps) {
             </p>
           </CardContent>
         </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">معدل التحويل</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{conversionRate}%</div>
+            <p className="text-xs text-muted-foreground">
+              نسبة التحويل من النقرات
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">تكلفة النقرة</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {formatCurrency(Number(costPerClick))}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              متوسط تكلفة النقرة الواحدة
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">حالة الحملة</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Badge 
+              variant={campaign.status === 'active' ? 'default' : 'secondary'}
+              className="text-lg"
+            >
+              {campaign.status === 'active' ? 'نشطة' : 'متوقفة'}
+            </Badge>
+            <p className="text-xs text-muted-foreground mt-2">
+              تنتهي في {new Date(campaign.endDate).toLocaleDateString('ar-IQ')}
+            </p>
+          </CardContent>
+        </Card>
       </div>
 
-      {/* Engagement Metrics Chart */}
+      {/* Engagement Analysis */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">تحليل التفاعل</CardTitle>
+          <CardTitle>تحليل التفاعل</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="h-[300px]">
@@ -108,11 +112,11 @@ export function CampaignAnalytics({ campaign }: CampaignAnalyticsProps) {
         </CardContent>
       </Card>
 
-      {/* Platform Distribution */}
+      {/* Audience Demographics */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">توزيع المنصات</CardTitle>
+            <CardTitle>توزيع الجمهور</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="h-[200px]">
@@ -139,46 +143,27 @@ export function CampaignAnalytics({ campaign }: CampaignAnalyticsProps) {
           </CardContent>
         </Card>
 
-        {/* Demographics */}
+        {/* Geographic Distribution */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">التركيبة السكانية</CardTitle>
+            <CardTitle>التوزيع الجغرافي</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            {/* Age Distribution */}
-            <div>
-              <h4 className="text-sm font-medium mb-2">توزيع الأعمار</h4>
-              <div className="space-y-2">
-                {campaign.targetAudience && JSON.parse(campaign.targetAudience).age.split('-').map((age: string, index: number) => (
-                  <div key={age} className="flex items-center gap-2">
-                    <div className="text-sm">{age} سنة</div>
-                    <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
-                      <div
-                        className="h-full bg-primary"
-                        style={{ width: `${Math.random() * 100}%` }}
-                      />
-                    </div>
-                    <div className="text-sm text-muted-foreground">
-                      {Math.floor(Math.random() * 30)}%
-                    </div>
+          <CardContent>
+            <div className="space-y-4">
+              {campaign.targetAudience && Object.entries(JSON.parse(campaign.targetAudience).regions || {}).map(([region, percentage]: [string, number]) => (
+                <div key={region} className="flex items-center gap-2">
+                  <div className="text-sm">{region}</div>
+                  <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
+                    <div
+                      className="h-full bg-primary"
+                      style={{ width: `${percentage}%` }}
+                    />
                   </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Gender Distribution */}
-            <div>
-              <h4 className="text-sm font-medium mb-2">توزيع الجنس</h4>
-              <div className="flex gap-4">
-                <div className="flex-1 text-center p-3 rounded-lg bg-muted">
-                  <div className="text-2xl font-bold">65%</div>
-                  <div className="text-xs text-muted-foreground">ذكور</div>
+                  <div className="text-sm text-muted-foreground">
+                    {percentage}%
+                  </div>
                 </div>
-                <div className="flex-1 text-center p-3 rounded-lg bg-muted">
-                  <div className="text-2xl font-bold">35%</div>
-                  <div className="text-xs text-muted-foreground">إناث</div>
-                </div>
-              </div>
+              ))}
             </div>
           </CardContent>
         </Card>
