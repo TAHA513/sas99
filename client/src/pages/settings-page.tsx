@@ -230,14 +230,14 @@ export default function SettingsPage() {
       if (data.currencySettings) {
         setStoreSettings({ ...storeSettings, currencySettings: data.currencySettings });
       }
-      if(data.enableStaffLogin !== undefined){
-        setStoreSettings({...storeSettings, enableStaffLogin: data.enableStaffLogin})
+      if (data.enableStaffLogin !== undefined) {
+        setStoreSettings({ ...storeSettings, enableStaffLogin: data.enableStaffLogin })
       }
-      if(data.restrictStaffAccess !== undefined){
-        setStoreSettings({...storeSettings, restrictStaffAccess: data.restrictStaffAccess})
+      if (data.restrictStaffAccess !== undefined) {
+        setStoreSettings({ ...storeSettings, restrictStaffAccess: data.restrictStaffAccess })
       }
-      if(data.trackStaffActivity !== undefined){
-        setStoreSettings({...storeSettings, trackStaffActivity: data.trackStaffActivity})
+      if (data.trackStaffActivity !== undefined) {
+        setStoreSettings({ ...storeSettings, trackStaffActivity: data.trackStaffActivity })
       }
 
     },
@@ -1276,7 +1276,7 @@ export default function SettingsPage() {
                             </FormItem>
                           )}
                         />
-                        <Button 
+                        <Button
                           type="submit"
                           disabled={adminCredentialsMutation.isPending}
                           className="w-full"
@@ -1358,7 +1358,7 @@ export default function SettingsPage() {
                             </FormItem>
                           )}
                         />
-                        <Button 
+                        <Button
                           type="submit"
                           disabled={staffCredentialsMutation.isPending}
                           className="w-full"
@@ -1369,6 +1369,74 @@ export default function SettingsPage() {
                     </Form>
                   </CardContent>
                 </CustomCard>
+
+                {/* Add users list table in the staff tab */}
+                <div className="mt-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Users className="h-5 w-5 text-primary" />
+                      <h3 className="text-lg font-medium">قائمة المستخدمين</h3>
+                    </div>
+                  </div>
+
+                  {isLoadingUsers ? (
+                    <div className="flex items-center justify-center p-8">
+                      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                    </div>
+                  ) : (
+                    <Table className="mt-4">
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>اسم المستخدم</TableHead>
+                          <TableHead>الدور</TableHead>
+                          <TableHead>رقم الموظف</TableHead>
+                          <TableHead>تاريخ الإنشاء</TableHead>
+                          <TableHead>الإجراءات</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {users?.map((user) => (
+                          <TableRow key={user.id}>
+                            <TableCell>{user.username}</TableCell>
+                            <TableCell>
+                              <Badge variant={user.role === 'admin' ? 'destructive' : 'default'}>
+                                {user.role === 'admin' ? 'مدير' : 'موظف'}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>{user.staffId || '-'}</TableCell>
+                            <TableCell>{new Date(user.createdAt).toLocaleDateString('ar')}</TableCell>
+                            <TableCell>
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive/90">
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>هل أنت متأكد من حذف هذا الحساب؟</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      سيتم حذف الحساب نهائياً ولن يتمكن المستخدم من الوصول إلى النظام.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>إلغاء</AlertDialogCancel>
+                                    <AlertDialogAction
+                                      onClick={() => deleteUserMutation.mutate(user.id)}
+                                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                    >
+                                      حذف الحساب
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  )}
+                </div>
 
               </CardContent>
             </CustomCard>
