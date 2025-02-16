@@ -34,7 +34,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin credentials management
   app.post("/api/admin/credentials", async (req, res) => {
     try {
-      const { username, password } = req.body;
+      const { username, password, name } = req.body;
 
       // التحقق من وجود المستخدم
       const existingAdmin = await storage.getUserByUsername(username);
@@ -48,6 +48,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         username,
         password: hashedPassword,
         role: "admin",
+        name: name || null, // إضافة الاسم إذا تم توفيره
       });
 
       res.status(201).json({ 
@@ -55,10 +56,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         user: {
           id: adminUser.id,
           username: adminUser.username,
-          role: adminUser.role
+          role: adminUser.role,
+          name: adminUser.name
         }
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating admin:', error);
       res.status(500).json({ 
         message: "حدث خطأ أثناء إنشاء حساب المدير",
@@ -70,7 +72,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Staff credentials management
   app.post("/api/staff/credentials", async (req, res) => {
     try {
-      const { username, password, staffId } = req.body;
+      const { username, password, staffId, name } = req.body;
 
       // التحقق من وجود المستخدم
       const existingStaff = await storage.getUserByUsername(username);
@@ -84,7 +86,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         username,
         password: hashedPassword,
         role: "staff",
-        staffId,
+        staffId: staffId || null,
+        name: name || null, // إضافة الاسم إذا تم توفيره
       });
 
       res.status(201).json({ 
@@ -93,10 +96,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           id: staffUser.id,
           username: staffUser.username,
           role: staffUser.role,
-          staffId: staffUser.staffId
+          staffId: staffUser.staffId,
+          name: staffUser.name
         }
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating staff:', error);
       res.status(500).json({ 
         message: "حدث خطأ أثناء إنشاء حساب الموظف",

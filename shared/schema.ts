@@ -14,6 +14,8 @@ export const users = pgTable("users", {
 
 export const insertUserSchema = createInsertSchema(users, {
   role: z.enum(["admin", "staff"]).default("staff"),
+  name: z.string().optional(),
+  staffId: z.string().optional(),
 }).pick({
   username: true,
   password: true,
