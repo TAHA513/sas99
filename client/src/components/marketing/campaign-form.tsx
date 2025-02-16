@@ -11,10 +11,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { insertMarketingCampaignSchema } from "@shared/schema";
 import { Slider } from "@/components/ui/slider";
 import { useState } from "react";
 import { CampaignPreview } from "./campaign-preview";
@@ -31,33 +29,82 @@ import { CampaignAnalytics } from "./campaign-analytics";
 import { CampaignScheduler } from "./campaign-scheduler";
 import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { insertMarketingCampaignSchema } from "@shared/schema";
+import { z } from "zod";
 
 const campaignFormSchema = insertMarketingCampaignSchema.extend({
   startDate: z.string(),
-  endDate: z.string(),
-  // Add targeting validation
-  targeting: z.object({
-    ageRange: z.array(z.string()),
-    gender: z.enum(['all', 'male', 'female']),
-    locations: z.array(z.string()),
-    interests: z.array(z.string()),
-    languages: z.array(z.string()),
-    devices: z.array(z.string()),
-  }),
+  endDate: z.string()
 });
 
 type CampaignFormData = z.infer<typeof campaignFormSchema>;
 
 interface CampaignFormProps {
-  platform: 'facebook' | 'instagram' | 'snapchat' | 'sms';
+  platform: 'facebook' | 'instagram' | 'snapchat' | 'whatsapp' | 'email' | 'sms';
   onSuccess?: () => void;
 }
+
+// Add country-cities mapping
+const countryCities: Record<string, string[]> = {
+  'المملكة العربية السعودية': [
+    'الرياض',
+    'جدة',
+    'مكة المكرمة',
+    'المدينة المنورة',
+    'الدمام',
+    'الخبر',
+    'تبوك',
+    'أبها',
+    'القصيم',
+    'حائل'
+  ],
+  'الإمارات': [
+    'دبي',
+    'أبو ظبي',
+    'الشارقة',
+    'عجمان',
+    'رأس الخيمة',
+    'الفجيرة',
+    'أم القيوين'
+  ],
+  'الكويت': [
+    'مدينة الكويت',
+    'حولي',
+    'الفروانية',
+    'مبارك الكبير',
+    'الأحمدي',
+    'الجهراء'
+  ],
+  'قطر': [
+    'الدوحة',
+    'الريان',
+    'الوكرة',
+    'أم صلال',
+    'الخور',
+    'الشمال'
+  ],
+  'البحرين': [
+    'المنامة',
+    'المحرق',
+    'الرفاع',
+    'مدينة عيسى',
+    'مدينة حمد'
+  ],
+  'عمان': [
+    'مسقط',
+    'صلالة',
+    'صحار',
+    'نزوى',
+    'صور'
+  ]
+};
 
 export function CampaignForm({ platform, onSuccess }: CampaignFormProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [budget, setBudget] = useState(100);
   const [showScheduler, setShowScheduler] = useState(false);
+  const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
 
   const form = useForm<CampaignFormData>({
     resolver: zodResolver(campaignFormSchema),
@@ -74,7 +121,7 @@ export function CampaignForm({ platform, onSuccess }: CampaignFormProps) {
       targeting: {
         ageRange: ['18-24'],
         gender: 'all',
-        locations: ['المملكة العربية السعودية'],
+        locations: [],
         interests: [],
         languages: ['العربية'],
         devices: ['mobile', 'desktop'],
@@ -123,23 +170,17 @@ export function CampaignForm({ platform, onSuccess }: CampaignFormProps) {
   const watchMediaFiles = form.watch('mediaFiles');
   const watchTargeting = form.watch('targeting');
 
-  // Available interests list
-  const availableInterests = [
-    'التسوق', 'الرياضة', 'السفر', 'التقنية', 'الطعام',
-    'الموضة', 'الصحة', 'التعليم', 'الترفيه', 'الأعمال',
-  ];
-
-  // Available locations
-  const availableLocations = [
-    'المملكة العربية السعودية', 'الإمارات', 'الكويت', 'قطر', 'البحرين', 'عمان',
-    'مصر', 'الأردن', 'لبنان', 'العراق', 'المغرب', 'تونس',
-  ];
-
   // Available languages
   const availableLanguages = ['العربية', 'الإنجليزية'];
 
   // Available age ranges
   const availableAgeRanges = ['13-17', '18-24', '25-34', '35-44', '45-54', '55-64', '65+'];
+
+  // Available interests
+  const availableInterests = [
+    'التسوق', 'الرياضة', 'السفر', 'التقنية', 'الطعام',
+    'الموضة', 'الصحة', 'التعليم', 'الترفيه', 'الأعمال',
+  ];
 
   return (
     <Form {...form}>
@@ -317,24 +358,66 @@ export function CampaignForm({ platform, onSuccess }: CampaignFormProps) {
             render={({ field }) => (
               <FormItem>
                 <FormLabel className="text-xs font-medium">المواقع</FormLabel>
-                <div className="grid grid-cols-2 gap-2">
-                  {availableLocations.map((location) => (
-                    <label
-                      key={location}
-                      className="flex items-center space-x-2 space-x-reverse text-xs"
-                    >
-                      <Checkbox
-                        checked={field.value.includes(location)}
-                        onCheckedChange={(checked) => {
-                          const newValue = checked
-                            ? [...field.value, location]
-                            : field.value.filter((v) => v !== location);
-                          field.onChange(newValue);
-                        }}
-                      />
-                      <span>{location}</span>
-                    </label>
-                  ))}
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-2">
+                    {Object.keys(countryCities).map((country) => (
+                      <label
+                        key={country}
+                        className="flex items-center space-x-2 space-x-reverse text-xs"
+                      >
+                        <Checkbox
+                          checked={field.value.some(loc => loc.country === country)}
+                          onCheckedChange={(checked) => {
+                            const newValue = checked
+                              ? [...field.value, { country, cities: [] }]
+                              : field.value.filter(loc => loc.country !== country);
+                            field.onChange(newValue);
+                            if (checked) {
+                              setSelectedCountry(country);
+                            }
+                          }}
+                        />
+                        <span>{country}</span>
+                      </label>
+                    ))}
+                  </div>
+
+                  {selectedCountry && (
+                    <div className="mt-2">
+                      <FormLabel className="text-xs font-medium block mb-2">
+                        المدن في {selectedCountry}
+                      </FormLabel>
+                      <div className="grid grid-cols-3 gap-2">
+                        {countryCities[selectedCountry].map((city) => (
+                          <label
+                            key={city}
+                            className="flex items-center space-x-2 space-x-reverse text-xs"
+                          >
+                            <Checkbox
+                              checked={field.value
+                                .find(loc => loc.country === selectedCountry)
+                                ?.cities.includes(city) || false}
+                              onCheckedChange={(checked) => {
+                                const newValue = field.value.map(loc => {
+                                  if (loc.country === selectedCountry) {
+                                    return {
+                                      ...loc,
+                                      cities: checked
+                                        ? [...loc.cities, city]
+                                        : loc.cities.filter(c => c !== city)
+                                    };
+                                  }
+                                  return loc;
+                                });
+                                field.onChange(newValue);
+                              }}
+                            />
+                            <span>{city}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </FormItem>
             )}

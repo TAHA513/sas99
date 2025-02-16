@@ -250,6 +250,17 @@ export const insertMarketingCampaignSchema = createInsertSchema(marketingCampaig
     conversion: z.number().default(0),
     roi: z.number().default(0),
   }).optional(),
+  targeting: z.object({
+    ageRange: z.array(z.string()),
+    gender: z.enum(['all', 'male', 'female']),
+    locations: z.array(z.object({
+      country: z.string(),
+      cities: z.array(z.string())
+    })),
+    interests: z.array(z.string()),
+    languages: z.array(z.string()),
+    devices: z.array(z.string()),
+  }),
   scheduledPosts: z.array(z.object({
     platformId: z.number(),
     content: z.string(),
