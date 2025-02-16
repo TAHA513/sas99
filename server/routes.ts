@@ -47,11 +47,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const adminUser = await storage.createUser({
         username,
         password: hashedPassword,
-        role: 'admin',
-        createdAt: new Date(),
+        role: "admin",
       });
 
-      res.status(201).json({ message: "تم إنشاء حساب المدير بنجاح" });
+      res.status(201).json({ message: "تم إنشاء حساب المدير بنجاح", user: adminUser });
     } catch (error) {
       console.error('Error creating admin:', error);
       res.status(500).json({ message: "حدث خطأ أثناء إنشاء حساب المدير" });
@@ -74,12 +73,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const staffUser = await storage.createUser({
         username,
         password: hashedPassword,
-        role: 'staff',
+        role: "staff",
         staffId,
-        createdAt: new Date(),
       });
 
-      res.status(201).json({ message: "تم إنشاء حساب الموظف بنجاح" });
+      res.status(201).json({ message: "تم إنشاء حساب الموظف بنجاح", user: staffUser });
     } catch (error) {
       console.error('Error creating staff:', error);
       res.status(500).json({ message: "حدث خطأ أثناء إنشاء حساب الموظف" });
