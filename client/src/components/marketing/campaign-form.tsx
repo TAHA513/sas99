@@ -28,6 +28,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { CampaignAnalytics } from "./campaign-analytics";
+import { CampaignScheduler } from "./campaign-scheduler";
+import { AlertCircle } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const campaignFormSchema = insertMarketingCampaignSchema.extend({
   startDate: z.string(),
@@ -54,6 +57,7 @@ export function CampaignForm({ platform, onSuccess }: CampaignFormProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [budget, setBudget] = useState(100);
+  const [showScheduler, setShowScheduler] = useState(false);
 
   const form = useForm<CampaignFormData>({
     resolver: zodResolver(campaignFormSchema),
@@ -491,6 +495,40 @@ export function CampaignForm({ platform, onSuccess }: CampaignFormProps) {
               }
             }}
           />
+        )}
+
+        {showScheduler ? (
+          <>
+            <Alert>
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>جدولة المنشورات</AlertTitle>
+              <AlertDescription>
+                يمكنك جدولة منشورات متعددة لهذه الحملة. سيتم نشرها تلقائياً في الأوقات المحددة.
+              </AlertDescription>
+            </Alert>
+            <CampaignScheduler
+              campaignId={form.getValues().id}
+              platform={platform}
+              onSuccess={() => setShowScheduler(false)}
+            />
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setShowScheduler(false)}
+              className="w-full h-7 text-xs font-medium"
+            >
+              إلغاء الجدولة
+            </Button>
+          </>
+        ) : (
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setShowScheduler(true)}
+            className="w-full h-7 text-xs font-medium"
+          >
+            جدولة المنشورات
+          </Button>
         )}
 
         <Button

@@ -131,6 +131,18 @@ export interface IStorage {
   updateDatabaseConnection(id: number, connection: Partial<schema.InsertDatabaseConnection>): Promise<schema.DatabaseConnection>;
   deleteDatabaseConnection(id: number): Promise<void>;
   testDatabaseConnection(connection: schema.InsertDatabaseConnection): Promise<boolean>;
+
+  // Campaign Notification operations
+  getCampaignNotifications(campaignId: number): Promise<schema.CampaignNotification[]>;
+  createCampaignNotification(notification: schema.InsertCampaignNotification): Promise<schema.CampaignNotification>;
+  updateCampaignNotification(id: number, notification: Partial<schema.InsertCampaignNotification>): Promise<schema.CampaignNotification>;
+  getPendingNotifications(): Promise<schema.CampaignNotification[]>;
+
+  // Scheduled Post operations
+  getScheduledPosts(campaignId: number): Promise<schema.ScheduledPost[]>;
+  createScheduledPost(post: schema.InsertScheduledPost): Promise<schema.ScheduledPost>;
+  updateScheduledPost(id: number, post: Partial<schema.InsertScheduledPost>): Promise<schema.ScheduledPost>;
+  getPendingScheduledPosts(): Promise<schema.ScheduledPost[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -645,6 +657,78 @@ export class DatabaseStorage implements IStorage {
   async testDatabaseConnection(connection: schema.InsertDatabaseConnection): Promise<boolean> {
     // TODO: Implement actual connection testing logic based on the database type
     return true;
+  }
+
+  // Campaign Notification operations
+  async getCampaignNotifications(campaignId: number): Promise<schema.CampaignNotification[]> {
+    return await db
+      .select()
+      .from(schema.campaignNotifications)
+      .where(eq(schema.campaignNotifications.campaignId, campaignId));
+  }
+
+  async createCampaignNotification(notification: schema.InsertCampaignNotification): Promise<schema.CampaignNotification> {
+    const [newNotification] = await db
+      .insert(schema.campaignNotifications)
+      .values(notification)
+      .returning();
+    return newNotification;
+  }
+
+  async updateCampaignNotification(
+    id: number,
+    notification: Partial<schema.InsertCampaignNotification>
+  ): Promise<schema.CampaignNotification> {
+    const [updatedNotification] = await db
+      .update(schema.campaignNotifications)
+      .set(notification)
+      .where(eq(schema.campaignNotifications.id, id))
+      .returning();
+    return updatedNotification;
+  }
+
+  async getPendingNotifications(): Promise<schema.CampaignNotification[]> {
+    return await db
+      .select()
+      .from(schema.campaignNotifications)
+      .where(eq(schema.campaignNotifications.status, 'pending'))
+      .orderBy(schema.campaignNotifications.scheduledFor);
+  }
+
+  // Scheduled Post operations
+  async getScheduledPosts(campaignId: number): Promise<schema.ScheduledPost[]> {
+    return await db
+      .select()
+      .from(schema.scheduledPosts)
+      .where(eq(schema.scheduledPosts.campaignId, campaignId));
+  }
+
+  async createScheduledPost(post: schema.InsertScheduledPost): Promise<schema.ScheduledPost> {
+    const [newPost] = await db
+      .insert(schema.scheduledPosts)
+      .values(post)
+      .returning();
+    return newPost;
+  }
+
+  async updateScheduledPost(
+    id: number,
+    post: Partial<schema.InsertScheduledPost>
+  ): Promise<schema.ScheduledPost> {
+    const [updatedPost] = await db
+      .update(schema.scheduledPosts)
+      .set(post)
+      .where(eq(schema.scheduledPosts.id, id))
+      .returning();
+    return updatedPost;
+  }
+
+  async getPendingScheduledPosts(): Promise<schema.ScheduledPost[]> {
+    return await db
+      .select()
+      .from(schema.scheduledPosts)
+      .where(eq(schema.scheduledPosts.status, 'pending'))
+      .orderBy(schema.scheduledPosts.scheduledTime);
   }
 }
 

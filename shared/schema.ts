@@ -67,7 +67,7 @@ export const marketingCampaigns = pgTable("marketing_campaigns", {
   targetAudience: text("target_audience"),
   budget: integer("budget"),
   messageCount: integer("message_count").notNull().default(0),
-  mediaFiles: text("media_files").array(), // New field for media files
+  mediaFiles: text("media_files").array(),
   adCreatives: text("ad_creatives").array(),
   campaignMetrics: json("campaign_metrics").$type<{
     impressions: number;
@@ -84,6 +84,29 @@ export const marketingCampaigns = pgTable("marketing_campaigns", {
     status: 'pending' | 'published' | 'failed';
     mediaUrls?: string[];
   }[]>(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const campaignNotifications = pgTable("campaign_notifications", {
+  id: serial("id").primaryKey(),
+  campaignId: integer("campaign_id").notNull(),
+  type: text("type").notNull(), // 'end_date', 'budget_limit', 'engagement_goal'
+  message: text("message").notNull(),
+  status: text("status").notNull().default("pending"), // 'pending', 'sent', 'read'
+  scheduledFor: timestamp("scheduled_for").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const scheduledPosts = pgTable("scheduled_posts", {
+  id: serial("id").primaryKey(),
+  campaignId: integer("campaign_id").notNull(),
+  platform: text("platform").notNull(),
+  content: text("content").notNull(),
+  mediaUrls: text("media_urls").array(),
+  scheduledTime: timestamp("scheduled_time").notNull(),
+  status: text("status").notNull().default("pending"), // 'pending', 'published', 'failed'
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -216,7 +239,7 @@ export const insertMarketingCampaignSchema = createInsertSchema(marketingCampaig
   type: z.enum(['promotional', 'awareness', 'engagement', 'sales', 'seasonal', 'sms']),
   socialMediaSettings: z.string().optional(),
   targetAudience: z.string().optional(),
-  mediaFiles: z.array(z.string()).optional(), // New validation for media files
+  mediaFiles: z.array(z.string()).optional(),
   adCreatives: z.array(z.string()).optional(),
   budget: z.number().optional(),
   campaignMetrics: z.object({
@@ -287,6 +310,18 @@ export const insertInstallmentPaymentSchema = createInsertSchema(installmentPaym
   paymentNumber: z.number().min(1),
 });
 
+export const insertCampaignNotificationSchema = createInsertSchema(campaignNotifications).extend({
+  type: z.enum(['end_date', 'budget_limit', 'engagement_goal']),
+  status: z.enum(['pending', 'sent', 'read']).default('pending'),
+});
+
+export const insertScheduledPostSchema = createInsertSchema(scheduledPosts).extend({
+  platform: z.enum(['facebook', 'instagram', 'snapchat', 'whatsapp', 'email', 'sms']),
+  status: z.enum(['pending', 'published', 'failed']).default('pending'),
+  mediaUrls: z.array(z.string()).optional(),
+});
+
+
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type Customer = typeof customers.$inferSelect;
@@ -317,6 +352,10 @@ export type InstallmentPlan = typeof installmentPlans.$inferSelect;
 export type InsertInstallmentPlan = z.infer<typeof insertInstallmentPlanSchema>;
 export type InstallmentPayment = typeof installmentPayments.$inferSelect;
 export type InsertInstallmentPayment = z.infer<typeof insertInstallmentPaymentSchema>;
+export type CampaignNotification = typeof campaignNotifications.$inferSelect;
+export type InsertCampaignNotification = z.infer<typeof insertCampaignNotificationSchema>;
+export type ScheduledPost = typeof scheduledPosts.$inferSelect;
+export type InsertScheduledPost = z.infer<typeof insertScheduledPostSchema>;
 
 
 export const suppliers = pgTable("suppliers", {
