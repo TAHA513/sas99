@@ -6,6 +6,7 @@ import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage";
 import { User as SelectUser } from "@shared/schema";
+import MemoryStore from "memorystore";
 
 declare global {
   namespace Express {
@@ -14,6 +15,7 @@ declare global {
 }
 
 const scryptAsync = promisify(scrypt);
+const MemoryStoreSession = MemoryStore(session);
 
 export async function hashPassword(password: string) {
   const salt = randomBytes(16).toString("hex");
@@ -30,11 +32,14 @@ export async function comparePasswords(supplied: string, stored: string) {
 
 export function setupAuth(app: Express) {
   app.use(session({
+    store: new MemoryStoreSession({
+      checkPeriod: 86400000 // prune expired entries every 24h
+    }),
     secret: process.env.SESSION_SECRET || 'your-secret-key',
     resave: false,
     saveUninitialized: false,
     cookie: {
-      secure: false, // set to true in production with HTTPS
+      secure: process.env.NODE_ENV === 'production',
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
       httpOnly: true
     }
@@ -54,23 +59,6 @@ export function setupAuth(app: Express) {
         const isValidPassword = await comparePasswords(password, user.password);
         if (!isValidPassword) {
           return done(null, false, { message: "كلمة المرور غير صحيحة" });
-        }
-
-        // Track login history for staff members if enabled
-        if (user.role === 'staff' && user.staffId) {
-          const settings = await storage.getStoreSettings();
-          if (settings?.trackStaffActivity) {
-            const loginHistory = settings.staffLoginHistory || [];
-            loginHistory.push({
-              username: user.username,
-              timestamp: new Date().toISOString(),
-              success: true
-            });
-            await storage.setStoreSettings({ 
-              ...settings, 
-              staffLoginHistory: loginHistory 
-            });
-          }
         }
 
         return done(null, user);
@@ -95,7 +83,7 @@ export function setupAuth(app: Express) {
     }
   });
 
-  // Login endpoint that handles both admin and staff
+  // Login endpoint
   app.post("/api/login", (req, res, next) => {
     passport.authenticate("local", (err, user, info) => {
       if (err) {

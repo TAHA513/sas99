@@ -47,11 +47,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
 
       if (!res.ok) {
-        const errorData = await res.json();
+        const errorData = await res.json().catch(() => ({ error: 'فشل تسجيل الدخول' }));
         throw new Error(errorData.error || 'فشل تسجيل الدخول');
       }
 
-      return await res.json();
+      const data = await res.json().catch(() => null);
+      if (!data) throw new Error('فشل استلام بيانات المستخدم');
+
+      return data;
     },
     onSuccess: (user: SelectUser) => {
       queryClient.setQueryData(["/api/user"], user);
@@ -77,7 +80,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
 
       if (!res.ok) {
-        const errorData = await res.json();
+        const errorData = await res.json().catch(() => ({ error: 'فشل تسجيل الخروج' }));
         throw new Error(errorData.error || 'فشل تسجيل الخروج');
       }
     },
