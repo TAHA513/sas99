@@ -1,5 +1,4 @@
-import { useAuth } from "@/hooks/use-auth";
-import { Button } from "@/components/ui/button";
+import { useState } from "react";
 import {
   Card,
   CardContent,
@@ -7,42 +6,48 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { Loader2 } from "lucide-react";
-import { useLocation } from "wouter";
-
-const loginSchema = z.object({
-  username: z.string().min(1, "اسم المستخدم مطلوب"),
-  password: z.string().min(1, "كلمة المرور مطلوبة"),
-});
-
-type LoginFormData = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
-  const { loginMutation } = useAuth();
-  const [, navigate] = useLocation();
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<LoginFormData>({
-    resolver: zodResolver(loginSchema),
-  });
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setIsLoading(true);
+    setError("");
 
-  const onSubmit = handleSubmit(async (data) => {
+    const formData = new FormData(event.currentTarget);
+    const username = formData.get("username") as string;
+    const password = formData.get("password") as string;
+
     try {
-      const user = await loginMutation.mutateAsync(data);
+      const response = await fetch("/api/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ username, password }),
+        credentials: "include",
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "حدث خطأ في تسجيل الدخول");
+      }
+
       // التوجيه المباشر بناءً على دور المستخدم
-      window.location.href = user.role === "admin" ? "/" : "/staff";
-    } catch (error) {
-      console.error("خطأ في تسجيل الدخول:", error);
+      window.location.href = data.role === "admin" ? "/" : "/staff";
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "حدث خطأ غير متوقع");
+    } finally {
+      setIsLoading(false);
     }
-  });
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
@@ -54,43 +59,40 @@ export default function LoginPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={onSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="username">اسم المستخدم</Label>
               <Input
                 id="username"
+                name="username"
                 type="text"
-                {...register("username")}
+                required
+                disabled={isLoading}
                 placeholder="أدخل اسم المستخدم"
-                disabled={loginMutation.isPending}
               />
-              {errors.username && (
-                <p className="text-sm text-destructive">
-                  {errors.username.message}
-                </p>
-              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">كلمة المرور</Label>
               <Input
                 id="password"
+                name="password"
                 type="password"
-                {...register("password")}
+                required
+                disabled={isLoading}
                 placeholder="أدخل كلمة المرور"
-                disabled={loginMutation.isPending}
               />
-              {errors.password && (
-                <p className="text-sm text-destructive">
-                  {errors.password.message}
-                </p>
-              )}
             </div>
+            {error && (
+              <div className="text-sm text-destructive text-center">
+                {error}
+              </div>
+            )}
             <Button
               type="submit"
               className="w-full"
-              disabled={loginMutation.isPending}
+              disabled={isLoading}
             >
-              {loginMutation.isPending ? (
+              {isLoading ? (
                 <>
                   <Loader2 className="ml-2 h-4 w-4 animate-spin" />
                   جاري تسجيل الدخول...

@@ -13,44 +13,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     next();
   });
 
-  // Configure session middleware
+  // تكوين الجلسة
   app.use(session({
     secret: process.env.SESSION_SECRET || 'your-secret-key',
     resave: false,
     saveUninitialized: false,
     cookie: {
-      secure: false, // set to true in production with HTTPS
-      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      secure: false,
+      maxAge: 24 * 60 * 60 * 1000,
       httpOnly: true
     }
   }));
 
-  // Simple login endpoint without passport
+  // تسجيل الدخول
   app.post("/api/login", async (req, res) => {
     try {
       const { username, password } = req.body;
 
       if (!username || !password) {
-        return res.status(400).json({ 
-          error: "يجب إدخال اسم المستخدم وكلمة المرور" 
-        });
+        return res.status(400).json({ error: "يجب إدخال اسم المستخدم وكلمة المرور" });
       }
 
       const user = await storage.getUserByUsername(username);
       if (!user) {
-        return res.status(401).json({ 
-          error: "اسم المستخدم غير صحيح" 
-        });
+        return res.status(401).json({ error: "اسم المستخدم غير صحيح" });
       }
 
       const isValidPassword = await comparePasswords(password, user.password);
       if (!isValidPassword) {
-        return res.status(401).json({ 
-          error: "كلمة المرور غير صحيحة" 
-        });
+        return res.status(401).json({ error: "كلمة المرور غير صحيحة" });
       }
 
-      // Store user info in session
+      // حفظ معلومات المستخدم في الجلسة
       req.session.user = {
         id: user.id,
         username: user.username,
@@ -58,59 +52,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
         name: user.name
       };
 
-      res.json({
-        id: user.id,
-        username: user.username,
-        role: user.role,
-        name: user.name
-      });
-    } catch (error) {
-      console.error("Login error:", error);
-      res.status(500).json({ 
-        error: "حدث خطأ في تسجيل الدخول" 
-      });
-    }
-  });
-
-  // Simple logout endpoint
-  app.post("/api/logout", (req, res) => {
-    if (!req.session) {
-      return res.status(200).json({ message: "تم تسجيل الخروج بنجاح" });
-    }
-
-    if (req.session.user) {
-      delete req.session.user;
+      // حفظ الجلسة بشكل صريح
       req.session.save((err) => {
         if (err) {
           console.error("Session save error:", err);
-          return res.status(500).json({ 
-            error: "حدث خطأ في تسجيل الخروج" 
-          });
+          return res.status(500).json({ error: "حدث خطأ في تسجيل الدخول" });
         }
-        req.session.destroy((err) => {
-          if (err) {
-            console.error("Session destroy error:", err);
-            return res.status(500).json({ 
-              error: "حدث خطأ في تسجيل الخروج" 
-            });
-          }
-          res.json({ message: "تم تسجيل الخروج بنجاح" });
+
+        res.json({
+          id: user.id,
+          username: user.username,
+          role: user.role,
+          name: user.name
         });
       });
-    } else {
-      res.json({ message: "تم تسجيل الخروج بنجاح" });
+    } catch (error) {
+      console.error("Login error:", error);
+      res.status(500).json({ error: "حدث خطأ في تسجيل الدخول" });
     }
   });
 
-  // Get current user endpoint
+  // تسجيل الخروج
+  app.post("/api/logout", (req, res) => {
+    req.session.destroy((err) => {
+      if (err) {
+        console.error("Logout error:", err);
+        return res.status(500).json({ error: "حدث خطأ في تسجيل الخروج" });
+      }
+      res.json({ message: "تم تسجيل الخروج بنجاح" });
+    });
+  });
+
+  // الحصول على معلومات المستخدم الحالي
   app.get("/api/user", (req, res) => {
-    const user = req.session?.user;
-    if (!user) {
-      return res.status(401).json({ 
-        error: "المستخدم غير مسجل الدخول" 
-      });
+    if (!req.session.user) {
+      return res.status(401).json({ error: "المستخدم غير مسجل الدخول" });
     }
-    res.json(user);
+    res.json(req.session.user);
   });
 
   // Staff Dashboard APIs
