@@ -2,14 +2,85 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import express from 'express';
-import { hashPassword } from "./auth";
+import { hashPassword, comparePasswords } from "./auth";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // التأكد من أن جميع نقاط نهاية API تستجيب بـ JSON
+  // Middleware for handling JSON responses
+  app.use(express.json());
   app.use('/api', (req, res, next) => {
     res.setHeader('Content-Type', 'application/json');
-    res.setHeader('Accept', 'application/json');
     next();
+  });
+
+  // Simple login endpoint without passport
+  app.post("/api/login", async (req, res) => {
+    try {
+      const { username, password } = req.body;
+
+      if (!username || !password) {
+        return res.status(400).json({ 
+          error: "يجب إدخال اسم المستخدم وكلمة المرور" 
+        });
+      }
+
+      const user = await storage.getUserByUsername(username);
+      if (!user) {
+        return res.status(401).json({ 
+          error: "اسم المستخدم غير صحيح" 
+        });
+      }
+
+      const isValidPassword = await comparePasswords(password, user.password);
+      if (!isValidPassword) {
+        return res.status(401).json({ 
+          error: "كلمة المرور غير صحيحة" 
+        });
+      }
+
+      // Store user info in session
+      req.session.user = {
+        id: user.id,
+        username: user.username,
+        role: user.role,
+        name: user.name
+      };
+
+      res.json({
+        id: user.id,
+        username: user.username,
+        role: user.role,
+        name: user.name
+      });
+    } catch (error) {
+      console.error("Login error:", error);
+      res.status(500).json({ 
+        error: "حدث خطأ في تسجيل الدخول" 
+      });
+    }
+  });
+
+  // Simple logout endpoint
+  app.post("/api/logout", (req, res) => {
+    req.session.destroy((err) => {
+      if (err) {
+        console.error("Logout error:", err);
+        return res.status(500).json({ 
+          error: "حدث خطأ في تسجيل الخروج" 
+        });
+      }
+      res.json({ message: "تم تسجيل الخروج بنجاح" });
+    });
+  });
+
+  // Get current user endpoint
+  app.get("/api/user", (req, res) => {
+    const user = req.session.user;
+    if (!user) {
+      return res.status(401).json({ 
+        error: "المستخدم غير مسجل الدخول" 
+      });
+    }
+    res.json(user);
   });
 
   // Staff Dashboard APIs

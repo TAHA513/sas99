@@ -10,6 +10,14 @@ import { User as SelectUser } from "@shared/schema";
 declare global {
   namespace Express {
     interface User extends SelectUser {}
+    interface Session {
+      user?: {
+        id: number;
+        username: string;
+        role: string;
+        name: string | null;
+      };
+    }
   }
 }
 
@@ -21,7 +29,7 @@ export async function hashPassword(password: string) {
   return `${buf.toString("hex")}.${salt}`;
 }
 
-async function comparePasswords(supplied: string, stored: string) {
+export async function comparePasswords(supplied: string, stored: string) {
   const [hashed, salt] = stored.split(".");
   const hashedBuf = Buffer.from(hashed, "hex");
   const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
@@ -29,7 +37,6 @@ async function comparePasswords(supplied: string, stored: string) {
 }
 
 export function setupAuth(app: Express) {
-  // إعداد الجلسة
   app.use(session({
     secret: process.env.SESSION_SECRET || 'your-secret-key',
     resave: false,
@@ -44,7 +51,6 @@ export function setupAuth(app: Express) {
   app.use(passport.initialize());
   app.use(passport.session());
 
-  // إستراتيجية المصادقة المحلية
   passport.use(
     new LocalStrategy(async (username, password, done) => {
       try {
@@ -87,7 +93,6 @@ export function setupAuth(app: Express) {
     }
   });
 
-  // نقاط نهاية API
   app.post("/api/login", (req, res, next) => {
     if (!req.body.username || !req.body.password) {
       return res.status(400).json({ error: "يجب إدخال اسم المستخدم وكلمة المرور" });

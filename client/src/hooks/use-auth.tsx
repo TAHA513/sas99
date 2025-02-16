@@ -2,23 +2,24 @@ import { createContext, ReactNode, useContext } from "react";
 import {
   useQuery,
   useMutation,
-  UseMutationResult,
 } from "@tanstack/react-query";
-import { insertUserSchema, User as SelectUser, InsertUser } from "@shared/schema";
-import { getQueryFn, apiRequest, queryClient } from "../lib/queryClient";
+import { User as SelectUser } from "@shared/schema";
+import { queryClient } from "../lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
+
+type LoginData = {
+  username: string;
+  password: string;
+};
 
 type AuthContextType = {
   user: SelectUser | null;
   isLoading: boolean;
   error: Error | null;
-  loginMutation: UseMutationResult<SelectUser, Error, LoginData>;
-  logoutMutation: UseMutationResult<void, Error, void>;
-  registerMutation: UseMutationResult<SelectUser, Error, InsertUser>;
+  loginMutation: any;
+  logoutMutation: any;
 };
-
-type LoginData = Pick<InsertUser, "username" | "password">;
 
 export const AuthContext = createContext<AuthContextType | null>(null);
 
@@ -32,48 +33,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isLoading,
   } = useQuery<SelectUser | null, Error>({
     queryKey: ["/api/user"],
-    queryFn: getQueryFn({ on401: "returnNull" }),
-    retry: 1,
-    staleTime: 30000, // 30 seconds
+    retry: false,
+    refetchOnWindowFocus: false,
   });
 
   const loginMutation = useMutation({
     mutationFn: async (credentials: LoginData) => {
-      try {
-        const res = await fetch('/api/login', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-          },
-          body: JSON.stringify(credentials),
-          credentials: 'include'
-        });
+      const res = await fetch('/api/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(credentials),
+        credentials: 'include'
+      });
 
-        if (!res.ok) {
-          const errorData = await res.json();
-          throw new Error(errorData.error || 'فشل تسجيل الدخول');
-        }
-
-        return await res.json();
-      } catch (error) {
-        console.error("Login error:", error);
-        throw error;
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'فشل تسجيل الدخول');
       }
+
+      return await res.json();
     },
-    onSuccess: (user: SelectUser) => {
-      queryClient.setQueryData(["/api/user"], user);
+    onSuccess: (userData: SelectUser) => {
+      queryClient.setQueryData(["/api/user"], userData);
       toast({
         title: "تم تسجيل الدخول بنجاح",
-        description: `مرحباً ${user.name || user.username}`,
+        description: `مرحباً ${userData.name || userData.username}`,
       });
       setLocation("/");
     },
     onError: (error: Error) => {
-      console.error("Login mutation error:", error);
+      console.error("Login error:", error);
       toast({
         title: "خطأ في تسجيل الدخول",
-        description: error.message || "فشل تسجيل الدخول. الرجاء المحاولة مرة أخرى",
+        description: error.message,
         variant: "destructive",
       });
     },
@@ -81,11 +75,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logoutMutation = useMutation({
     mutationFn: async () => {
-      try {
-        await apiRequest("POST", "/api/logout");
-      } catch (error) {
-        console.error("Logout error:", error);
-        throw error;
+      const res = await fetch('/api/logout', {
+        method: 'POST',
+        credentials: 'include'
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'فشل تسجيل الخروج');
       }
     },
     onSuccess: () => {
@@ -98,10 +95,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
     },
     onError: (error: Error) => {
-      console.error("Logout mutation error:", error);
       toast({
         title: "فشل تسجيل الخروج",
-        description: error.message || "حدث خطأ أثناء تسجيل الخروج",
+        description: error.message,
         variant: "destructive",
       });
     },
@@ -115,7 +111,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         error,
         loginMutation,
         logoutMutation,
-        registerMutation: {} as any, // سيتم تنفيذه لاحقاً
       }}
     >
       {children}
