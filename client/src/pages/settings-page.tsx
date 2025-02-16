@@ -1,8 +1,8 @@
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Building2, Settings as SettingsIcon, Paintbrush, Database } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { DatabaseConnectionForm } from "@/components/settings/database-connection-form";
+import DatabaseSettingsPage from "./database-settings-page";
 
 export default function SettingsPage() {
   return (
@@ -69,7 +69,7 @@ export default function SettingsPage() {
           </TabsContent>
 
           <TabsContent value="database">
-            <DatabaseConnectionForm />
+            <DatabaseSettingsPage />
           </TabsContent>
         </Tabs>
       </div>
