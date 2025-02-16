@@ -40,11 +40,10 @@ export default function LoginPage() {
         throw new Error(data.error || "حدث خطأ في تسجيل الدخول");
       }
 
-      // التوجيه المباشر بناءً على دور المستخدم
-      window.location.href = data.role === "admin" ? "/" : "/staff";
+      // استخدام window.location.replace للتوجيه
+      window.location.replace(data.redirectTo);
     } catch (err) {
       setError(err instanceof Error ? err.message : "حدث خطأ غير متوقع");
-    } finally {
       setIsLoading(false);
     }
   };

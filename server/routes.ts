@@ -52,19 +52,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         name: user.name
       };
 
-      // حفظ الجلسة بشكل صريح
-      req.session.save((err) => {
-        if (err) {
-          console.error("Session save error:", err);
-          return res.status(500).json({ error: "حدث خطأ في تسجيل الدخول" });
-        }
+      // انتظار حفظ الجلسة قبل الرد
+      await new Promise((resolve, reject) => {
+        req.session.save((err) => {
+          if (err) reject(err);
+          else resolve(true);
+        });
+      });
 
-        res.json({
+      // إرسال البيانات مع مسار التوجيه
+      res.json({
+        user: {
           id: user.id,
           username: user.username,
           role: user.role,
           name: user.name
-        });
+        },
+        redirectTo: user.role === "admin" ? "/" : "/staff"
       });
     } catch (error) {
       console.error("Login error:", error);
