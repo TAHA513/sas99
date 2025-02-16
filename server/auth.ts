@@ -1,16 +1,21 @@
 import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
-import { Express } from "express";
+import { Express, Request, Response, NextFunction } from "express";
 import session from "express-session";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage";
-import { User as SelectUser } from "@shared/schema";
+import { SYSTEM_ROLES, DEFAULT_PERMISSIONS, ROLE_PERMISSIONS, User } from "@shared/schema";
 import MemoryStore from "memorystore";
 
 declare global {
   namespace Express {
-    interface User extends SelectUser {}
+    interface User {
+      id: number;
+      username: string;
+      role: string;
+      permissions?: string[];
+    }
   }
 }
 
@@ -31,16 +36,17 @@ export async function comparePasswords(supplied: string, stored: string) {
 }
 
 export function setupAuth(app: Express) {
+  // إعداد جلسات المستخدمين
   app.use(session({
     store: new MemoryStoreSession({
-      checkPeriod: 86400000 // prune expired entries every 24h
+      checkPeriod: 86400000 // تنظيف الجلسات المنتهية كل 24 ساعة
     }),
     secret: process.env.SESSION_SECRET || 'your-secret-key',
     resave: false,
     saveUninitialized: false,
     cookie: {
       secure: process.env.NODE_ENV === 'production',
-      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      maxAge: 24 * 60 * 60 * 1000, // 24 ساعة
       httpOnly: true
     }
   }));
@@ -48,6 +54,7 @@ export function setupAuth(app: Express) {
   app.use(passport.initialize());
   app.use(passport.session());
 
+  // إستراتيجية تسجيل الدخول
   passport.use(
     new LocalStrategy(async (username, password, done) => {
       try {
@@ -56,12 +63,28 @@ export function setupAuth(app: Express) {
           return done(null, false, { message: "اسم المستخدم غير صحيح" });
         }
 
+        if (!user.isActive) {
+          return done(null, false, { message: "هذا الحساب معطل" });
+        }
+
         const isValidPassword = await comparePasswords(password, user.password);
         if (!isValidPassword) {
           return done(null, false, { message: "كلمة المرور غير صحيحة" });
         }
 
-        return done(null, user);
+        // تحديث آخر تسجيل دخول
+        await storage.updateUserLastLogin(user.id);
+
+        // جلب صلاحيات المستخدم
+        const userPermissions = await storage.getUserPermissions(user.id);
+        const permissions = userPermissions.map(p => p.key);
+
+        return done(null, {
+          id: user.id,
+          username: user.username,
+          role: user.role,
+          permissions
+        });
       } catch (error) {
         console.error("خطأ في المصادقة:", error);
         return done(error);
@@ -76,14 +99,49 @@ export function setupAuth(app: Express) {
   passport.deserializeUser(async (id: number, done) => {
     try {
       const user = await storage.getUser(id);
-      done(null, user);
+      if (!user) {
+        return done(null, false);
+      }
+
+      const userPermissions = await storage.getUserPermissions(user.id);
+      const permissions = userPermissions.map(p => p.key);
+
+      done(null, {
+        id: user.id,
+        username: user.username,
+        role: user.role,
+        permissions
+      });
     } catch (error) {
       console.error("خطأ في استرجاع بيانات المستخدم:", error);
       done(error);
     }
   });
 
-  // نقطة نهاية تسجيل الدخول
+  // Middleware للتحقق من الصلاحيات
+  export function checkPermission(requiredPermission: string) {
+    return (req: Request, res: Response, next: NextFunction) => {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ error: "غير مصرح" });
+      }
+
+      const user = req.user as Express.User;
+
+      // Super Admin لديه كل الصلاحيات
+      if (user.role === SYSTEM_ROLES.SUPER_ADMIN) {
+        return next();
+      }
+
+      // التحقق من الصلاحيات
+      if (!user.permissions?.includes(requiredPermission)) {
+        return res.status(403).json({ error: "ليس لديك صلاحية الوصول" });
+      }
+
+      next();
+    };
+  }
+
+  // نقاط النهاية للمصادقة
   app.post("/api/login", (req, res, next) => {
     passport.authenticate("local", (err, user, info) => {
       if (err) {
@@ -100,17 +158,11 @@ export function setupAuth(app: Express) {
           console.error("خطأ في جلسة تسجيل الدخول:", err);
           return res.status(500).json({ error: "حدث خطأ في تسجيل الدخول" });
         }
-        return res.json({
-          id: user.id,
-          username: user.username,
-          role: user.role,
-          name: user.name
-        });
+        return res.json(user);
       });
     })(req, res, next);
   });
 
-  // نقطة نهاية تسجيل الخروج
   app.post("/api/logout", (req, res) => {
     req.logout((err) => {
       if (err) {
@@ -121,18 +173,36 @@ export function setupAuth(app: Express) {
     });
   });
 
-  // نقطة نهاية الحصول على بيانات المستخدم الحالي
   app.get("/api/user", (req, res) => {
     if (!req.isAuthenticated()) {
       return res.status(401).json({ error: "المستخدم غير مصرح له" });
     }
 
-    const user = req.user;
-    res.json({
-      id: user.id,
-      username: user.username,
-      role: user.role,
-      name: user.name
-    });
+    res.json(req.user);
+  });
+
+  // نقطة نهاية لإعادة تعيين كلمة المرور
+  app.post("/api/reset-password", async (req, res) => {
+    try {
+      const { username, oldPassword, newPassword } = req.body;
+
+      const user = await storage.getUserByUsername(username);
+      if (!user) {
+        return res.status(404).json({ error: "المستخدم غير موجود" });
+      }
+
+      const isValidPassword = await comparePasswords(oldPassword, user.password);
+      if (!isValidPassword) {
+        return res.status(401).json({ error: "كلمة المرور الحالية غير صحيحة" });
+      }
+
+      const hashedPassword = await hashPassword(newPassword);
+      await storage.updateUserPassword(user.id, hashedPassword);
+
+      res.json({ message: "تم تغيير كلمة المرور بنجاح" });
+    } catch (error) {
+      console.error("خطأ في تغيير كلمة المرور:", error);
+      res.status(500).json({ error: "حدث خطأ في تغيير كلمة المرور" });
+    }
   });
 }

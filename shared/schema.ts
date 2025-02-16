@@ -1,62 +1,167 @@
-// Add new default permissions
-const DEFAULT_PERMISSIONS = [
-  {
-    name: "صفحة الموظفين",
-    key: "staff_page",
-    description: "الوصول إلى صفحة إدارة الموظفين"
-  }
-];
-
 import { pgTable, text, serial, integer, boolean, timestamp, decimal, json } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-// النماذج الحالية تبقى كما هي
+// تعريف الأدوار المتاحة في النظام
+export const SYSTEM_ROLES = {
+  SUPER_ADMIN: 'super_admin',
+  ADMIN: 'admin',
+  MANAGER: 'manager',
+  STAFF: 'staff',
+  CASHIER: 'cashier',
+} as const;
+
+// تعريف الصلاحيات الافتراضية
+export const DEFAULT_PERMISSIONS = {
+  // إدارة المستخدمين والصلاحيات
+  MANAGE_USERS: 'manage_users',
+  MANAGE_ROLES: 'manage_roles',
+  MANAGE_PERMISSIONS: 'manage_permissions',
+
+  // إدارة المنتجات والمخزون
+  MANAGE_PRODUCTS: 'manage_products',
+  VIEW_PRODUCTS: 'view_products',
+  MANAGE_INVENTORY: 'manage_inventory',
+
+  // إدارة المبيعات والفواتير
+  MANAGE_SALES: 'manage_sales',
+  CREATE_INVOICE: 'create_invoice',
+  VIEW_INVOICES: 'view_invoices',
+  VOID_INVOICE: 'void_invoice',
+
+  // إدارة العملاء
+  MANAGE_CUSTOMERS: 'manage_customers',
+  VIEW_CUSTOMERS: 'view_customers',
+
+  // إدارة الموظفين
+  MANAGE_STAFF: 'manage_staff',
+  VIEW_STAFF: 'view_staff',
+
+  // إدارة التقارير
+  VIEW_REPORTS: 'view_reports',
+  EXPORT_REPORTS: 'export_reports',
+
+  // إدارة الإعدادات
+  MANAGE_SETTINGS: 'manage_settings',
+
+  // الوظائف المالية
+  MANAGE_EXPENSES: 'manage_expenses',
+  VIEW_EXPENSES: 'view_expenses',
+  MANAGE_PAYMENTS: 'manage_payments',
+
+  // التسويق والعروض
+  MANAGE_MARKETING: 'manage_marketing',
+  MANAGE_PROMOTIONS: 'manage_promotions',
+} as const;
+
+// تعريف الصلاحيات الافتراضية لكل دور
+export const ROLE_PERMISSIONS = {
+  [SYSTEM_ROLES.SUPER_ADMIN]: Object.values(DEFAULT_PERMISSIONS),
+  [SYSTEM_ROLES.ADMIN]: [
+    DEFAULT_PERMISSIONS.MANAGE_USERS,
+    DEFAULT_PERMISSIONS.MANAGE_ROLES,
+    DEFAULT_PERMISSIONS.MANAGE_PERMISSIONS,
+    DEFAULT_PERMISSIONS.MANAGE_PRODUCTS,
+    DEFAULT_PERMISSIONS.MANAGE_INVENTORY,
+    DEFAULT_PERMISSIONS.MANAGE_SALES,
+    DEFAULT_PERMISSIONS.MANAGE_CUSTOMERS,
+    DEFAULT_PERMISSIONS.MANAGE_STAFF,
+    DEFAULT_PERMISSIONS.MANAGE_SETTINGS,
+    DEFAULT_PERMISSIONS.VIEW_REPORTS,
+    DEFAULT_PERMISSIONS.EXPORT_REPORTS,
+  ],
+  [SYSTEM_ROLES.MANAGER]: [
+    DEFAULT_PERMISSIONS.MANAGE_PRODUCTS,
+    DEFAULT_PERMISSIONS.MANAGE_INVENTORY,
+    DEFAULT_PERMISSIONS.MANAGE_SALES,
+    DEFAULT_PERMISSIONS.MANAGE_CUSTOMERS,
+    DEFAULT_PERMISSIONS.VIEW_STAFF,
+    DEFAULT_PERMISSIONS.VIEW_REPORTS,
+    DEFAULT_PERMISSIONS.MANAGE_EXPENSES,
+  ],
+  [SYSTEM_ROLES.STAFF]: [
+    DEFAULT_PERMISSIONS.VIEW_PRODUCTS,
+    DEFAULT_PERMISSIONS.CREATE_INVOICE,
+    DEFAULT_PERMISSIONS.VIEW_CUSTOMERS,
+    DEFAULT_PERMISSIONS.VIEW_REPORTS,
+  ],
+  [SYSTEM_ROLES.CASHIER]: [
+    DEFAULT_PERMISSIONS.VIEW_PRODUCTS,
+    DEFAULT_PERMISSIONS.CREATE_INVOICE,
+    DEFAULT_PERMISSIONS.VIEW_CUSTOMERS,
+  ],
+} as const;
+
+// جدول المستخدمين
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
-  role: text("role", { enum: ["admin", "staff"] }).notNull().default("staff"),
   name: text("name"),
-  staffId: text("staff_id"),
+  email: text("email"),
+  phone: text("phone"),
+  role: text("role", { enum: Object.values(SYSTEM_ROLES) })
+    .notNull()
+    .default(SYSTEM_ROLES.STAFF),
+  isActive: boolean("is_active").notNull().default(true),
+  lastLogin: timestamp("last_login"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
-// إضافة جدول الصلاحيات
+// جدول الصلاحيات
 export const permissions = pgTable("permissions", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
-  key: text("key").notNull().unique(),
+  key: text("key", { enum: Object.values(DEFAULT_PERMISSIONS) }).notNull().unique(),
   description: text("description"),
+  category: text("category").notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
-// جدول ربط المستخدمين بالصلاحيات
+// جدول صلاحيات المستخدمين
 export const userPermissions = pgTable("user_permissions", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull(),
   permissionId: integer("permission_id").notNull(),
   granted: boolean("granted").notNull().default(false),
+  grantedBy: integer("granted_by").notNull(),
+  grantedAt: timestamp("granted_at").notNull().defaultNow(),
+  expiresAt: timestamp("expires_at"),
+});
+
+// جدول سجل الصلاحيات
+export const permissionLog = pgTable("permission_log", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  action: text("action").notNull(),
+  details: json("details").notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
-  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  createdBy: integer("created_by").notNull(),
 });
 
-// تحديث مخطط إدخال المستخدم
+// مخططات إدخال البيانات
 export const insertUserSchema = createInsertSchema(users).extend({
-  permissions: z.array(z.number()).optional(),
+  password: z.string().min(8, "كلمة المرور يجب أن تكون 8 أحرف على الأقل"),
+  email: z.string().email("البريد الإلكتروني غير صالح").optional(),
+  phone: z.string().optional(),
+  role: z.enum(Object.values(SYSTEM_ROLES)),
 });
 
-// مخطط الصلاحيات
 export const insertPermissionSchema = createInsertSchema(permissions);
-
-// مخطط ربط الصلاحيات
 export const insertUserPermissionSchema = createInsertSchema(userPermissions);
 
 // تصدير الأنواع
+export type User = typeof users.$inferSelect;
+export type InsertUser = z.infer<typeof insertUserSchema>;
 export type Permission = typeof permissions.$inferSelect;
 export type InsertPermission = z.infer<typeof insertPermissionSchema>;
 export type UserPermission = typeof userPermissions.$inferSelect;
 export type InsertUserPermission = z.infer<typeof insertUserPermissionSchema>;
+export type PermissionLog = typeof permissionLog.$inferSelect;
+
+// Add new default permissions
+const DEFAULT_PERMISSIONS_ARRAY = Object.values(DEFAULT_PERMISSIONS);
 
 export const customers = pgTable("customers", {
   id: serial("id").primaryKey(),
@@ -390,8 +495,6 @@ export const insertScheduledPostSchema = createInsertSchema(scheduledPosts).exte
 });
 
 
-export type User = typeof users.$inferSelect;
-export type InsertUser = z.infer<typeof insertUserSchema>;
 export type Customer = typeof customers.$inferSelect;
 export type InsertCustomer = z.infer<typeof insertCustomerSchema>;
 export type Appointment = typeof appointments.$inferSelect;
@@ -425,6 +528,7 @@ export type CampaignNotification = typeof campaignNotifications.$inferSelect;
 export type InsertCampaignNotification = z.infer<typeof insertCampaignNotificationSchema>;
 export type ScheduledPost = typeof scheduledPosts.$inferSelect;
 export type InsertScheduledPost = z.infer<typeof insertScheduledPostSchema>;
+
 
 
 export const suppliers = pgTable("suppliers", {

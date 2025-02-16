@@ -5,6 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Table,
   TableBody,
   TableCell,
@@ -13,11 +20,13 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2 } from "lucide-react";
+import { Loader2, ShieldAlert, UserCheck } from "lucide-react";
+import { SYSTEM_ROLES, DEFAULT_PERMISSIONS } from "@shared/schema";
 
 export function PermissionsManager() {
   const { toast } = useToast();
   const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
+  const [selectedRole, setSelectedRole] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
   // جلب قائمة المستخدمين
@@ -26,16 +35,6 @@ export function PermissionsManager() {
     queryFn: async () => {
       const res = await fetch("/api/users");
       if (!res.ok) throw new Error("فشل في جلب المستخدمين");
-      return res.json();
-    }
-  });
-
-  // جلب قائمة الصلاحيات
-  const { data: permissions, isLoading: loadingPermissions } = useQuery({
-    queryKey: ["/api/permissions"],
-    queryFn: async () => {
-      const res = await fetch("/api/permissions");
-      if (!res.ok) throw new Error("فشل في جلب الصلاحيات");
       return res.json();
     }
   });
@@ -52,18 +51,48 @@ export function PermissionsManager() {
     enabled: !!selectedUserId,
   });
 
+  // تحديث دور المستخدم
+  const updateRoleMutation = useMutation({
+    mutationFn: async ({ userId, role }: { userId: number; role: string }) => {
+      const res = await fetch(`/api/users/${userId}/role`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ role }),
+      });
+      if (!res.ok) throw new Error("فشل تحديث الدور");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+      queryClient.invalidateQueries({ 
+        queryKey: ["/api/users", selectedUserId, "permissions"]
+      });
+      toast({
+        title: "تم تحديث الدور",
+        description: "تم تحديث دور المستخدم بنجاح",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "خطأ",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   // تحديث صلاحيات المستخدم
   const updatePermissionMutation = useMutation({
     mutationFn: async ({
       userId,
-      permissionId,
+      permissionKey,
       granted,
     }: {
       userId: number;
-      permissionId: number;
+      permissionKey: string;
       granted: boolean;
     }) => {
-      const res = await fetch(`/api/users/${userId}/permissions/${permissionId}`, {
+      const res = await fetch(`/api/users/${userId}/permissions/${permissionKey}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ granted }),
@@ -72,7 +101,9 @@ export function PermissionsManager() {
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/users", selectedUserId, "permissions"] });
+      queryClient.invalidateQueries({ 
+        queryKey: ["/api/users", selectedUserId, "permissions"]
+      });
       toast({
         title: "تم تحديث الصلاحية",
         description: "تم تحديث صلاحيات المستخدم بنجاح",
@@ -87,7 +118,7 @@ export function PermissionsManager() {
     },
   });
 
-  if (loadingUsers || loadingPermissions) {
+  if (loadingUsers) {
     return (
       <div className="flex items-center justify-center p-8">
         <Loader2 className="h-8 w-8 animate-spin" />
@@ -95,11 +126,21 @@ export function PermissionsManager() {
     );
   }
 
+  // تنظيم الصلاحيات حسب الفئة
+  const groupedPermissions = Object.entries(DEFAULT_PERMISSIONS).reduce((acc, [key, value]) => {
+    const category = value.split('_')[0].toLowerCase();
+    if (!acc[category]) {
+      acc[category] = [];
+    }
+    acc[category].push({ key, value });
+    return acc;
+  }, {} as Record<string, Array<{ key: string, value: string }>>);
+
   return (
     <Card>
       <CardHeader>
         <CardTitle>إدارة صلاحيات المستخدمين</CardTitle>
-        <CardDescription>حدد المستخدم لإدارة صلاحياته</CardDescription>
+        <CardDescription>تعيين وتعديل أدوار وصلاحيات المستخدمين</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="space-y-6">
@@ -111,53 +152,102 @@ export function PermissionsManager() {
                 <Button
                   key={user.id}
                   variant={selectedUserId === user.id ? "default" : "outline"}
-                  onClick={() => setSelectedUserId(user.id)}
+                  onClick={() => {
+                    setSelectedUserId(user.id);
+                    setSelectedRole(user.role);
+                  }}
+                  className="justify-start"
                 >
-                  {user.name || user.username}
+                  <div className="flex items-center gap-2">
+                    {user.role === SYSTEM_ROLES.SUPER_ADMIN ? (
+                      <ShieldAlert className="h-4 w-4" />
+                    ) : (
+                      <UserCheck className="h-4 w-4" />
+                    )}
+                    <span>{user.name || user.username}</span>
+                  </div>
                 </Button>
               ))}
             </div>
           </div>
 
-          {/* جدول الصلاحيات */}
           {selectedUserId && (
-            <div className="border rounded-lg">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>الصلاحية</TableHead>
-                    <TableHead>الوصف</TableHead>
-                    <TableHead>الحالة</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {permissions?.map((permission: any) => {
-                    const userPermission = userPermissions?.find(
-                      (up: any) => up.permissionId === permission.id
-                    );
-                    return (
-                      <TableRow key={permission.id}>
-                        <TableCell>{permission.name}</TableCell>
-                        <TableCell>{permission.description}</TableCell>
-                        <TableCell>
-                          <Switch
-                            checked={userPermission?.granted ?? false}
-                            onCheckedChange={(checked) =>
-                              updatePermissionMutation.mutate({
-                                userId: selectedUserId,
-                                permissionId: permission.id,
-                                granted: checked,
-                              })
-                            }
-                            disabled={updatePermissionMutation.isPending}
-                          />
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </div>
+            <>
+              {/* تحديد الدور */}
+              <div className="space-y-2">
+                <Label>الدور</Label>
+                <Select
+                  value={selectedRole || undefined}
+                  onValueChange={(value) => {
+                    setSelectedRole(value);
+                    updateRoleMutation.mutate({
+                      userId: selectedUserId,
+                      role: value,
+                    });
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="اختر الدور" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.values(SYSTEM_ROLES).map((role) => (
+                      <SelectItem key={role} value={role}>
+                        {role}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* جدول الصلاحيات */}
+              <div className="space-y-4">
+                {Object.entries(groupedPermissions).map(([category, permissions]) => (
+                  <Card key={category}>
+                    <CardHeader>
+                      <CardTitle className="capitalize">{category}</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>الصلاحية</TableHead>
+                            <TableHead>الحالة</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {permissions.map(({ key, value }) => {
+                            const hasPermission = userPermissions?.some(
+                              (p: any) => p.key === key && p.granted
+                            );
+                            return (
+                              <TableRow key={key}>
+                                <TableCell>{value}</TableCell>
+                                <TableCell>
+                                  <Switch
+                                    checked={hasPermission}
+                                    onCheckedChange={(checked) =>
+                                      updatePermissionMutation.mutate({
+                                        userId: selectedUserId,
+                                        permissionKey: key,
+                                        granted: checked,
+                                      })
+                                    }
+                                    disabled={
+                                      updatePermissionMutation.isPending ||
+                                      selectedRole === SYSTEM_ROLES.SUPER_ADMIN
+                                    }
+                                  />
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })}
+                        </TableBody>
+                      </Table>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </>
           )}
         </div>
       </CardContent>

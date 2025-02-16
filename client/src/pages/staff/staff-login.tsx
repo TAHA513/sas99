@@ -23,7 +23,7 @@ export default function LoginPage() {
   const { toast } = useToast();
 
   const { data: settings } = useQuery({
-    queryKey: ['/api/settings'],
+    queryKey: ['/api/settings/store'],
   });
 
   const adminForm = useForm<LoginData>({
@@ -36,10 +36,10 @@ export default function LoginPage() {
 
   const adminLoginMutation = useMutation({
     mutationFn: async (data: LoginData) => {
-      const response = await fetch('/api/admin/login', {
+      const response = await fetch('/api/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
+        body: JSON.stringify({ ...data, loginType: 'admin' }),
       });
 
       if (!response.ok) {
@@ -62,10 +62,10 @@ export default function LoginPage() {
 
   const staffLoginMutation = useMutation({
     mutationFn: async (data: LoginData) => {
-      const response = await fetch('/api/staff/login', {
+      const response = await fetch('/api/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
+        body: JSON.stringify({ ...data, loginType: 'staff' }),
       });
 
       if (!response.ok) {
