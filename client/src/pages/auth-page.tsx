@@ -10,8 +10,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useLocation } from "wouter";
 import { z } from "zod";
 
-const loginSchema = insertUserSchema.omit({ name: true }).extend({
-  identifier: z.string().min(1, "يرجى إدخال اسم المستخدم أو البريد الإلكتروني"),
+const loginSchema = z.object({
+  username: z.string().min(1, "يرجى إدخال اسم المستخدم"),
   password: z.string().min(1, "يرجى إدخال كلمة المرور"),
 });
 
@@ -29,7 +29,7 @@ export default function AuthPage() {
   const loginForm = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      identifier: "",
+      username: "",
       password: "",
     },
   });
@@ -44,10 +44,13 @@ export default function AuthPage() {
   });
 
   const onLoginSubmit = (data: LoginFormData) => {
-    loginMutation.mutate({
-      username: data.identifier,
-      password: data.password,
-    });
+    console.log('تم تقديم نموذج تسجيل الدخول:', data);
+    loginMutation.mutate(data);
+  };
+
+  const onRegisterSubmit = (data: z.infer<typeof insertUserSchema>) => {
+    console.log('تم تقديم نموذج التسجيل:', data);
+    registerMutation.mutate(data);
   };
 
   return (
@@ -69,10 +72,10 @@ export default function AuthPage() {
                   <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-4">
                     <FormField
                       control={loginForm.control}
-                      name="identifier"
+                      name="username"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>اسم المستخدم / البريد الإلكتروني</FormLabel>
+                          <FormLabel>اسم المستخدم</FormLabel>
                           <FormControl>
                             <Input {...field} />
                           </FormControl>
@@ -102,7 +105,7 @@ export default function AuthPage() {
 
               <TabsContent value="register">
                 <Form {...registerForm}>
-                  <form onSubmit={registerForm.handleSubmit((data) => registerMutation.mutate(data))} className="space-y-4">
+                  <form onSubmit={registerForm.handleSubmit(onRegisterSubmit)} className="space-y-4">
                     <FormField
                       control={registerForm.control}
                       name="name"
