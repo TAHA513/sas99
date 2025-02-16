@@ -22,15 +22,20 @@ async function hashPassword(password: string) {
 }
 
 async function comparePasswords(supplied: string, stored: string) {
-  // للمستخدم الأول (admin) الذي لديه كلمة مرور غير مشفرة
-  if (stored === "password_hash.salt" && supplied === "admin123") {
+  // للمستخدم الأول (admin)، نقارن كلمة المرور مباشرة
+  if (stored === "admin123" && supplied === "admin123") {
     return true;
   }
 
-  const [hashed, salt] = stored.split(".");
-  const hashedBuf = Buffer.from(hashed, "hex");
-  const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
-  return timingSafeEqual(hashedBuf, suppliedBuf);
+  try {
+    const [hashed, salt] = stored.split(".");
+    const hashedBuf = Buffer.from(hashed, "hex");
+    const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
+    return timingSafeEqual(hashedBuf, suppliedBuf);
+  } catch (error) {
+    console.error('خطأ في مقارنة كلمات المرور:', error);
+    return false;
+  }
 }
 
 export function setupAuth(app: Express) {
@@ -53,17 +58,24 @@ export function setupAuth(app: Express) {
   passport.use(
     new LocalStrategy(async (username, password, done) => {
       try {
+        console.log('محاولة تسجيل دخول:', username);
         const user = await storage.getUserByUsername(username);
+
         if (!user) {
+          console.log('المستخدم غير موجود:', username);
           return done(null, false);
         }
 
-        if (!(await comparePasswords(password, user.password))) {
+        const isValidPassword = await comparePasswords(password, user.password);
+        console.log('نتيجة التحقق من كلمة المرور:', isValidPassword);
+
+        if (!isValidPassword) {
           return done(null, false);
         }
 
         return done(null, user);
       } catch (error) {
+        console.error('خطأ في المصادقة:', error);
         return done(error);
       }
     }),
@@ -102,13 +114,23 @@ export function setupAuth(app: Express) {
   });
 
   app.post("/api/login", (req, res, next) => {
+    console.log('محاولة تسجيل دخول جديدة:', req.body.username);
+
     passport.authenticate("local", (err: any, user: any, info: any) => {
-      if (err) return next(err);
+      if (err) {
+        console.error('خطأ في المصادقة:', err);
+        return next(err);
+      }
       if (!user) {
+        console.log('فشل تسجيل الدخول لـ:', req.body.username);
         return res.status(401).json({ message: "اسم المستخدم أو كلمة المرور غير صحيحة" });
       }
       req.login(user, (err) => {
-        if (err) return next(err);
+        if (err) {
+          console.error('خطأ في تسجيل الدخول:', err);
+          return next(err);
+        }
+        console.log('تم تسجيل الدخول بنجاح:', user.username);
         res.json(user);
       });
     })(req, res, next);
