@@ -7,7 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { MessageSquare, Upload, Plus, Building2, Settings as SettingsIcon, Paintbrush, Database, Users, History, Shield, KeyRound, UserPlus, Trash2, Loader2, Calendar, Package, Receipt, Sections } from "lucide-react";
+import { MessageSquare, Upload, Plus, Building2, Settings as SettingsIcon, Paintbrush, Database, Users, History, KeyRound, UserPlus, Trash2, Loader2, Calendar, Package, Receipt, Sections } from "lucide-react";
 import { SiGooglecalendar } from "react-icons/si";
 import { SiFacebook, SiInstagram, SiSnapchat } from "react-icons/si";
 import { Label } from "@/components/ui/label";
@@ -54,7 +54,6 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { PermissionsManager } from "@/components/settings/permissions-manager";
-import { SecuritySettings } from "@/components/settings/security-settings";
 
 const socialMediaAccountSchema = z.object({
   platform: z.enum(['facebook', 'instagram', 'snapchat'], {
@@ -597,10 +596,6 @@ export default function SettingsPage() {
               <Building2 className="h-4 w-4" />
               <span>المتجر</span>
             </TabsTrigger>
-            <TabsTrigger value="security" className="space-x-2">
-              <Shield className="h-4 w-4" />
-              <span>الأمان</span>
-            </TabsTrigger>
             <TabsTrigger value="integrations" className="space-x-2">
               <SettingsIcon className="h-4 w-4" />
               <span>التكاملات</span>
@@ -890,7 +885,7 @@ export default function SettingsPage() {
                     <SiSnapchat className="h-8 w-8 text-yellow-500" />
                   </div>
                   <div>
-                    <CardTitle>الحسابات المرتبطة</CardTitle>
+                                        <CardTitle>الحسابات المرتبطة</CardTitle>
                     <CardDescription>
                       إدارة حسابات التواصل الاجتماعي المرتبطة بالنظام
                     </CardDescription>
@@ -1547,9 +1542,6 @@ export default function SettingsPage() {
                 </div>
               </CardContent>
             </CustomCard>
-          </TabsContent>
-          <TabsContent value="security">
-            <SecuritySettings />
           </TabsContent>
         </Tabs>
       </div>
