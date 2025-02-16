@@ -4,7 +4,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from "@/hooks/use-auth";
 import NotFound from "@/pages/not-found";
 import DashboardPage from "@/pages/dashboard-page";
-import LoginPage from "@/pages/auth/login-page";
+import AuthPage from "@/pages/auth-page";
+import StaffLoginPage from "@/pages/staff/staff-login";
 import StaffDashboard from "@/pages/staff/dashboard";
 import CustomersPage from "@/pages/customers-page";
 import AppointmentsPage from "@/pages/appointments-page";
@@ -22,9 +23,9 @@ import ExpensesPage from "@/pages/expenses-page";
 import ExpenseCategoriesPage from "@/pages/expense-categories-page";
 import SettingsPage from "@/pages/settings-page";
 import InventoryReportsPage from "@/pages/inventory-reports-page";
-import { ProtectedRoute } from "@/lib/protected-route";
 import { useEffect } from "react";
 import { loadThemeSettings } from "@/lib/theme";
+import { ProtectedRoute } from "@/lib/protected-route";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -42,26 +43,105 @@ function Router() {
 
   return (
     <Switch>
-      <Route path="/auth/login" component={LoginPage} />
-      <ProtectedRoute path="/" component={DashboardPage} />
-      <ProtectedRoute path="/purchases" component={PurchasesPage} />
-      <ProtectedRoute path="/suppliers" component={SuppliersPage} />
-      <ProtectedRoute path="/customers" component={CustomersPage} />
-      <ProtectedRoute path="/staff" component={StaffDashboard} />
-      <ProtectedRoute path="/staff-management" component={StaffPage} />
-      <ProtectedRoute path="/marketing" component={MarketingPage} />
-      <ProtectedRoute path="/promotions" component={PromotionsPage} />
-      <ProtectedRoute path="/products" component={ProductsPage} />
-      <ProtectedRoute path="/invoices" component={InvoicesPage} />
-      <ProtectedRoute path="/installments" component={InstallmentsPage} />
-      <ProtectedRoute path="/expenses" component={ExpensesPage} />
-      <ProtectedRoute path="/expense-categories" component={ExpenseCategoriesPage} />
-      <ProtectedRoute path="/reports" component={ReportsPage} />
-      <ProtectedRoute path="/inventory-reports" component={InventoryReportsPage} />
-      <ProtectedRoute path="/barcodes" component={BarcodesPage} />
-      <ProtectedRoute path="/settings" component={SettingsPage} />
-      <ProtectedRoute path="/appointments" component={AppointmentsPage} />
-      <Route component={NotFound} />
+      <Route path="/auth">
+        <AuthPage />
+      </Route>
+      <Route path="/staff/login">
+        <StaffLoginPage />
+      </Route>
+      <Route path="/">
+        <ProtectedRoute>
+          <DashboardPage />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/purchases">
+        <ProtectedRoute>
+          <PurchasesPage />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/suppliers">
+        <ProtectedRoute>
+          <SuppliersPage />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/customers">
+        <ProtectedRoute>
+          <CustomersPage />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/staff">
+        <ProtectedRoute>
+          <StaffDashboard />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/staff-management">
+        <ProtectedRoute>
+          <StaffPage />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/marketing">
+        <ProtectedRoute>
+          <MarketingPage />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/promotions">
+        <ProtectedRoute>
+          <PromotionsPage />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/products">
+        <ProtectedRoute>
+          <ProductsPage />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/invoices">
+        <ProtectedRoute>
+          <InvoicesPage />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/installments">
+        <ProtectedRoute>
+          <InstallmentsPage />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/expenses">
+        <ProtectedRoute>
+          <ExpensesPage />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/expense-categories">
+        <ProtectedRoute>
+          <ExpenseCategoriesPage />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/reports">
+        <ProtectedRoute>
+          <ReportsPage />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/inventory-reports">
+        <ProtectedRoute>
+          <InventoryReportsPage />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/barcodes">
+        <ProtectedRoute>
+          <BarcodesPage />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/settings">
+        <ProtectedRoute>
+          <SettingsPage />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/appointments">
+        <ProtectedRoute>
+          <AppointmentsPage />
+        </ProtectedRoute>
+      </Route>
+      <Route>
+        <NotFound />
+      </Route>
     </Switch>
   );
 }

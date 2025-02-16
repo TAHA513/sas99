@@ -47,12 +47,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
 
       if (!res.ok) {
-        const errorData = await res.json().catch(() => ({ error: 'فشل تسجيل الدخول' }));
-        throw new Error(errorData.error || 'فشل تسجيل الدخول');
+        throw new Error('فشل تسجيل الدخول');
       }
 
-      const data = await res.json().catch(() => null);
-      if (!data) throw new Error('فشل استلام بيانات المستخدم');
+      const data = await res.json();
+      if (!data) {
+        throw new Error('فشل استلام بيانات المستخدم');
+      }
 
       return data;
     },
@@ -62,6 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         title: "تم تسجيل الدخول بنجاح",
         description: `مرحباً بك ${user.name || user.username}`,
       });
+      window.location.href = '/'; // إعادة التوجيه مباشرة للصفحة الرئيسية
     },
     onError: (error: Error) => {
       toast({
@@ -80,8 +82,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
 
       if (!res.ok) {
-        const errorData = await res.json().catch(() => ({ error: 'فشل تسجيل الخروج' }));
-        throw new Error(errorData.error || 'فشل تسجيل الخروج');
+        throw new Error('فشل تسجيل الخروج');
       }
     },
     onSuccess: () => {
@@ -90,6 +91,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       toast({
         title: "تم تسجيل الخروج بنجاح",
       });
+      window.location.href = '/auth'; // إعادة التوجيه لصفحة تسجيل الدخول
     },
     onError: (error: Error) => {
       toast({

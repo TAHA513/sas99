@@ -35,7 +35,6 @@ export default function AuthPage() {
       setLocation("/"); // Redirect to home after successful login
     } catch (error) {
       console.error("Login error:", error);
-      // Add more sophisticated error handling here, e.g., display an error message to the user.
     }
   };
 
