@@ -15,7 +15,8 @@ import {
   ShoppingCart,
   Truck,
   DollarSign,
-  FolderIcon, // Added import for FolderIcon
+  FolderIcon,
+  ClipboardList, // Add import for inventory report icon
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
@@ -77,9 +78,14 @@ const navItems = [
     icon: FolderIcon,
   },
   {
-    title: "التقارير",
+    title: "التقارير العامة",
     href: "/reports",
     icon: LineChart,
+  },
+  {
+    title: "تقارير المخزون",
+    href: "/inventory-reports",
+    icon: ClipboardList,
   },
   {
     title: "التسويق",
@@ -112,7 +118,7 @@ export function DashboardNav() {
         <h1 className="text-2xl font-bold">نظام الإدارة</h1>
       </div>
 
-      <nav className="space-y-2 flex-1">
+      <nav className="space-y-2 flex-1 overflow-y-auto">
         {navItems.map((item) => (
           <Link key={item.href} href={item.href}>
             <Button
