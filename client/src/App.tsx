@@ -43,29 +43,37 @@ function Router() {
   return (
     <Switch>
       {/* صفحة تسجيل الدخول */}
-      <Route path="/staff/login" component={LoginPage} />
+      <Route path="/auth/login" component={LoginPage} />
 
       {/* المسارات المحمية للمدير فقط */}
-      <ProtectedRoute path="/" component={DashboardPage} allowedRoles={["admin"]} />
-      <ProtectedRoute path="/purchases" component={PurchasesPage} allowedRoles={["admin"]} />
-      <ProtectedRoute path="/suppliers" component={SuppliersPage} allowedRoles={["admin"]} />
-      <ProtectedRoute path="/customers" component={CustomersPage} allowedRoles={["admin"]} />
-      <ProtectedRoute path="/staff-management" component={StaffPage} allowedRoles={["admin"]} />
-      <ProtectedRoute path="/marketing" component={MarketingPage} allowedRoles={["admin"]} />
-      <ProtectedRoute path="/promotions" component={PromotionsPage} allowedRoles={["admin"]} />
-      <ProtectedRoute path="/products" component={ProductsPage} allowedRoles={["admin"]} />
-      <ProtectedRoute path="/invoices" component={InvoicesPage} allowedRoles={["admin"]} />
-      <ProtectedRoute path="/installments" component={InstallmentsPage} allowedRoles={["admin"]} />
-      <ProtectedRoute path="/expenses" component={ExpensesPage} allowedRoles={["admin"]} />
-      <ProtectedRoute path="/expense-categories" component={ExpenseCategoriesPage} allowedRoles={["admin"]} />
-      <ProtectedRoute path="/reports" component={ReportsPage} allowedRoles={["admin"]} />
-      <ProtectedRoute path="/inventory-reports" component={InventoryReportsPage} allowedRoles={["admin"]} />
-      <ProtectedRoute path="/barcodes" component={BarcodesPage} allowedRoles={["admin"]} />
-      <ProtectedRoute path="/settings" component={SettingsPage} allowedRoles={["admin"]} />
+      <ProtectedRoute path="/" component={DashboardPage} />
+      <ProtectedRoute path="/purchases" component={PurchasesPage} />
+      <ProtectedRoute path="/suppliers" component={SuppliersPage} />
+      <ProtectedRoute path="/customers" component={CustomersPage} />
+      <ProtectedRoute 
+        path="/staff-management" 
+        component={StaffPage} 
+        requiredPermission="staff_page"
+      />
+      <ProtectedRoute path="/marketing" component={MarketingPage} />
+      <ProtectedRoute path="/promotions" component={PromotionsPage} />
+      <ProtectedRoute path="/products" component={ProductsPage} />
+      <ProtectedRoute path="/invoices" component={InvoicesPage} />
+      <ProtectedRoute path="/installments" component={InstallmentsPage} />
+      <ProtectedRoute path="/expenses" component={ExpensesPage} />
+      <ProtectedRoute path="/expense-categories" component={ExpenseCategoriesPage} />
+      <ProtectedRoute path="/reports" component={ReportsPage} />
+      <ProtectedRoute path="/inventory-reports" component={InventoryReportsPage} />
+      <ProtectedRoute path="/barcodes" component={BarcodesPage} />
+      <ProtectedRoute path="/settings" component={SettingsPage} />
 
       {/* المسارات المتاحة للموظفين */}
-      <ProtectedRoute path="/staff" component={StaffDashboard} allowedRoles={["admin", "staff"]} />
-      <ProtectedRoute path="/appointments" component={AppointmentsPage} allowedRoles={["admin", "staff"]} />
+      <ProtectedRoute 
+        path="/staff" 
+        component={StaffDashboard} 
+        requiredPermission="staff_page"
+      />
+      <ProtectedRoute path="/appointments" component={AppointmentsPage} />
 
       <Route component={NotFound} />
     </Switch>

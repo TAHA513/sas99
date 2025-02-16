@@ -1,3 +1,12 @@
+// Add new default permissions
+const DEFAULT_PERMISSIONS = [
+  {
+    name: "صفحة الموظفين",
+    key: "staff_page",
+    description: "الوصول إلى صفحة إدارة الموظفين"
+  }
+];
+
 import { pgTable, text, serial, integer, boolean, timestamp, decimal, json } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
