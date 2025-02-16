@@ -31,6 +31,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     data: user,
     error,
     isLoading,
+    refetch: refetchUser
   } = useQuery<SelectUser | null, Error>({
     queryKey: ["/api/user"],
     retry: false,
@@ -55,13 +56,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       return await res.json();
     },
-    onSuccess: (userData: SelectUser) => {
+    onSuccess: async (userData: SelectUser) => {
+      // تحديث البيانات في القائمة
       queryClient.setQueryData(["/api/user"], userData);
+      // إعادة جلب بيانات المستخدم للتأكد من تحديث الحالة
+      await refetchUser();
+
       toast({
         title: "تم تسجيل الدخول بنجاح",
         description: `مرحباً ${userData.name || userData.username}`,
       });
-      setLocation("/");
+
+      // التوجيه بناءً على الدور
+      if (userData.role === "admin") {
+        setLocation("/");
+      } else {
+        setLocation("/staff");
+      }
     },
     onError: (error: Error) => {
       console.error("Login error:", error);
