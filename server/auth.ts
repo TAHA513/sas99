@@ -22,6 +22,11 @@ async function hashPassword(password: string) {
 }
 
 async function comparePasswords(supplied: string, stored: string) {
+  // للمستخدم الأول (admin) الذي لديه كلمة مرور غير مشفرة
+  if (stored === "password_hash.salt" && supplied === "admin123") {
+    return true;
+  }
+
   const [hashed, salt] = stored.split(".");
   const hashedBuf = Buffer.from(hashed, "hex");
   const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
@@ -51,11 +56,6 @@ export function setupAuth(app: Express) {
         const user = await storage.getUserByUsername(username);
         if (!user) {
           return done(null, false);
-        }
-
-        // For the initial admin user with unencrypted password
-        if (user.username === 'admin' && user.password === 'password_hash.salt' && password === 'admin123') {
-          return done(null, user);
         }
 
         if (!(await comparePasswords(password, user.password))) {
@@ -102,7 +102,7 @@ export function setupAuth(app: Express) {
   });
 
   app.post("/api/login", (req, res, next) => {
-    passport.authenticate("local", (err, user, info) => {
+    passport.authenticate("local", (err: any, user: any, info: any) => {
       if (err) return next(err);
       if (!user) {
         return res.status(401).json({ message: "اسم المستخدم أو كلمة المرور غير صحيحة" });
