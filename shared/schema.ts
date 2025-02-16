@@ -8,13 +8,6 @@ export const users = pgTable("users", {
   password: text("password").notNull(),
   role: text("role").notNull().default("staff"),
   name: text("name").notNull(),
-  active: boolean("active").notNull().default(true),
-  permissions: json("permissions").$type<string[]>().default([]).notNull(),
-  authToken: text("auth_token"),
-  tokenExpiry: timestamp("token_expiry"),
-  lastLogin: timestamp("last_login"),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-  updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
 export const customers = pgTable("customers", {
@@ -42,11 +35,6 @@ export const staff = pgTable("staff", {
   specialization: text("specialization"),
   workDays: text("work_days").array(),
   workHours: text("work_hours").array(),
-  accessibleSections: json("accessible_sections").$type<{
-    section: string,
-    permissions: ('read' | 'write' | 'delete')[]
-  }[]>().default([]),
-  status: text("status").notNull().default("active"),
 });
 
 export const settings = pgTable("settings", {
@@ -229,23 +217,15 @@ export const installmentPayments = pgTable("installment_payments", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
-export const insertUserSchema = createInsertSchema(users).extend({
-  password: z.string().min(8, "كلمة المرور يجب أن تكون 8 أحرف على الأقل"),
-  confirmPassword: z.string(),
-  permissions: z.array(z.string()).optional(),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "كلمات المرور غير متطابقة",
-  path: ["confirmPassword"],
+export const insertUserSchema = createInsertSchema(users).pick({
+  username: true,
+  password: true,
+  name: true,
 });
 
 export const insertCustomerSchema = createInsertSchema(customers);
 export const insertAppointmentSchema = createInsertSchema(appointments);
-export const insertStaffSchema = createInsertSchema(staff).extend({
-  accessibleSections: z.array(z.object({
-    section: z.string(),
-    permissions: z.array(z.enum(['read', 'write', 'delete']))
-  })).optional(),
-});
+export const insertStaffSchema = createInsertSchema(staff);
 export const insertSettingSchema = createInsertSchema(settings).pick({
   key: true,
   value: true,

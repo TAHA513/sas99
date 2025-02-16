@@ -3,6 +3,7 @@ import { eq, and, sql } from 'drizzle-orm';
 import { db } from './db';
 import * as schema from '@shared/schema';
 import session from "express-session";
+import createMemoryStore from "memorystore";
 import connectPg from "connect-pg-simple";
 
 const PostgresSessionStore = connectPg(session);
@@ -13,7 +14,6 @@ export interface IStorage {
   getUser(id: number): Promise<schema.User | undefined>;
   getUserByUsername(username: string): Promise<schema.User | undefined>;
   createUser(user: schema.InsertUser): Promise<schema.User>;
-  updateUser(id: number, updates: Partial<schema.InsertUser>): Promise<schema.User>;
 
   // Customer operations
   getCustomers(): Promise<schema.Customer[]>;
@@ -33,9 +33,8 @@ export interface IStorage {
   getStaff(): Promise<schema.Staff[]>;
   getStaffMember(id: number): Promise<schema.Staff | undefined>;
   createStaff(staff: schema.InsertStaff): Promise<schema.Staff>;
-  updateStaff(id: number, updates: Partial<schema.InsertStaff>): Promise<schema.Staff>;
+  updateStaff(id: number, staff: Partial<schema.InsertStaff>): Promise<schema.Staff>;
   deleteStaff(id: number): Promise<void>;
-  getStaffByUserId(userId: number): Promise<schema.Staff | undefined>;
 
   // Settings operations
   getSetting(key: string): Promise<schema.Setting | undefined>;
@@ -53,7 +52,7 @@ export interface IStorage {
   getPromotions(): Promise<schema.Promotion[]>;
   getPromotion(id: number): Promise<schema.Promotion | undefined>;
   createPromotion(promotion: schema.InsertPromotion): Promise<schema.Promotion>;
-  updatePromotion(id: number, updates: Partial<schema.InsertPromotion>): Promise<schema.Promotion>;
+  updatePromotion(id: number, promotion: Partial<schema.InsertPromotion>): Promise<schema.Promotion>;
   deletePromotion(id: number): Promise<void>;
 
   // Discount Code operations
@@ -172,18 +171,6 @@ export class DatabaseStorage implements IStorage {
     return newUser;
   }
 
-  async updateUser(id: number, updates: Partial<schema.InsertUser>): Promise<schema.User> {
-    const [updatedUser] = await db
-      .update(schema.users)
-      .set({
-        ...updates,
-        updatedAt: new Date(),
-      })
-      .where(eq(schema.users.id, id))
-      .returning();
-    return updatedUser;
-  }
-
   // Customer operations
   async getCustomers(): Promise<schema.Customer[]> {
     return await db.select().from(schema.customers);
@@ -251,23 +238,14 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createStaff(staff: schema.InsertStaff): Promise<schema.Staff> {
-    const [newStaff] = await db
-      .insert(schema.staff)
-      .values({
-        ...staff,
-        status: staff.status || 'active',
-      })
-      .returning();
+    const [newStaff] = await db.insert(schema.staff).values(staff).returning();
     return newStaff;
   }
 
   async updateStaff(id: number, updates: Partial<schema.InsertStaff>): Promise<schema.Staff> {
     const [updatedStaff] = await db
       .update(schema.staff)
-      .set({
-        ...updates,
-        updatedAt: new Date(),
-      })
+      .set(updates)
       .where(eq(schema.staff.id, id))
       .returning();
     return updatedStaff;
@@ -275,14 +253,6 @@ export class DatabaseStorage implements IStorage {
 
   async deleteStaff(id: number): Promise<void> {
     await db.delete(schema.staff).where(eq(schema.staff.id, id));
-  }
-
-  async getStaffByUserId(userId: number): Promise<schema.Staff | undefined> {
-    const [staffMember] = await db
-      .select()
-      .from(schema.staff)
-      .where(eq(schema.staff.userId, userId));
-    return staffMember;
   }
 
   // Settings operations
