@@ -321,6 +321,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/inventory/stats", async (_req, res) => {
+    try {
+      const products = await storage.getProducts();
+      const lowStockProducts = products.filter(product => Number(product.quantity) < 10);
+
+      // Get today's sales
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const invoices = await storage.getInvoices();
+      const todaysSales = invoices.filter(invoice => {
+        const invoiceDate = new Date(invoice.date);
+        return invoiceDate >= today;
+      });
+
+      const stats = {
+        totalProducts: products.length,
+        lowStockCount: lowStockProducts.length,
+        dailySales: todaysSales.length,
+      };
+
+      res.json(stats);
+    } catch (error) {
+      console.error('Error fetching inventory stats:', error);
+      res.status(500).json({ error: "حدث خطأ أثناء جلب إحصائيات المخزون" });
+    }
+  });
 
   const httpServer = createServer(app);
   return httpServer;
