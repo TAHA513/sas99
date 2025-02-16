@@ -6,10 +6,20 @@ export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
-  role: text("role").notNull().default("staff"),
+  role: text("role", { enum: ["admin", "staff"] }).notNull().default("staff"),
   name: text("name"),
   staffId: text("staff_id"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const insertUserSchema = createInsertSchema(users, {
+  role: z.enum(["admin", "staff"]).default("staff"),
+}).pick({
+  username: true,
+  password: true,
+  role: true,
+  name: true,
+  staffId: true,
 });
 
 export const customers = pgTable("customers", {
@@ -217,13 +227,6 @@ export const installmentPayments = pgTable("installment_payments", {
   status: text("status").notNull().default("paid"),
   notes: text("notes"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
-});
-
-export const insertUserSchema = createInsertSchema(users).pick({
-  username: true,
-  password: true,
-  name: true,
-  staffId: true,
 });
 
 export const insertCustomerSchema = createInsertSchema(customers);

@@ -36,13 +36,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { username, password } = req.body;
 
-      // Check if admin already exists
+      // التحقق من وجود المستخدم
       const existingAdmin = await storage.getUserByUsername(username);
       if (existingAdmin) {
         return res.status(400).json({ message: "اسم المستخدم موجود بالفعل" });
       }
 
-      // Create new admin user
+      // إنشاء مستخدم جديد بصلاحيات المدير
       const hashedPassword = await hashPassword(password);
       const adminUser = await storage.createUser({
         username,
@@ -50,10 +50,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         role: "admin",
       });
 
-      res.status(201).json({ message: "تم إنشاء حساب المدير بنجاح", user: adminUser });
+      res.status(201).json({ 
+        message: "تم إنشاء حساب المدير بنجاح",
+        user: {
+          id: adminUser.id,
+          username: adminUser.username,
+          role: adminUser.role
+        }
+      });
     } catch (error) {
       console.error('Error creating admin:', error);
-      res.status(500).json({ message: "حدث خطأ أثناء إنشاء حساب المدير" });
+      res.status(500).json({ 
+        message: "حدث خطأ أثناء إنشاء حساب المدير",
+        error: error.message 
+      });
     }
   });
 
@@ -62,13 +72,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { username, password, staffId } = req.body;
 
-      // Check if staff username already exists
+      // التحقق من وجود المستخدم
       const existingStaff = await storage.getUserByUsername(username);
       if (existingStaff) {
         return res.status(400).json({ message: "اسم المستخدم موجود بالفعل" });
       }
 
-      // Create new staff user
+      // إنشاء مستخدم جديد بصلاحيات الموظف
       const hashedPassword = await hashPassword(password);
       const staffUser = await storage.createUser({
         username,
@@ -77,10 +87,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         staffId,
       });
 
-      res.status(201).json({ message: "تم إنشاء حساب الموظف بنجاح", user: staffUser });
+      res.status(201).json({ 
+        message: "تم إنشاء حساب الموظف بنجاح",
+        user: {
+          id: staffUser.id,
+          username: staffUser.username,
+          role: staffUser.role,
+          staffId: staffUser.staffId
+        }
+      });
     } catch (error) {
       console.error('Error creating staff:', error);
-      res.status(500).json({ message: "حدث خطأ أثناء إنشاء حساب الموظف" });
+      res.status(500).json({ 
+        message: "حدث خطأ أثناء إنشاء حساب الموظف",
+        error: error.message 
+      });
     }
   });
 
