@@ -15,6 +15,14 @@ export interface StoreSettings {
     defaultCurrency: 'USD' | 'IQD';
     usdToIqdRate: number;
   };
+  enableStaffLogin?: boolean;
+  restrictStaffAccess?: boolean;
+  trackStaffActivity?: boolean;
+  staffLoginHistory?: any[];
+  enableSalesPartition?: boolean;
+  enableAppointmentsPartition?: boolean;
+  enableInventoryPartition?: boolean;
+  enableReportsPartition?: boolean;
 }
 
 // Social Media Account
@@ -68,7 +76,15 @@ export const getStoreSettings = (): StoreSettings =>
     currencySettings: {
       defaultCurrency: 'USD',
       usdToIqdRate: 1460
-    }
+    },
+    enableStaffLogin: false,
+    restrictStaffAccess: false,
+    trackStaffActivity: false,
+    staffLoginHistory: [],
+    enableSalesPartition: false,
+    enableAppointmentsPartition: false,
+    enableInventoryPartition: false,
+    enableReportsPartition: false
   });
 
 export const setStoreSettings = (settings: Partial<StoreSettings>) => {

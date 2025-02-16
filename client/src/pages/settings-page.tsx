@@ -7,7 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { MessageSquare, Upload, Plus, Building2, Settings as SettingsIcon, Paintbrush, Database, Users, History, Shield, KeyRound, UserPlus, Trash2, Loader2 } from "lucide-react";
+import { MessageSquare, Upload, Plus, Building2, Settings as SettingsIcon, Paintbrush, Database, Users, History, Shield, KeyRound, UserPlus, Trash2, Loader2, Calendar, Package, Receipt, Sections } from "lucide-react";
 import { SiGooglecalendar } from "react-icons/si";
 import { SiFacebook, SiInstagram, SiSnapchat } from "react-icons/si";
 import { Label } from "@/components/ui/label";
@@ -209,6 +209,10 @@ export default function SettingsPage() {
       staffLoginHistory?: any[];
       restrictStaffAccess?: boolean;
       trackStaffActivity?: boolean;
+      enableSalesPartition?: boolean;
+      enableAppointmentsPartition?: boolean;
+      enableInventoryPartition?: boolean;
+      enableReportsPartition?: boolean;
     }) => {
       if (data.storeName !== undefined || data.storeLogo !== undefined) {
         const newSettings = {
@@ -240,7 +244,18 @@ export default function SettingsPage() {
       if (data.trackStaffActivity !== undefined) {
         setStoreSettings({ ...storeSettings, trackStaffActivity: data.trackStaffActivity })
       }
-
+      if (data.enableSalesPartition !== undefined) {
+        setStoreSettings({ ...storeSettings, enableSalesPartition: data.enableSalesPartition });
+      }
+      if (data.enableAppointmentsPartition !== undefined) {
+        setStoreSettings({ ...storeSettings, enableAppointmentsPartition: data.enableAppointmentsPartition });
+      }
+      if (data.enableInventoryPartition !== undefined) {
+        setStoreSettings({ ...storeSettings, enableInventoryPartition: data.enableInventoryPartition });
+      }
+      if (data.enableReportsPartition !== undefined) {
+        setStoreSettings({ ...storeSettings, enableReportsPartition: data.enableReportsPartition });
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['storeSettings'] });
@@ -870,7 +885,7 @@ export default function SettingsPage() {
               <CardHeader>
                 <div className="flex items-center space-x-4">
                   <div className="flex gap-2">
-                    <SiFacebook className="h-8 w-8 text-blue-600" />
+                    <SiFacebook className="h-8 w-8 textblue-600" />
                     <SiInstagram className="h-8 w-8 text-pink-600" />
                     <SiSnapchat className="h-8 w-8 text-yellow-500" />
                   </div>
@@ -1445,92 +1460,90 @@ export default function SettingsPage() {
               </CardContent>
             </CustomCard>
           </TabsContent>
-          {/* Add the new tab content here */}
           <TabsContent value="permissions" className="space-y-6">
             <CustomCard>
               <CardHeader>
                 <div className="flex items-center space-x-4">
                   <Shield className="h-8 w-8 text-primary" />
                   <div>
-                    <CardTitle>صلاحيات الموظفين</CardTitle>
+                    <CardTitle>صلاحيات النظام</CardTitle>
                     <CardDescription>
-                      إدارة صلاحيات الوصول للموظفين
+                      إدارة صلاحيات المستخدمين والموظفين
                     </CardDescription>
                   </div>
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="staff-login"
-                      checked={storeSettings?.enableStaffLogin}
-                      onCheckedChange={(checked) => {
-                        storeSettingsMutation.mutate({ enableStaffLogin: checked });
-                      }}
-                    />
-                    <Label htmlFor="staff-login">
-                      تمكين تسجيل دخول الموظفين
-                    </Label>
-                  </div>
+                <div className="space-y-8">
+                  <PermissionsManager />
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold">بارتشن الموظفين</h3>
+                    <div className="grid gap-4">
+                      <div className="flex items-center justify-between p-4 border rounded-lg">
+                        <div className="flex items-center gap-3">
+                          <Users className="h-5 w-5 text-muted-foreground" />
+                          <div>
+                            <p className="font-medium">قسم المبيعات</p>
+                            <p className="text-sm text-muted-foreground">الوصول إلى المبيعات والفواتير</p>
+                          </div>
+                        </div>
+                        <Switch
+                          checked={storeSettings?.enableSalesPartition}
+                          onCheckedChange={(checked) => {
+                            storeSettingsMutation.mutate({ enableSalesPartition: checked })
+                          }}
+                        />
+                      </div>
 
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="restrict-staff"
-                      checked={storeSettings?.restrictStaffAccess}
-                      onCheckedChange={(checked) => {
-                        storeSettingsMutation.mutate({ restrictStaffAccess: checked });
-                      }}
-                    />
-                    <Label htmlFor="restrict-staff">
-                      تقييد وصول الموظفين حسب الصلاحيات
-                    </Label>
-                  </div>
+                      <div className="flex items-center justify-between p-4 border rounded-lg">
+                        <div className="flex items-center gap-3">
+                          <Calendar className="h-5 w-5 text-muted-foreground" />
+                          <div>
+                            <p className="font-medium">قسم المواعيد</p>
+                            <p className="text-sm text-muted-foreground">إدارة مواعيد العملاء</p>
+                          </div>
+                        </div>
+                        <Switch
+                          checked={storeSettings?.enableAppointmentsPartition}
+                          onCheckedChange={(checked) => {
+                            storeSettingsMutation.mutate({ enableAppointmentsPartition: checked })
+                          }}
+                        />
+                      </div>
 
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="track-activity"
-                      checked={storeSettings?.trackStaffActivity}
-                      onCheckedChange={(checked) => {
-                        storeSettingsMutation.mutate({ trackStaffActivity: checked });
-                      }}
-                    />
-                    <Label htmlFor="track-activity">
-                      تتبع نشاط الموظفين
-                    </Label>
-                  </div>
+                      <div className="flex items-center justify-between p-4 border rounded-lg">
+                        <div className="flex items-center gap-3">
+                          <Package className="h-5 w-5 text-muted-foreground" />
+                          <div>
+                            <p className="font-medium">قسم المخزون</p>
+                            <p className="text-sm text-muted-foreground">إدارة المنتجات والمخزون</p>
+                          </div>
+                        </div>
+                        <Switch
+                          checked={storeSettings?.enableInventoryPartition}
+                          onCheckedChange={(checked) => {
+                            storeSettingsMutation.mutate({ enableInventoryPartition: checked })
+                          }}
+                        />
+                      </div>
 
-                  {storeSettings?.staffLoginHistory && storeSettings.staffLoginHistory.length > 0 && (
-                    <div className="mt-6">
-                      <h3 className="text-lg font-semibold mb-4">سجل تسجيل الدخول</h3>
-                      <div className="border rounded-lg">
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead>الموظف</TableHead>
-                              <TableHead>التاريخ والوقت</TableHead>
-                              <TableHead>الحالة</TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {storeSettings.staffLoginHistory.map((entry, index) => (
-                              <TableRow key={index}>
-                                <TableCell>{entry.username}</TableCell>
-                                <TableCell>
-                                  {new Date(entry.timestamp).toLocaleString('ar-IQ')}
-                                </TableCell>
-                                <TableCell>
-                                  <Badge variant={entry.success ? "success" : "destructive"}>
-                                    {entry.success ? "نجاح" : "فشل"}
-                                  </Badge>
-                                </TableCell>
-                              </TableRow>
-                            ))}
-                          </TableBody>
-                        </Table>
+                      <div className="flex items-center justify-between p-4 border rounded-lg">
+                        <div className="flex items-center gap-3">
+                          <Receipt className="h-5 w-5 text-muted-foreground" />
+                          <div>
+                            <p className="font-medium">قسم التقارير</p>
+                            <p className="text-sm text-muted-foreground">عرض التقارير والإحصائيات</p>
+                          </div>
+                        </div>
+                        <Switch
+                          checked={storeSettings?.enableReportsPartition}
+                          onCheckedChange={(checked) => {
+                            storeSettingsMutation.mutate({ enableReportsPartition: checked })
+                          }}
+                        />
                       </div>
                     </div>
-                  )}
+                  </div>
                 </div>
               </CardContent>
             </CustomCard>
