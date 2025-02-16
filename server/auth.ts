@@ -43,9 +43,10 @@ export function setupAuth(app: Express) {
   app.use(passport.initialize());
   app.use(passport.session());
 
-  // إضافة middleware لضمان استجابات JSON لجميع نقاط نهاية API
+  // التأكد من أن جميع نقاط نهاية API ترجع JSON
   app.use('/api', (req, res, next) => {
     res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Accept', 'application/json');
     next();
   });
 
@@ -92,7 +93,7 @@ export function setupAuth(app: Express) {
     }
   });
 
-  // API نقاط نهاية
+  // نقاط نهاية API
   app.post("/api/login", (req, res, next) => {
     passport.authenticate("local", (err, user, info) => {
       if (err) {

@@ -5,30 +5,42 @@ import express from 'express';
 import { hashPassword } from "./auth";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // التأكد من أن جميع نقاط نهاية API تستجيب بـ JSON
+  app.use('/api', (req, res, next) => {
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Accept', 'application/json');
+    next();
+  });
+
   // Staff Dashboard APIs
   app.get("/api/sales/today", async (_req, res) => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    try {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
 
-    const invoices = await storage.getInvoices();
-    const todaySales = invoices.filter(invoice => {
-      const invoiceDate = new Date(invoice.date);
-      return invoiceDate >= today;
-    });
+      const invoices = await storage.getInvoices();
+      const todaySales = invoices.filter(invoice => {
+        const invoiceDate = new Date(invoice.date);
+        return invoiceDate >= today;
+      });
 
-    const total = todaySales.reduce((sum, invoice) => sum + Number(invoice.finalTotal), 0);
+      const total = todaySales.reduce((sum, invoice) => sum + Number(invoice.finalTotal), 0);
 
-    res.json({
-      total,
-      count: todaySales.length,
-      items: todaySales.map(invoice => ({
-        id: invoice.id,
-        amount: invoice.finalTotal,
-        date: invoice.date,
-        status: invoice.status,
-        customerName: invoice.customerName
-      }))
-    });
+      res.json({
+        total,
+        count: todaySales.length,
+        items: todaySales.map(invoice => ({
+          id: invoice.id,
+          amount: invoice.finalTotal,
+          date: invoice.date,
+          status: 'completed',
+          customerName: invoice.customerName
+        }))
+      });
+    } catch (error) {
+      console.error('Error fetching sales:', error);
+      res.status(500).json({ error: "حدث خطأ أثناء جلب بيانات المبيعات" });
+    }
   });
 
   // Admin credentials management
