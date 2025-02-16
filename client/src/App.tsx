@@ -24,6 +24,7 @@ import SettingsPage from "@/pages/settings-page";
 import InventoryReportsPage from "@/pages/inventory-reports-page";
 import { useEffect } from "react";
 import { loadThemeSettings } from "@/lib/theme";
+import { ProtectedRoute } from "@/lib/protected-route";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -44,25 +45,28 @@ function Router() {
       {/* صفحة تسجيل الدخول */}
       <Route path="/staff/login" component={LoginPage} />
 
-      {/* المسارات المحمية */}
-      <Route path="/" component={DashboardPage} />
-      <Route path="/staff" component={StaffDashboard} />
-      <Route path="/purchases" component={PurchasesPage} />
-      <Route path="/suppliers" component={SuppliersPage} />
-      <Route path="/customers" component={CustomersPage} />
-      <Route path="/appointments" component={AppointmentsPage} />
-      <Route path="/staff-management" component={StaffPage} />
-      <Route path="/marketing" component={MarketingPage} />
-      <Route path="/promotions" component={PromotionsPage} />
-      <Route path="/products" component={ProductsPage} />
-      <Route path="/invoices" component={InvoicesPage} />
-      <Route path="/installments" component={InstallmentsPage} />
-      <Route path="/expenses" component={ExpensesPage} />
-      <Route path="/expense-categories" component={ExpenseCategoriesPage} />
-      <Route path="/reports" component={ReportsPage} />
-      <Route path="/inventory-reports" component={InventoryReportsPage} />
-      <Route path="/barcodes" component={BarcodesPage} />
-      <Route path="/settings" component={SettingsPage} />
+      {/* المسارات المحمية للمدير فقط */}
+      <ProtectedRoute path="/" component={DashboardPage} allowedRoles={["admin"]} />
+      <ProtectedRoute path="/purchases" component={PurchasesPage} allowedRoles={["admin"]} />
+      <ProtectedRoute path="/suppliers" component={SuppliersPage} allowedRoles={["admin"]} />
+      <ProtectedRoute path="/customers" component={CustomersPage} allowedRoles={["admin"]} />
+      <ProtectedRoute path="/staff-management" component={StaffPage} allowedRoles={["admin"]} />
+      <ProtectedRoute path="/marketing" component={MarketingPage} allowedRoles={["admin"]} />
+      <ProtectedRoute path="/promotions" component={PromotionsPage} allowedRoles={["admin"]} />
+      <ProtectedRoute path="/products" component={ProductsPage} allowedRoles={["admin"]} />
+      <ProtectedRoute path="/invoices" component={InvoicesPage} allowedRoles={["admin"]} />
+      <ProtectedRoute path="/installments" component={InstallmentsPage} allowedRoles={["admin"]} />
+      <ProtectedRoute path="/expenses" component={ExpensesPage} allowedRoles={["admin"]} />
+      <ProtectedRoute path="/expense-categories" component={ExpenseCategoriesPage} allowedRoles={["admin"]} />
+      <ProtectedRoute path="/reports" component={ReportsPage} allowedRoles={["admin"]} />
+      <ProtectedRoute path="/inventory-reports" component={InventoryReportsPage} allowedRoles={["admin"]} />
+      <ProtectedRoute path="/barcodes" component={BarcodesPage} allowedRoles={["admin"]} />
+      <ProtectedRoute path="/settings" component={SettingsPage} allowedRoles={["admin"]} />
+
+      {/* المسارات المتاحة للموظفين */}
+      <ProtectedRoute path="/staff" component={StaffDashboard} allowedRoles={["admin", "staff"]} />
+      <ProtectedRoute path="/appointments" component={AppointmentsPage} allowedRoles={["admin", "staff"]} />
+
       <Route component={NotFound} />
     </Switch>
   );
