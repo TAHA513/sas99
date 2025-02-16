@@ -15,6 +15,7 @@ export interface IStorage {
   createUser(user: schema.InsertUser): Promise<schema.User>;
   deleteUser(id: number): Promise<void>;
   getUsers(): Promise<schema.User[]>;
+  updateUser(id: number, updates: Partial<Omit<schema.InsertUser, "username">>): Promise<schema.User>;
 
   // Permission operations
   getPermissions(): Promise<schema.Permission[]>;
@@ -187,6 +188,15 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(schema.users);
   }
 
+  async updateUser(id: number, updates: Partial<Omit<schema.InsertUser, "username">>): Promise<schema.User> {
+    const [updatedUser] = await db
+      .update(schema.users)
+      .set(updates)
+      .where(eq(schema.users.id, id))
+      .returning();
+    return updatedUser;
+  }
+
   // Permission operations
   async getPermissions(): Promise<schema.Permission[]> {
     return await db.select().from(schema.permissions);
@@ -217,7 +227,7 @@ export class DatabaseStorage implements IStorage {
       })
       .onConflictDoUpdate({
         target: [schema.userPermissions.userId, schema.userPermissions.permissionId],
-        set: { 
+        set: {
           granted,
           updatedAt: new Date()
         },

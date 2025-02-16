@@ -5,7 +5,6 @@ import session from "express-session";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage";
-import { SYSTEM_ROLES, DEFAULT_PERMISSIONS, ROLE_PERMISSIONS, User } from "@shared/schema";
 import MemoryStore from "memorystore";
 
 declare global {
@@ -14,7 +13,6 @@ declare global {
       id: number;
       username: string;
       role: string;
-      permissions?: string[];
     }
   }
 }
@@ -73,17 +71,12 @@ export function setupAuth(app: Express) {
         }
 
         // تحديث آخر تسجيل دخول
-        await storage.updateUserLastLogin(user.id);
-
-        // جلب صلاحيات المستخدم
-        const userPermissions = await storage.getUserPermissions(user.id);
-        const permissions = userPermissions.map(p => p.key);
+        await storage.updateUser(user.id, { lastLogin: new Date() });
 
         return done(null, {
           id: user.id,
           username: user.username,
-          role: user.role,
-          permissions
+          role: user.role
         });
       } catch (error) {
         console.error("خطأ في المصادقة:", error);
@@ -103,14 +96,10 @@ export function setupAuth(app: Express) {
         return done(null, false);
       }
 
-      const userPermissions = await storage.getUserPermissions(user.id);
-      const permissions = userPermissions.map(p => p.key);
-
       done(null, {
         id: user.id,
         username: user.username,
-        role: user.role,
-        permissions
+        role: user.role
       });
     } catch (error) {
       console.error("خطأ في استرجاع بيانات المستخدم:", error);
@@ -118,30 +107,6 @@ export function setupAuth(app: Express) {
     }
   });
 
-  // Middleware للتحقق من الصلاحيات
-  export function checkPermission(requiredPermission: string) {
-    return (req: Request, res: Response, next: NextFunction) => {
-      if (!req.isAuthenticated()) {
-        return res.status(401).json({ error: "غير مصرح" });
-      }
-
-      const user = req.user as Express.User;
-
-      // Super Admin لديه كل الصلاحيات
-      if (user.role === SYSTEM_ROLES.SUPER_ADMIN) {
-        return next();
-      }
-
-      // التحقق من الصلاحيات
-      if (!user.permissions?.includes(requiredPermission)) {
-        return res.status(403).json({ error: "ليس لديك صلاحية الوصول" });
-      }
-
-      next();
-    };
-  }
-
-  // نقاط النهاية للمصادقة
   app.post("/api/login", (req, res, next) => {
     passport.authenticate("local", (err, user, info) => {
       if (err) {
@@ -177,11 +142,10 @@ export function setupAuth(app: Express) {
     if (!req.isAuthenticated()) {
       return res.status(401).json({ error: "المستخدم غير مصرح له" });
     }
-
     res.json(req.user);
   });
 
-  // نقطة نهاية لإعادة تعيين كلمة المرور
+  // نقطة نهاية لتغيير كلمة المرور
   app.post("/api/reset-password", async (req, res) => {
     try {
       const { username, oldPassword, newPassword } = req.body;
@@ -197,7 +161,7 @@ export function setupAuth(app: Express) {
       }
 
       const hashedPassword = await hashPassword(newPassword);
-      await storage.updateUserPassword(user.id, hashedPassword);
+      await storage.updateUser(user.id, { password: hashedPassword });
 
       res.json({ message: "تم تغيير كلمة المرور بنجاح" });
     } catch (error) {

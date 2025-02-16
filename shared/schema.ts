@@ -2,16 +2,10 @@ import { pgTable, text, serial, integer, boolean, timestamp, json, decimal } fro
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-// تعريف الأدوار المتاحة في النظام
+// تعريف الأدوار
 export const SYSTEM_ROLES = {
   MANAGER: 'مدير',
   STAFF: 'موظف',
-} as const;
-
-// تعريف الصلاحيات الافتراضية للأدوار
-export const ROLE_PERMISSIONS = {
-  [SYSTEM_ROLES.MANAGER]: ["FULL_ACCESS"],
-  [SYSTEM_ROLES.STAFF]: ["LIMITED_ACCESS"],
 } as const;
 
 // جدول المستخدمين
@@ -51,45 +45,6 @@ export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type ActivityLog = typeof activityLog.$inferSelect;
 export type InsertActivityLog = z.infer<typeof insertActivityLogSchema>;
-
-// تعريفات أخرى تبقى كما هي
-export const permissions = pgTable("permissions", {
-  id: serial("id").primaryKey(),
-  name: text("name").notNull(),
-  key: text("key").notNull().unique(),
-  description: text("description"),
-  category: text("category").notNull(),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-});
-
-export const userPermissions = pgTable("user_permissions", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull(),
-  permissionId: integer("permission_id").notNull(),
-  granted: boolean("granted").notNull().default(false),
-  grantedBy: integer("granted_by").notNull(),
-  grantedAt: timestamp("granted_at").notNull().defaultNow(),
-  expiresAt: timestamp("expires_at"),
-});
-
-export const permissionLog = pgTable("permission_log", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull(),
-  action: text("action").notNull(),
-  details: json("details").notNull(),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-  createdBy: integer("created_by").notNull(),
-});
-
-export const insertPermissionSchema = createInsertSchema(permissions);
-export const insertUserPermissionSchema = createInsertSchema(userPermissions);
-
-export type Permission = typeof permissions.$inferSelect;
-export type InsertPermission = z.infer<typeof insertPermissionSchema>;
-export type UserPermission = typeof userPermissions.$inferSelect;
-export type InsertUserPermission = z.infer<typeof insertUserPermissionSchema>;
-export type PermissionLog = typeof permissionLog.$inferSelect;
-
 
 export const customers = pgTable("customers", {
   id: serial("id").primaryKey(),
@@ -452,7 +407,6 @@ export type CampaignNotification = typeof campaignNotifications.$inferSelect;
 export type InsertCampaignNotification = z.infer<typeof insertCampaignNotificationSchema>;
 export type ScheduledPost = typeof scheduledPosts.$inferSelect;
 export type InsertScheduledPost = z.infer<typeof insertScheduledPostSchema>;
-
 
 export const suppliers = pgTable("suppliers", {
   id: serial("id").primaryKey(),

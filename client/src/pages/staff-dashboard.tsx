@@ -18,7 +18,7 @@ export default function StaffDashboard() {
   const [, setLocation] = useLocation();
 
   // Redirect if not staff
-  if (user?.role !== "staff") {
+  if (user?.role !== "موظف") {
     return <Link href="/" />;
   }
 
@@ -131,7 +131,7 @@ export default function StaffDashboard() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {todaySales?.items?.map((sale: any) => (
+            {todaySales?.map((sale: any) => (
               <TableRow key={sale.id}>
                 <TableCell>{sale.id}</TableCell>
                 <TableCell>{sale.customerName || 'عميل نقدي'}</TableCell>
