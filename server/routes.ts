@@ -163,6 +163,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
+  // Delete user account
+  app.delete("/api/users/:id", async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      const user = await storage.getUser(userId);
+
+      if (!user) {
+        return res.status(404).json({ message: "المستخدم غير موجود" });
+      }
+
+      await storage.deleteUser(userId);
+      res.status(200).json({ message: "تم حذف الحساب بنجاح" });
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      res.status(500).json({ message: "حدث خطأ أثناء حذف الحساب" });
+    }
+  });
+
+  // Get all users
+  app.get("/api/users", async (_req, res) => {
+    try {
+      const users = await storage.getUsers();
+      res.json(users.map(user => ({
+        id: user.id,
+        username: user.username,
+        role: user.role,
+        staffId: user.staffId,
+        createdAt: user.createdAt
+      })));
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      res.status(500).json({ message: "حدث خطأ أثناء جلب قائمة المستخدمين" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

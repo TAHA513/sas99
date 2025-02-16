@@ -7,7 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { MessageSquare, Upload, Plus, Building2, Settings as SettingsIcon, Paintbrush, Database, Users, History, Shield, KeyRound, UserPlus } from "lucide-react";
+import { MessageSquare, Upload, Plus, Building2, Settings as SettingsIcon, Paintbrush, Database, Users, History, Shield, KeyRound, UserPlus, Trash2, Loader2 } from "lucide-react";
 import { SiGooglecalendar } from "react-icons/si";
 import { SiFacebook, SiInstagram, SiSnapchat } from "react-icons/si";
 import { Label } from "@/components/ui/label";
@@ -42,6 +42,17 @@ import { DatabaseConnectionForm } from "@/components/settings/database-connectio
 import type { DatabaseConnection } from "@shared/schema";
 import { motion } from "framer-motion";
 import { Table, TableBody, TableCell, TableHeader, TableHead, TableRow } from "@/components/ui/table";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 
 const socialMediaAccountSchema = z.object({
@@ -100,7 +111,6 @@ const colorOptions = [
 
 const createGradient = (color1: string, color2: string) => `linear-gradient(to right, ${color1}, ${color2})`;
 
-// Add new schema for admin credentials
 const adminCredentialsSchema = z.object({
   username: z.string().min(3, "اسم المستخدم يجب أن يكون 3 أحرف على الأقل"),
   password: z.string().min(6, "كلمة المرور يجب أن تكون 6 أحرف على الأقل"),
@@ -129,12 +139,10 @@ export default function SettingsPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const queryClient = useQueryClient();
 
-  // Load theme settings on mount
   useEffect(() => {
     loadThemeSettings();
   }, []);
 
-  // Queries
   const { data: storeSettings } = useQuery({
     queryKey: ['storeSettings'],
     queryFn: getStoreSettings,
@@ -145,7 +153,6 @@ export default function SettingsPage() {
     queryFn: getSocialAccounts,
   });
 
-  // Forms
   const whatsappForm = useForm<WhatsAppSettings>({
     resolver: zodResolver(whatsappSchema),
     defaultValues: getWhatsAppSettings(),
@@ -165,7 +172,7 @@ export default function SettingsPage() {
     resolver: zodResolver(currencySettingsSchema),
     defaultValues: {
       defaultCurrency: 'USD',
-      usdToIqdRate: 1460, // Default exchange rate
+      usdToIqdRate: 1460,
     }
   });
 
@@ -189,8 +196,6 @@ export default function SettingsPage() {
     }
   });
 
-
-  // Mutations
   const storeSettingsMutation = useMutation({
     mutationFn: async (data: {
       storeName?: string;
@@ -204,7 +209,6 @@ export default function SettingsPage() {
       restrictStaffAccess?: boolean;
       trackStaffActivity?: boolean;
     }) => {
-      // Update store settings
       if (data.storeName !== undefined || data.storeLogo !== undefined) {
         const newSettings = {
           ...(data.storeName !== undefined && { storeName: data.storeName }),
@@ -213,12 +217,10 @@ export default function SettingsPage() {
         setStoreSettings(newSettings);
       }
 
-      // Handle color changes
       if (data.primary) {
         updateThemeColors(data.primary);
       }
 
-      // Handle font changes
       if (data.fontSize || data.fontFamily) {
         updateThemeFonts(
           data.fontSize || localStorage.getItem('theme-font-size') || 'medium',
@@ -317,7 +319,6 @@ export default function SettingsPage() {
   const { data: connections } = useQuery({
     queryKey: ['databaseConnections'],
     queryFn: () => {
-      // Replace with your actual database connection fetching logic
       return Promise.resolve([{
         id: '1',
         name: 'Main Database',
@@ -388,6 +389,41 @@ export default function SettingsPage() {
     },
   });
 
+  // Add this after other queries
+  const { data: users, isLoading: isLoadingUsers } = useQuery({
+    queryKey: ['users'],
+    queryFn: async () => {
+      const res = await fetch('/api/users');
+      if (!res.ok) throw new Error('Failed to fetch users');
+      return res.json();
+    },
+  });
+
+  const deleteUserMutation = useMutation({
+    mutationFn: async (userId: number) => {
+      const res = await fetch(`/api/users/${userId}`, {
+        method: 'DELETE',
+      });
+      if (!res.ok) throw new Error('Failed to delete user');
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      toast({
+        title: "تم الحذف",
+        description: "تم حذف الحساب بنجاح",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "خطأ",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+
   return (
     <DashboardLayout>
       <div className="space-y-8">
@@ -416,7 +452,6 @@ export default function SettingsPage() {
                   variant="outline"
                   className="w-full flex items-center justify-start gap-3 h-14"
                   onClick={() => {
-                    // سيتم إضافة منطق تسجيل الدخول لفيسبوك
                     toast({
                       title: "قريباً",
                       description: "سيتم إضافة خيار تسجيل الدخول بفيسبوك قريباً",
@@ -434,7 +469,6 @@ export default function SettingsPage() {
                   variant="outline"
                   className="w-full flex items-center justify-start gap-3 h-14"
                   onClick={() => {
-                    // سيتم إضافة منطق تسجيل الدخول لانستغرام
                     toast({
                       title: "قريباً",
                       description: "سيتم إضافة خيار تسجيل الدخول بانستغرام قريباً",
@@ -452,7 +486,6 @@ export default function SettingsPage() {
                   variant="outline"
                   className="w-full flex items-center justify-start gap-3 h-14"
                   onClick={() => {
-                    // سيتم إضافة منطق تسجيل الدخول لسناب شات
                     toast({
                       title: "قريباً",
                       description: "سيتم إضافة خيار تسجيل الدخول بسناب شات قريباً",
@@ -852,7 +885,7 @@ export default function SettingsPage() {
                         <div className="flex items-center gap-4">
                           {account.platform === 'facebook' && <SiFacebook className="h-6 w-6 text-blue-600" />}
                           {account.platform === 'instagram' && <SiInstagram className="h-6 w-6 text-pink-600" />}
-                          {account.platform === 'snapchat' && <SiSnapchat className="h-6 w-6 text-yellow-500" />}
+                          {account.platform === 'snapchat' && <SiSnapchat className="h-6 w-6 text-yellow500" />}
                           <div>
                             <p className="font-medium">{account.username}</p>
                             <p className="text-sm text-muted-foreground">
@@ -886,7 +919,6 @@ export default function SettingsPage() {
                 </div>
               </CardHeader>
               <CardContent className="space-y-6">
-                {/* Theme Color */}
                 <div className="space-y-4">
                   <Label>لون النظام الأساسي</Label>
                   <div className="grid grid-cols-5 gap-2">
@@ -920,7 +952,6 @@ export default function SettingsPage() {
                   </div>
                 </div>
 
-                {/* Font Settings */}
                 <div className="space-y-4">
                   <Label>حجم الخط</Label>
                   <Select
@@ -1079,7 +1110,6 @@ export default function SettingsPage() {
                 </div>
               </CardHeader>
               <CardContent className="space-y-6">
-                {/* تفعيل/تعطيل تسجيل دخول الموظفين */}
                 <div className="flex items-center justify-between space-x-4">
                   <div>
                     <Label className="text-base">تفعيل تسجيل دخول الموظفين</Label>
@@ -1099,7 +1129,6 @@ export default function SettingsPage() {
                   />
                 </div>
 
-                {/* سجل تسجيل الدخول */}
                 <div className="space-y-4">
                   <div className="flex items-center gap-2">
                     <History className="h-5 w-5 text-primary" />
@@ -1146,7 +1175,6 @@ export default function SettingsPage() {
                   </div>
                 </div>
 
-                {/* إعدادات الصلاحيات */}
                 <div className="space-y-4">
                   <div className="flex items-center gap-2">
                     <Shield className="h-5 w-5 text-primary" />
@@ -1206,7 +1234,6 @@ export default function SettingsPage() {
                   <CardContent>
                     <Form {...adminForm}>
                       <form onSubmit={adminForm.handleSubmit((data) => {
-                        // Remove confirmPassword before sending
                         const { confirmPassword, ...adminData } = data;
                         adminCredentialsMutation.mutate(adminData);
                       })} className="space-y-4">
@@ -1276,7 +1303,6 @@ export default function SettingsPage() {
                   <CardContent>
                     <Form {...staffForm}>
                       <form onSubmit={staffForm.handleSubmit((data) => {
-                        // Remove confirmPassword before sending
                         const { confirmPassword, ...staffData } = data;
                         staffCredentialsMutation.mutate(staffData);
                       })} className="space-y-4">

@@ -14,6 +14,8 @@ export interface IStorage {
   getUser(id: number): Promise<schema.User | undefined>;
   getUserByUsername(username: string): Promise<schema.User | undefined>;
   createUser(user: schema.InsertUser): Promise<schema.User>;
+  deleteUser(id: number): Promise<void>;
+  getUsers(): Promise<schema.User[]>;
 
   // Customer operations
   getCustomers(): Promise<schema.Customer[]>;
@@ -52,7 +54,7 @@ export interface IStorage {
   getPromotions(): Promise<schema.Promotion[]>;
   getPromotion(id: number): Promise<schema.Promotion | undefined>;
   createPromotion(promotion: schema.InsertPromotion): Promise<schema.Promotion>;
-  updatePromotion(id: number, promotion: Partial<schema.InsertPromotion>): Promise<schema.Promotion>;
+  updatePromotion(id: number, updates: Partial<schema.InsertPromotion>): Promise<schema.Promotion>;
   deletePromotion(id: number): Promise<void>;
 
   // Discount Code operations
@@ -60,21 +62,21 @@ export interface IStorage {
   getDiscountCode(id: number): Promise<schema.DiscountCode | undefined>;
   getDiscountCodeByCode(code: string): Promise<schema.DiscountCode | undefined>;
   createDiscountCode(code: schema.InsertDiscountCode): Promise<schema.DiscountCode>;
-  updateDiscountCode(id: number, code: Partial<schema.InsertDiscountCode>): Promise<schema.DiscountCode>;
+  updateDiscountCode(id: number, updates: Partial<schema.InsertDiscountCode>): Promise<schema.DiscountCode>;
   deleteDiscountCode(id: number): Promise<void>;
 
   // Social Media Account operations
   getSocialMediaAccounts(): Promise<schema.SocialMediaAccount[]>;
   getSocialMediaAccount(id: number): Promise<schema.SocialMediaAccount | undefined>;
   createSocialMediaAccount(account: schema.InsertSocialMediaAccount): Promise<schema.SocialMediaAccount>;
-  updateSocialMediaAccount(id: number, account: Partial<schema.InsertSocialMediaAccount>): Promise<schema.SocialMediaAccount>;
+  updateSocialMediaAccount(id: number, updates: Partial<schema.InsertSocialMediaAccount>): Promise<schema.SocialMediaAccount>;
   deleteSocialMediaAccount(id: number): Promise<void>;
 
   // Product Group operations
   getProductGroups(): Promise<schema.ProductGroup[]>;
   getProductGroup(id: number): Promise<schema.ProductGroup | undefined>;
   createProductGroup(group: schema.InsertProductGroup): Promise<schema.ProductGroup>;
-  updateProductGroup(id: number, group: Partial<schema.InsertProductGroup>): Promise<schema.ProductGroup>;
+  updateProductGroup(id: number, updates: Partial<schema.InsertProductGroup>): Promise<schema.ProductGroup>;
   deleteProductGroup(id: number): Promise<void>;
 
   // Product operations
@@ -169,6 +171,14 @@ export class DatabaseStorage implements IStorage {
   async createUser(user: schema.InsertUser): Promise<schema.User> {
     const [newUser] = await db.insert(schema.users).values(user).returning();
     return newUser;
+  }
+
+  async deleteUser(id: number): Promise<void> {
+    await db.delete(schema.users).where(eq(schema.users.id, id));
+  }
+
+  async getUsers(): Promise<schema.User[]> {
+    return await db.select().from(schema.users);
   }
 
   // Customer operations
