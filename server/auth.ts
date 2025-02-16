@@ -35,20 +35,14 @@ export function setupAuth(app: Express) {
     resave: false,
     saveUninitialized: false,
     cookie: {
-      secure: process.env.NODE_ENV === "production",
-      maxAge: 24 * 60 * 60 * 1000 // 24 hours
+      secure: false, // set to true in production with HTTPS
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      httpOnly: true
     }
   }));
 
   app.use(passport.initialize());
   app.use(passport.session());
-
-  // التأكد من أن جميع نقاط نهاية API ترجع JSON
-  app.use('/api', (req, res, next) => {
-    res.setHeader('Content-Type', 'application/json');
-    res.setHeader('Accept', 'application/json');
-    next();
-  });
 
   // إستراتيجية المصادقة المحلية
   passport.use(
@@ -95,48 +89,60 @@ export function setupAuth(app: Express) {
 
   // نقاط نهاية API
   app.post("/api/login", (req, res, next) => {
+    if (!req.body.username || !req.body.password) {
+      return res.status(400).json({ error: "يجب إدخال اسم المستخدم وكلمة المرور" });
+    }
+
     passport.authenticate("local", (err, user, info) => {
       if (err) {
         console.error("Login error:", err);
         return res.status(500).json({ error: "حدث خطأ في النظام" });
       }
+
       if (!user) {
         return res.status(401).json({ error: info?.message || "فشل تسجيل الدخول" });
       }
+
       req.logIn(user, (err) => {
         if (err) {
           console.error("Login session error:", err);
           return res.status(500).json({ error: "حدث خطأ في تسجيل الدخول" });
         }
-        return res.json(user);
+        return res.json({
+          id: user.id,
+          username: user.username,
+          role: user.role,
+          name: user.name
+        });
       });
     })(req, res, next);
   });
 
   app.post("/api/logout", (req, res) => {
-    try {
-      req.logout((err) => {
-        if (err) {
-          console.error("Logout error:", err);
-          return res.status(500).json({ error: "حدث خطأ في تسجيل الخروج" });
-        }
-        res.status(200).json({ message: "تم تسجيل الخروج بنجاح" });
-      });
-    } catch (error) {
-      console.error("Logout error:", error);
-      res.status(500).json({ error: "حدث خطأ غير متوقع في تسجيل الخروج" });
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: "المستخدم غير مسجل الدخول" });
     }
+
+    req.logout((err) => {
+      if (err) {
+        console.error("Logout error:", err);
+        return res.status(500).json({ error: "حدث خطأ في تسجيل الخروج" });
+      }
+      res.json({ message: "تم تسجيل الخروج بنجاح" });
+    });
   });
 
   app.get("/api/user", (req, res) => {
-    try {
-      if (!req.isAuthenticated()) {
-        return res.status(401).json({ error: "المستخدم غير مصرح له" });
-      }
-      res.json(req.user);
-    } catch (error) {
-      console.error("User fetch error:", error);
-      res.status(500).json({ error: "حدث خطأ في جلب بيانات المستخدم" });
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: "المستخدم غير مصرح له" });
     }
+
+    const user = req.user;
+    res.json({
+      id: user.id,
+      username: user.username,
+      role: user.role,
+      name: user.name
+    });
   });
 }
