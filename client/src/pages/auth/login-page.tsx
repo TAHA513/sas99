@@ -14,6 +14,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Loader2 } from "lucide-react";
 import { useLocation } from "wouter";
+import { useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 
 const loginSchema = z.object({
@@ -36,26 +37,20 @@ export default function LoginPage() {
     resolver: zodResolver(loginSchema),
   });
 
-  // إذا كان المستخدم مسجل الدخول بالفعل، قم بتوجيهه إلى الصفحة المناسبة
-  if (user) {
-    // التوجيه بناءً على دور المستخدم
-    if (user.role === "admin") {
-      setLocation("/");
-    } else {
-      setLocation("/staff");
-    }
-    return null;
-  }
-
-  const onSubmit = async (data: LoginFormData) => {
-    try {
-      const result = await loginMutation.mutateAsync(data);
-      // التوجيه بناءً على دور المستخدم
-      if (result.role === "admin") {
+  useEffect(() => {
+    // التحقق من حالة المستخدم وتوجيهه عند التغيير
+    if (user) {
+      if (user.role === "admin") {
         setLocation("/");
       } else {
         setLocation("/staff");
       }
+    }
+  }, [user, setLocation]);
+
+  const onSubmit = async (data: LoginFormData) => {
+    try {
+      await loginMutation.mutateAsync(data);
     } catch (error) {
       console.error("Login error:", error);
       toast({

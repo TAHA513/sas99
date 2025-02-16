@@ -6,7 +6,6 @@ import {
 import { User as SelectUser } from "@shared/schema";
 import { queryClient } from "../lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { useLocation } from "wouter";
 
 type LoginData = {
   username: string;
@@ -25,13 +24,11 @@ export const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
-  const [, setLocation] = useLocation();
 
   const {
     data: user,
     error,
     isLoading,
-    refetch: refetchUser
   } = useQuery<SelectUser | null, Error>({
     queryKey: ["/api/user"],
     retry: false,
@@ -54,25 +51,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw new Error(errorData.error || 'فشل تسجيل الدخول');
       }
 
-      return await res.json();
+      const userData = await res.json();
+      return userData;
     },
-    onSuccess: async (userData: SelectUser) => {
-      // تحديث البيانات في القائمة
+    onSuccess: (userData: SelectUser) => {
       queryClient.setQueryData(["/api/user"], userData);
-      // إعادة جلب بيانات المستخدم للتأكد من تحديث الحالة
-      await refetchUser();
-
       toast({
         title: "تم تسجيل الدخول بنجاح",
         description: `مرحباً ${userData.name || userData.username}`,
       });
-
-      // التوجيه بناءً على الدور
-      if (userData.role === "admin") {
-        setLocation("/");
-      } else {
-        setLocation("/staff");
-      }
     },
     onError: (error: Error) => {
       console.error("Login error:", error);
@@ -99,7 +86,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     onSuccess: () => {
       queryClient.setQueryData(["/api/user"], null);
       queryClient.clear();
-      setLocation("/staff/login");
       toast({
         title: "تم تسجيل الخروج بنجاح",
         description: "تم تسجيل خروجك من النظام",
