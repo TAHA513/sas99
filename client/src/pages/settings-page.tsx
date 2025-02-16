@@ -15,7 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Building2, Settings as SettingsIcon, Paintbrush, Database } from "lucide-react";
+import { Building2, Settings as SettingsIcon, Paintbrush, Database, Shield } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useState, useEffect } from "react";
@@ -23,6 +23,7 @@ import { Switch } from "@/components/ui/switch";
 import { loadThemeSettings } from "@/lib/theme";
 import { useQueryClient } from "@tanstack/react-query";
 import DatabaseSettingsPage from "./database-settings-page";
+import { SecuritySettings } from "@/components/settings/security-settings";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
@@ -83,10 +84,14 @@ export default function SettingsPage() {
         </div>
 
         <Tabs defaultValue="store" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4 gap-4">
+          <TabsList className="grid w-full grid-cols-2 lg:grid-cols-5 gap-4">
             <TabsTrigger value="store" className="space-x-2">
               <Building2 className="h-4 w-4" />
               <span>المتجر</span>
+            </TabsTrigger>
+            <TabsTrigger value="security" className="space-x-2">
+              <Shield className="h-4 w-4" />
+              <span>الأمان</span>
             </TabsTrigger>
             <TabsTrigger value="integrations" className="space-x-2">
               <SettingsIcon className="h-4 w-4" />
@@ -188,6 +193,10 @@ export default function SettingsPage() {
                 </Form>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="security">
+            <SecuritySettings />
           </TabsContent>
 
           <TabsContent value="integrations">
