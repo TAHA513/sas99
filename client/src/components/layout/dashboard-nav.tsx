@@ -16,13 +16,10 @@ import {
   Truck,
   DollarSign,
   FolderIcon,
-  ClipboardList,
-  LogOut,
-  Shield,
+  ClipboardList, // Add import for inventory report icon
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
-import { useAuth } from "@/hooks/use-auth";
 
 const navItems = [
   {
@@ -110,17 +107,10 @@ const navItems = [
     href: "/settings",
     icon: Settings,
   },
-  {
-    title: "الأمان",
-    href: "/security",
-    icon: Shield,
-    adminOnly: true,
-  },
 ];
 
 export function DashboardNav() {
   const [location] = useLocation();
-  const { logoutMutation, user } = useAuth();
 
   return (
     <div className="h-screen w-64 border-l bg-card p-4 flex flex-col">
@@ -129,36 +119,23 @@ export function DashboardNav() {
       </div>
 
       <nav className="space-y-2 flex-1 overflow-y-auto">
-        {navItems
-          .filter((item) => !item.adminOnly || user?.role === "admin")
-          .map((item) => (
-            <Link key={item.href} href={item.href}>
-              <Button
-                variant="ghost"
-                className={cn(
-                  "w-full flex items-center justify-start gap-3 px-3 py-2 h-10",
-                  location === item.href
-                    ? "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground"
-                    : "hover:bg-accent"
-                )}
-              >
-                <item.icon className="h-4 w-4" />
-                {item.title}
-              </Button>
-            </Link>
-          ))}
+        {navItems.map((item) => (
+          <Link key={item.href} href={item.href}>
+            <Button
+              variant="ghost"
+              className={cn(
+                "w-full flex items-center justify-start gap-3 px-3 py-2 h-10",
+                location === item.href
+                  ? "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground"
+                  : "hover:bg-accent"
+              )}
+            >
+              <item.icon className="h-4 w-4" />
+              {item.title}
+            </Button>
+          </Link>
+        ))}
       </nav>
-
-      <div className="mt-4 pt-4 border-t">
-        <Button
-          variant="ghost"
-          className="w-full flex items-center justify-start gap-3 px-3 py-2 h-10 text-destructive hover:text-destructive hover:bg-destructive/10"
-          onClick={() => logoutMutation.mutate()}
-        >
-          <LogOut className="h-4 w-4" />
-          تسجيل الخروج
-        </Button>
-      </div>
     </div>
   );
 }

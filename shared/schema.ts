@@ -8,10 +8,6 @@ export const users = pgTable("users", {
   password: text("password").notNull(),
   role: text("role").notNull().default("staff"),
   name: text("name").notNull(),
-  email: text("email"),
-  lastLoginAt: timestamp("last_login_at"),
-  loginAttempts: integer("login_attempts").notNull().default(0),
-  lockedUntil: timestamp("locked_until"),
 });
 
 export const customers = pgTable("customers", {
@@ -527,23 +523,3 @@ export const insertDatabaseConnectionSchema = createInsertSchema(databaseConnect
 
 export type DatabaseConnection = typeof databaseConnections.$inferSelect;
 export type InsertDatabaseConnection = z.infer<typeof insertDatabaseConnectionSchema>;
-
-export const userLogs = pgTable("user_logs", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull(),
-  action: text("action").notNull(), // 'login_success', 'login_failed', 'logout'
-  ipAddress: text("ip_address"),
-  userAgent: text("user_agent"),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-});
-
-// Add Zod schema for validation
-export const insertUserLogSchema = createInsertSchema(userLogs).extend({
-  action: z.enum(['login_success', 'login_failed', 'logout']),
-  ipAddress: z.string().optional(),
-  userAgent: z.string().optional(),
-});
-
-// Add type exports
-export type UserLog = typeof userLogs.$inferSelect;
-export type InsertUserLog = z.infer<typeof insertUserLogSchema>;

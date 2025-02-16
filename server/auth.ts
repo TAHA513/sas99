@@ -22,32 +22,18 @@ async function hashPassword(password: string) {
 }
 
 async function comparePasswords(supplied: string, stored: string) {
-  // للمستخدم الأول (admin)، نقارن كلمة المرور مباشرة
-  if (stored === "admin123" && supplied === "admin123") {
-    return true;
-  }
-
-  try {
-    const [hashed, salt] = stored.split(".");
-    const hashedBuf = Buffer.from(hashed, "hex");
-    const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
-    return timingSafeEqual(hashedBuf, suppliedBuf);
-  } catch (error) {
-    console.error('خطأ في مقارنة كلمات المرور:', error);
-    return false;
-  }
+  const [hashed, salt] = stored.split(".");
+  const hashedBuf = Buffer.from(hashed, "hex");
+  const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
+  return timingSafeEqual(hashedBuf, suppliedBuf);
 }
 
 export function setupAuth(app: Express) {
   const sessionSettings: session.SessionOptions = {
-    secret: process.env.SESSION_SECRET || 'development_secret',
+    secret: process.env.SESSION_SECRET!,
     resave: false,
     saveUninitialized: false,
     store: storage.sessionStore,
-    cookie: {
-      secure: process.env.NODE_ENV === "production",
-      maxAge: 24 * 60 * 60 * 1000, // 24 hours
-    }
   };
 
   app.set("trust proxy", 1);
@@ -57,83 +43,40 @@ export function setupAuth(app: Express) {
 
   passport.use(
     new LocalStrategy(async (username, password, done) => {
-      try {
-        console.log('محاولة تسجيل دخول:', username);
-        const user = await storage.getUserByUsername(username);
-
-        if (!user) {
-          console.log('المستخدم غير موجود:', username);
-          return done(null, false);
-        }
-
-        const isValidPassword = await comparePasswords(password, user.password);
-        console.log('نتيجة التحقق من كلمة المرور:', isValidPassword);
-
-        if (!isValidPassword) {
-          return done(null, false);
-        }
-
+      const user = await storage.getUserByUsername(username);
+      if (!user || !(await comparePasswords(password, user.password))) {
+        return done(null, false);
+      } else {
         return done(null, user);
-      } catch (error) {
-        console.error('خطأ في المصادقة:', error);
-        return done(error);
       }
     }),
   );
 
   passport.serializeUser((user, done) => done(null, user.id));
   passport.deserializeUser(async (id: number, done) => {
-    try {
-      const user = await storage.getUser(id);
-      done(null, user);
-    } catch (error) {
-      done(error);
-    }
+    const user = await storage.getUser(id);
+    done(null, user);
   });
 
   app.post("/api/register", async (req, res, next) => {
-    try {
-      const existingUser = await storage.getUserByUsername(req.body.username);
-      if (existingUser) {
-        return res.status(400).json({ message: "اسم المستخدم موجود بالفعل" });
-      }
-
-      const hashedPassword = await hashPassword(req.body.password);
-      const user = await storage.createUser({
-        ...req.body,
-        password: hashedPassword,
-      });
-
-      req.login(user, (err) => {
-        if (err) return next(err);
-        res.status(201).json(user);
-      });
-    } catch (error) {
-      next(error);
+    const existingUser = await storage.getUserByUsername(req.body.username);
+    if (existingUser) {
+      return res.status(400).send("Username already exists");
     }
+
+    const user = await storage.createUser({
+      ...req.body,
+      password: await hashPassword(req.body.password),
+    });
+
+    req.login(user, (err) => {
+      if (err) return next(err);
+      res.status(201).json(user);
+    });
   });
 
-  app.post("/api/login", (req, res, next) => {
-    console.log('محاولة تسجيل دخول جديدة:', req.body.username);
-
-    passport.authenticate("local", (err: any, user: any, info: any) => {
-      if (err) {
-        console.error('خطأ في المصادقة:', err);
-        return next(err);
-      }
-      if (!user) {
-        console.log('فشل تسجيل الدخول لـ:', req.body.username);
-        return res.status(401).json({ message: "اسم المستخدم أو كلمة المرور غير صحيحة" });
-      }
-      req.login(user, (err) => {
-        if (err) {
-          console.error('خطأ في تسجيل الدخول:', err);
-          return next(err);
-        }
-        console.log('تم تسجيل الدخول بنجاح:', user.username);
-        res.json(user);
-      });
-    })(req, res, next);
+  app.post("/api/login", passport.authenticate("local"), (req, res) => {
+    res.status(200).json(req.user);
   });
 
   app.post("/api/logout", (req, res, next) => {

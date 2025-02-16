@@ -2,20 +2,12 @@ import { useAuth } from "@/hooks/use-auth";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertUserSchema } from "@shared/schema";
 import { useForm } from "react-hook-form";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useLocation } from "wouter";
-import { z } from "zod";
-
-const loginSchema = z.object({
-  username: z.string().min(1, "يرجى إدخال اسم المستخدم"),
-  password: z.string().min(1, "يرجى إدخال كلمة المرور"),
-});
-
-type LoginFormData = z.infer<typeof loginSchema>;
 
 export default function AuthPage() {
   const { loginMutation, registerMutation, user } = useAuth();
@@ -26,32 +18,13 @@ export default function AuthPage() {
     return null;
   }
 
-  const loginForm = useForm<LoginFormData>({
-    resolver: zodResolver(loginSchema),
-    defaultValues: {
-      username: "",
-      password: "",
-    },
+  const loginForm = useForm({
+    resolver: zodResolver(insertUserSchema.omit({ name: true })),
   });
 
   const registerForm = useForm({
     resolver: zodResolver(insertUserSchema),
-    defaultValues: {
-      username: "",
-      password: "",
-      name: "",
-    },
   });
-
-  const onLoginSubmit = (data: LoginFormData) => {
-    console.log('تم تقديم نموذج تسجيل الدخول:', data);
-    loginMutation.mutate(data);
-  };
-
-  const onRegisterSubmit = (data: z.infer<typeof insertUserSchema>) => {
-    console.log('تم تقديم نموذج التسجيل:', data);
-    registerMutation.mutate(data);
-  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
@@ -69,7 +42,7 @@ export default function AuthPage() {
 
               <TabsContent value="login">
                 <Form {...loginForm}>
-                  <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-4">
+                  <form onSubmit={loginForm.handleSubmit((data) => loginMutation.mutate(data))} className="space-y-4">
                     <FormField
                       control={loginForm.control}
                       name="username"
@@ -79,7 +52,6 @@ export default function AuthPage() {
                           <FormControl>
                             <Input {...field} />
                           </FormControl>
-                          <FormMessage />
                         </FormItem>
                       )}
                     />
@@ -92,7 +64,6 @@ export default function AuthPage() {
                           <FormControl>
                             <Input type="password" {...field} />
                           </FormControl>
-                          <FormMessage />
                         </FormItem>
                       )}
                     />
@@ -105,7 +76,7 @@ export default function AuthPage() {
 
               <TabsContent value="register">
                 <Form {...registerForm}>
-                  <form onSubmit={registerForm.handleSubmit(onRegisterSubmit)} className="space-y-4">
+                  <form onSubmit={registerForm.handleSubmit((data) => registerMutation.mutate(data))} className="space-y-4">
                     <FormField
                       control={registerForm.control}
                       name="name"
@@ -115,7 +86,6 @@ export default function AuthPage() {
                           <FormControl>
                             <Input {...field} />
                           </FormControl>
-                          <FormMessage />
                         </FormItem>
                       )}
                     />
@@ -128,7 +98,6 @@ export default function AuthPage() {
                           <FormControl>
                             <Input {...field} />
                           </FormControl>
-                          <FormMessage />
                         </FormItem>
                       )}
                     />
@@ -141,7 +110,6 @@ export default function AuthPage() {
                           <FormControl>
                             <Input type="password" {...field} />
                           </FormControl>
-                          <FormMessage />
                         </FormItem>
                       )}
                     />
