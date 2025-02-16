@@ -94,15 +94,15 @@ export function CampaignForm({ platform, onSuccess }: CampaignFormProps) {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit((data) => createCampaign.mutate(data))} className="space-y-4">
+      <form onSubmit={form.handleSubmit((data) => createCampaign.mutate(data))} className="space-y-3">
         <FormField
           control={form.control}
           name="name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>اسم الحملة</FormLabel>
+              <FormLabel className="text-xs">اسم الحملة</FormLabel>
               <FormControl>
-                <Input {...field} placeholder="أدخل اسماً مميزاً للحملة" className="h-8" />
+                <Input {...field} placeholder="أدخل اسماً مميزاً للحملة" className="h-7 text-sm" />
               </FormControl>
             </FormItem>
           )}
@@ -113,30 +113,30 @@ export function CampaignForm({ platform, onSuccess }: CampaignFormProps) {
           name="description"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>وصف الحملة</FormLabel>
+              <FormLabel className="text-xs">وصف الحملة</FormLabel>
               <FormControl>
                 <Textarea
                   {...field}
                   value={field.value || ""}
                   placeholder="اكتب وصفاً مختصراً للحملة"
-                  className="h-20 text-sm"
+                  className="h-16 text-sm"
                 />
               </FormControl>
             </FormItem>
           )}
         />
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-2">
           <FormField
             control={form.control}
             name="type"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>نوع الحملة</FormLabel>
+                <FormLabel className="text-xs">نوع الحملة</FormLabel>
                 <FormControl>
                   <select
                     {...field}
-                    className="h-8 w-full rounded-md border border-input bg-background px-2 py-1 text-sm"
+                    className="h-7 w-full rounded-md border border-input bg-background px-2 py-0 text-xs"
                   >
                     <option value="promotional">ترويجية</option>
                     <option value="awareness">توعوية</option>
@@ -155,7 +155,7 @@ export function CampaignForm({ platform, onSuccess }: CampaignFormProps) {
             name="budget"
             render={() => (
               <FormItem>
-                <FormLabel>الميزانية (دولار)</FormLabel>
+                <FormLabel className="text-xs">الميزانية (دولار)</FormLabel>
                 <FormControl>
                   <div className="space-y-1">
                     <Slider
@@ -164,9 +164,9 @@ export function CampaignForm({ platform, onSuccess }: CampaignFormProps) {
                       min={10}
                       max={1000}
                       step={10}
-                      className="py-1"
+                      className="py-0.5"
                     />
-                    <div className="text-muted-foreground text-xs text-center">
+                    <div className="text-muted-foreground text-[10px] text-center">
                       ${budget.toLocaleString()}
                     </div>
                   </div>
@@ -176,15 +176,15 @@ export function CampaignForm({ platform, onSuccess }: CampaignFormProps) {
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-2">
           <FormField
             control={form.control}
             name="startDate"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>تاريخ البدء</FormLabel>
+                <FormLabel className="text-xs">تاريخ البدء</FormLabel>
                 <FormControl>
-                  <Input type="date" {...field} className="h-8" />
+                  <Input type="date" {...field} className="h-7 text-xs" />
                 </FormControl>
               </FormItem>
             )}
@@ -195,9 +195,9 @@ export function CampaignForm({ platform, onSuccess }: CampaignFormProps) {
             name="endDate"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>تاريخ الانتهاء</FormLabel>
+                <FormLabel className="text-xs">تاريخ الانتهاء</FormLabel>
                 <FormControl>
-                  <Input type="date" {...field} className="h-8" />
+                  <Input type="date" {...field} className="h-7 text-xs" />
                 </FormControl>
               </FormItem>
             )}
@@ -209,20 +209,20 @@ export function CampaignForm({ platform, onSuccess }: CampaignFormProps) {
           name="content"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>محتوى الإعلان</FormLabel>
+              <FormLabel className="text-xs">محتوى الإعلان</FormLabel>
               <FormControl>
                 <Textarea
                   {...field}
                   value={field.value || ""}
                   placeholder="اكتب نص الإعلان هنا"
-                  className="h-24 text-sm"
+                  className="h-20 text-sm"
                 />
               </FormControl>
             </FormItem>
           )}
         />
 
-        <Button type="submit" disabled={createCampaign.isPending} className="w-full h-8 mt-2">
+        <Button type="submit" disabled={createCampaign.isPending} className="w-full h-7 text-xs mt-1">
           {createCampaign.isPending ? "جاري الإنشاء..." : "إنشاء الحملة"}
         </Button>
       </form>
