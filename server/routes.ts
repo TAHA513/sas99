@@ -2,104 +2,14 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import express from 'express';
-import { hashPassword, comparePasswords } from "./auth";
-import session from "express-session";
+import { setupAuth } from "./auth";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Middleware for handling JSON responses
   app.use(express.json());
 
-  // تكوين الجلسة
-  app.use(session({
-    secret: process.env.SESSION_SECRET || 'your-secret-key',
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-      secure: false,
-      maxAge: 24 * 60 * 60 * 1000,
-      httpOnly: true
-    }
-  }));
-
-  // تسجيل الدخول
-  app.post("/api/login", async (req, res) => {
-    try {
-      const { username, password } = req.body;
-
-      // التحقق من وجود اسم المستخدم وكلمة المرور
-      if (!username || !password) {
-        return res.status(400).json({ error: "يجب إدخال اسم المستخدم وكلمة المرور" });
-      }
-
-      // البحث عن المستخدم في قاعدة البيانات
-      const user = await storage.getUserByUsername(username);
-      if (!user) {
-        return res.status(401).json({ error: "اسم المستخدم غير صحيح" });
-      }
-
-      // التحقق من صحة كلمة المرور
-      const isValidPassword = await comparePasswords(password, user.password);
-      if (!isValidPassword) {
-        return res.status(401).json({ error: "كلمة المرور غير صحيحة" });
-      }
-
-      // تخزين بيانات المستخدم في الجلسة
-      req.session.regenerate((err) => {
-        if (err) {
-          console.error("Session regeneration error:", err);
-          return res.status(500).json({ error: "حدث خطأ في تسجيل الدخول" });
-        }
-
-        req.session.user = {
-          id: user.id,
-          username: user.username,
-          role: user.role,
-          name: user.name
-        };
-
-        req.session.save((err) => {
-          if (err) {
-            console.error("Session save error:", err);
-            return res.status(500).json({ error: "حدث خطأ في حفظ الجلسة" });
-          }
-
-          // إرسال البيانات والمسار للتوجيه
-          res.json({
-            success: true,
-            redirect: user.role === "admin" ? "/" : "/staff"
-          });
-        });
-      });
-    } catch (error) {
-      console.error("Login error:", error);
-      res.status(500).json({ error: "حدث خطأ في تسجيل الدخول" });
-    }
-  });
-
-  // تسجيل الخروج
-  app.post("/api/logout", (req, res) => {
-    req.session.destroy((err) => {
-      if (err) {
-        console.error("Logout error:", err);
-        return res.status(500).json({ error: "حدث خطأ في تسجيل الخروج" });
-      }
-      res.json({ success: true });
-    });
-  });
-
-  // التحقق من حالة تسجيل الدخول
-  app.get("/api/auth/check", (req, res) => {
-    if (req.session.user) {
-      res.json({ 
-        isAuthenticated: true, 
-        user: req.session.user 
-      });
-    } else {
-      res.json({ 
-        isAuthenticated: false 
-      });
-    }
-  });
+  // تكوين المصادقة
+  setupAuth(app);
 
   // Staff Dashboard APIs
   app.get("/api/sales/today", async (_req, res) => {
@@ -152,7 +62,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         name: name || null, // إضافة الاسم إذا تم توفيره
       });
 
-      res.status(201).json({ 
+      res.status(201).json({
         message: "تم إنشاء حساب المدير بنجاح",
         user: {
           id: adminUser.id,
@@ -163,9 +73,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error: any) {
       console.error('Error creating admin:', error);
-      res.status(500).json({ 
+      res.status(500).json({
         message: "حدث خطأ أثناء إنشاء حساب المدير",
-        error: error.message 
+        error: error.message
       });
     }
   });
@@ -191,7 +101,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         name: name || null, // إضافة الاسم إذا تم توفيره
       });
 
-      res.status(201).json({ 
+      res.status(201).json({
         message: "تم إنشاء حساب الموظف بنجاح",
         user: {
           id: staffUser.id,
@@ -203,9 +113,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error: any) {
       console.error('Error creating staff:', error);
-      res.status(500).json({ 
+      res.status(500).json({
         message: "حدث خطأ أثناء إنشاء حساب الموظف",
-        error: error.message 
+        error: error.message
       });
     }
   });
@@ -322,7 +232,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // إضافة API للصلاحيات
 
   // جلب كل الصلاحيات
   app.get("/api/permissions", async (_req, res) => {

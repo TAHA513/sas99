@@ -10,14 +10,6 @@ import { User as SelectUser } from "@shared/schema";
 declare global {
   namespace Express {
     interface User extends SelectUser {}
-    interface Session {
-      user?: {
-        id: number;
-        username: string;
-        role: string;
-        name: string | null;
-      };
-    }
   }
 }
 
@@ -54,10 +46,6 @@ export function setupAuth(app: Express) {
   passport.use(
     new LocalStrategy(async (username, password, done) => {
       try {
-        if (!username || !password) {
-          return done(null, false, { message: "يجب إدخال اسم المستخدم وكلمة المرور" });
-        }
-
         const user = await storage.getUserByUsername(username);
         if (!user) {
           return done(null, false, { message: "اسم المستخدم غير صحيح" });
@@ -73,7 +61,7 @@ export function setupAuth(app: Express) {
         console.error("Authentication error:", error);
         return done(error);
       }
-    }),
+    })
   );
 
   passport.serializeUser((user, done) => {
@@ -83,9 +71,6 @@ export function setupAuth(app: Express) {
   passport.deserializeUser(async (id: number, done) => {
     try {
       const user = await storage.getUser(id);
-      if (!user) {
-        return done(null, false);
-      }
       done(null, user);
     } catch (error) {
       console.error("Deserialization error:", error);
@@ -94,10 +79,6 @@ export function setupAuth(app: Express) {
   });
 
   app.post("/api/login", (req, res, next) => {
-    if (!req.body.username || !req.body.password) {
-      return res.status(400).json({ error: "يجب إدخال اسم المستخدم وكلمة المرور" });
-    }
-
     passport.authenticate("local", (err, user, info) => {
       if (err) {
         console.error("Login error:", err);
@@ -124,10 +105,6 @@ export function setupAuth(app: Express) {
   });
 
   app.post("/api/logout", (req, res) => {
-    if (!req.isAuthenticated()) {
-      return res.status(401).json({ error: "المستخدم غير مسجل الدخول" });
-    }
-
     req.logout((err) => {
       if (err) {
         console.error("Logout error:", err);
