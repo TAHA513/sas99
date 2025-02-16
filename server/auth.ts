@@ -63,7 +63,7 @@ export function setupAuth(app: Express) {
 
         return done(null, user);
       } catch (error) {
-        console.error("Authentication error:", error);
+        console.error("خطأ في المصادقة:", error);
         return done(error);
       }
     })
@@ -78,16 +78,16 @@ export function setupAuth(app: Express) {
       const user = await storage.getUser(id);
       done(null, user);
     } catch (error) {
-      console.error("Deserialization error:", error);
+      console.error("خطأ في استرجاع بيانات المستخدم:", error);
       done(error);
     }
   });
 
-  // Login endpoint
+  // نقطة نهاية تسجيل الدخول
   app.post("/api/login", (req, res, next) => {
     passport.authenticate("local", (err, user, info) => {
       if (err) {
-        console.error("Login error:", err);
+        console.error("خطأ في تسجيل الدخول:", err);
         return res.status(500).json({ error: "حدث خطأ في النظام" });
       }
 
@@ -97,7 +97,7 @@ export function setupAuth(app: Express) {
 
       req.logIn(user, (err) => {
         if (err) {
-          console.error("Login session error:", err);
+          console.error("خطأ في جلسة تسجيل الدخول:", err);
           return res.status(500).json({ error: "حدث خطأ في تسجيل الدخول" });
         }
         return res.json({
@@ -110,18 +110,18 @@ export function setupAuth(app: Express) {
     })(req, res, next);
   });
 
-  // Logout endpoint
+  // نقطة نهاية تسجيل الخروج
   app.post("/api/logout", (req, res) => {
     req.logout((err) => {
       if (err) {
-        console.error("Logout error:", err);
+        console.error("خطأ في تسجيل الخروج:", err);
         return res.status(500).json({ error: "حدث خطأ في تسجيل الخروج" });
       }
       res.json({ message: "تم تسجيل الخروج بنجاح" });
     });
   });
 
-  // Get current user endpoint
+  // نقطة نهاية الحصول على بيانات المستخدم الحالي
   app.get("/api/user", (req, res) => {
     if (!req.isAuthenticated()) {
       return res.status(401).json({ error: "المستخدم غير مصرح له" });

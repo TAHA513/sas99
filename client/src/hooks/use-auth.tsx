@@ -47,15 +47,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
 
       if (!res.ok) {
-        throw new Error('فشل تسجيل الدخول');
+        const data = await res.json();
+        throw new Error(data.error || 'فشل تسجيل الدخول');
       }
 
-      const data = await res.json();
-      if (!data) {
-        throw new Error('فشل استلام بيانات المستخدم');
-      }
-
-      return data;
+      return res.json();
     },
     onSuccess: (user: SelectUser) => {
       queryClient.setQueryData(["/api/user"], user);
@@ -63,7 +59,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         title: "تم تسجيل الدخول بنجاح",
         description: `مرحباً بك ${user.name || user.username}`,
       });
-      window.location.replace('/'); // تغيير إلى replace لضمان التوجيه الصحيح
+      window.location.replace('/');
     },
     onError: (error: Error) => {
       toast({
@@ -91,7 +87,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       toast({
         title: "تم تسجيل الخروج بنجاح",
       });
-      window.location.replace('/auth'); // تغيير إلى replace لضمان التوجيه الصحيح
+      window.location.replace('/auth');
     },
     onError: (error: Error) => {
       toast({
