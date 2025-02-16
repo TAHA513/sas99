@@ -1,12 +1,8 @@
 import { Switch, Route } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
-import { AuthProvider } from "@/hooks/use-auth";
 import NotFound from "@/pages/not-found";
 import DashboardPage from "@/pages/dashboard-page";
-import AuthPage from "@/pages/auth-page";
-import StaffLoginPage from "@/pages/staff/staff-login";
-import StaffDashboard from "@/pages/staff/dashboard";
 import CustomersPage from "@/pages/customers-page";
 import AppointmentsPage from "@/pages/appointments-page";
 import StaffPage from "@/pages/staff-page";
@@ -25,7 +21,6 @@ import SettingsPage from "@/pages/settings-page";
 import InventoryReportsPage from "@/pages/inventory-reports-page";
 import { useEffect } from "react";
 import { loadThemeSettings } from "@/lib/theme";
-import { ProtectedRoute } from "@/lib/protected-route";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -43,104 +38,56 @@ function Router() {
 
   return (
     <Switch>
-      {/* Public routes that don't require authentication */}
       <Route path="/">
         <DashboardPage />
       </Route>
-
-      {/* Auth routes */}
-      <Route path="/auth">
-        <AuthPage />
-      </Route>
-      <Route path="/staff/login">
-        <StaffLoginPage />
-      </Route>
-
-      {/* Protected routes that require authentication */}
       <Route path="/purchases">
-        <ProtectedRoute>
-          <PurchasesPage />
-        </ProtectedRoute>
+        <PurchasesPage />
       </Route>
       <Route path="/suppliers">
-        <ProtectedRoute>
-          <SuppliersPage />
-        </ProtectedRoute>
+        <SuppliersPage />
       </Route>
       <Route path="/customers">
-        <ProtectedRoute>
-          <CustomersPage />
-        </ProtectedRoute>
+        <CustomersPage />
       </Route>
       <Route path="/staff">
-        <ProtectedRoute>
-          <StaffDashboard />
-        </ProtectedRoute>
-      </Route>
-      <Route path="/staff-management">
-        <ProtectedRoute>
-          <StaffPage />
-        </ProtectedRoute>
+        <StaffPage />
       </Route>
       <Route path="/marketing">
-        <ProtectedRoute>
-          <MarketingPage />
-        </ProtectedRoute>
+        <MarketingPage />
       </Route>
       <Route path="/promotions">
-        <ProtectedRoute>
-          <PromotionsPage />
-        </ProtectedRoute>
+        <PromotionsPage />
       </Route>
       <Route path="/products">
-        <ProtectedRoute>
-          <ProductsPage />
-        </ProtectedRoute>
+        <ProductsPage />
       </Route>
       <Route path="/invoices">
-        <ProtectedRoute>
-          <InvoicesPage />
-        </ProtectedRoute>
+        <InvoicesPage />
       </Route>
       <Route path="/installments">
-        <ProtectedRoute>
-          <InstallmentsPage />
-        </ProtectedRoute>
+        <InstallmentsPage />
       </Route>
       <Route path="/expenses">
-        <ProtectedRoute>
-          <ExpensesPage />
-        </ProtectedRoute>
+        <ExpensesPage />
       </Route>
       <Route path="/expense-categories">
-        <ProtectedRoute>
-          <ExpenseCategoriesPage />
-        </ProtectedRoute>
+        <ExpenseCategoriesPage />
       </Route>
       <Route path="/reports">
-        <ProtectedRoute>
-          <ReportsPage />
-        </ProtectedRoute>
+        <ReportsPage />
       </Route>
       <Route path="/inventory-reports">
-        <ProtectedRoute>
-          <InventoryReportsPage />
-        </ProtectedRoute>
+        <InventoryReportsPage />
       </Route>
       <Route path="/barcodes">
-        <ProtectedRoute>
-          <BarcodesPage />
-        </ProtectedRoute>
+        <BarcodesPage />
       </Route>
       <Route path="/settings">
-        <ProtectedRoute>
-          <SettingsPage />
-        </ProtectedRoute>
+        <SettingsPage />
       </Route>
       <Route path="/appointments">
-        <ProtectedRoute>
-          <AppointmentsPage />
-        </ProtectedRoute>
+        <AppointmentsPage />
       </Route>
       <Route>
         <NotFound />
@@ -152,10 +99,8 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <Router />
-        <Toaster />
-      </AuthProvider>
+      <Router />
+      <Toaster />
     </QueryClientProvider>
   );
 }

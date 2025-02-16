@@ -17,11 +17,9 @@ import {
   DollarSign,
   FolderIcon,
   ClipboardList,
-  LogOut,
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
-import { useAuth } from "@/hooks/use-auth";
 
 const navItems = [
   {
@@ -113,7 +111,6 @@ const navItems = [
 
 export function DashboardNav() {
   const [location] = useLocation();
-  const { logoutMutation } = useAuth();
 
   return (
     <div className="h-screen w-64 border-l bg-card p-4 flex flex-col">
@@ -139,16 +136,6 @@ export function DashboardNav() {
           </Link>
         ))}
       </nav>
-
-      {/* Logout Button */}
-      <Button
-        variant="ghost"
-        className="w-full flex items-center justify-start gap-3 px-3 py-2 h-10 mt-4 text-red-500 hover:text-red-600 hover:bg-red-50"
-        onClick={() => logoutMutation.mutate()}
-      >
-        <LogOut className="h-4 w-4" />
-        تسجيل الخروج
-      </Button>
     </div>
   );
 }

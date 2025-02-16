@@ -2,14 +2,10 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import express from 'express';
-import { setupAuth } from "./auth";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Middleware for handling JSON responses
   app.use(express.json());
-
-  // Setup authentication
-  setupAuth(app);
 
   // Staff Dashboard APIs
   app.get("/api/sales/today", async (_req, res) => {
