@@ -56,6 +56,23 @@ export function setupAuth(app: Express) {
           return done(null, false, { message: "كلمة المرور غير صحيحة" });
         }
 
+        // Track login history for staff members if enabled
+        if (user.role === 'staff' && user.staffId) {
+          const settings = await storage.getStoreSettings();
+          if (settings?.trackStaffActivity) {
+            const loginHistory = settings.staffLoginHistory || [];
+            loginHistory.push({
+              username: user.username,
+              timestamp: new Date().toISOString(),
+              success: true
+            });
+            await storage.setStoreSettings({ 
+              ...settings, 
+              staffLoginHistory: loginHistory 
+            });
+          }
+        }
+
         return done(null, user);
       } catch (error) {
         console.error("Authentication error:", error);
@@ -78,6 +95,7 @@ export function setupAuth(app: Express) {
     }
   });
 
+  // Login endpoint that handles both admin and staff
   app.post("/api/login", (req, res, next) => {
     passport.authenticate("local", (err, user, info) => {
       if (err) {
@@ -104,6 +122,7 @@ export function setupAuth(app: Express) {
     })(req, res, next);
   });
 
+  // Logout endpoint
   app.post("/api/logout", (req, res) => {
     req.logout((err) => {
       if (err) {
@@ -114,6 +133,7 @@ export function setupAuth(app: Express) {
     });
   });
 
+  // Get current user endpoint
   app.get("/api/user", (req, res) => {
     if (!req.isAuthenticated()) {
       return res.status(401).json({ error: "المستخدم غير مصرح له" });

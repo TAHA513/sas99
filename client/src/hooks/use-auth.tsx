@@ -53,6 +53,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       return await res.json();
     },
+    onSuccess: (user: SelectUser) => {
+      queryClient.setQueryData(["/api/user"], user);
+      toast({
+        title: "تم تسجيل الدخول بنجاح",
+        description: `مرحباً بك ${user.name || user.username}`,
+      });
+    },
     onError: (error: Error) => {
       toast({
         title: "خطأ في تسجيل الدخول",
@@ -77,7 +84,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     onSuccess: () => {
       queryClient.setQueryData(["/api/user"], null);
       queryClient.clear();
-      window.location.href = '/staff/login';
+      toast({
+        title: "تم تسجيل الخروج بنجاح",
+      });
     },
     onError: (error: Error) => {
       toast({
