@@ -83,36 +83,55 @@ export default function StaffDashboard() {
 
   // Export functions
   const exportDailyReport = () => {
-    const salesData = todaySales?.map((sale: any) => ({
-      'رقم الفاتورة': sale.id,
-      'اسم العميل': sale.customerName || 'عميل نقدي',
-      'المبلغ': sale.amount,
-      'التاريخ': new Date(sale.date).toLocaleString('ar-IQ'),
-      'الحالة': sale.status === 'completed' ? 'مكتمل' :
-                sale.status === 'pending' ? 'معلق' : 'ملغي'
-    }));
-
-    const appointmentsData = appointments?.map((appointment: any) => ({
-      'وقت الموعد': new Date(appointment.time).toLocaleString('ar-IQ'),
-      'اسم العميل': appointment.customerName,
-      'رقم الهاتف': appointment.customerPhone,
-      'الحالة': appointment.status === 'completed' ? 'مكتمل' :
-                appointment.status === 'pending' ? 'معلق' : 'ملغي'
-    }));
-
-    const wb = XLSX.utils.book_new();
-
-    if (salesData?.length) {
-      const ws1 = XLSX.utils.json_to_sheet(salesData);
-      XLSX.utils.book_append_sheet(wb, ws1, "المبيعات");
+    if (!todaySales?.length && !appointments?.length) {
+      // No data to export
+      alert('لا توجد بيانات للتصدير');
+      return;
     }
 
-    if (appointmentsData?.length) {
-      const ws2 = XLSX.utils.json_to_sheet(appointmentsData);
-      XLSX.utils.book_append_sheet(wb, ws2, "المواعيد");
-    }
+    try {
+      const wb = XLSX.utils.book_new();
+      let hasData = false;
 
-    XLSX.writeFile(wb, `تقرير_يومي_${new Date().toLocaleDateString('ar-IQ')}.xlsx`);
+      if (todaySales?.length > 0) {
+        const salesData = todaySales.map((sale: any) => ({
+          'رقم الفاتورة': sale.id,
+          'اسم العميل': sale.customerName || 'عميل نقدي',
+          'المبلغ': `${Number(sale.amount).toLocaleString()} د.ع`,
+          'التاريخ': new Date(sale.date).toLocaleString('ar-IQ'),
+          'الحالة': sale.status === 'completed' ? 'مكتمل' :
+                    sale.status === 'pending' ? 'معلق' : 'ملغي'
+        }));
+
+        const ws1 = XLSX.utils.json_to_sheet(salesData);
+        XLSX.utils.book_append_sheet(wb, ws1, "المبيعات");
+        hasData = true;
+      }
+
+      if (appointments?.length > 0) {
+        const appointmentsData = appointments.map((appointment: any) => ({
+          'وقت الموعد': new Date(appointment.time).toLocaleString('ar-IQ'),
+          'اسم العميل': appointment.customerName,
+          'رقم الهاتف': appointment.customerPhone,
+          'الحالة': appointment.status === 'completed' ? 'مكتمل' :
+                    appointment.status === 'pending' ? 'معلق' : 'ملغي'
+        }));
+
+        const ws2 = XLSX.utils.json_to_sheet(appointmentsData);
+        XLSX.utils.book_append_sheet(wb, ws2, "المواعيد");
+        hasData = true;
+      }
+
+      if (hasData) {
+        const fileName = `تقرير_يومي_${new Date().toLocaleDateString('ar-IQ')}.xlsx`;
+        XLSX.writeFile(wb, fileName);
+      } else {
+        alert('لا توجد بيانات للتصدير');
+      }
+    } catch (error) {
+      console.error('خطأ في تصدير التقرير:', error);
+      alert('حدث خطأ أثناء تصدير التقرير');
+    }
   };
 
   // Handle invoice printing
