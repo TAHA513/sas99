@@ -1,11 +1,14 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useLocation } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { useMutation } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
+import { Loader2 } from "lucide-react";
 
 const staffLoginSchema = z.object({
   username: z.string().min(1, "اسم المستخدم مطلوب"),
@@ -16,14 +19,47 @@ type StaffLoginData = z.infer<typeof staffLoginSchema>;
 
 export default function StaffLoginPage() {
   const [, setLocation] = useLocation();
+  const { toast } = useToast();
 
   const form = useForm<StaffLoginData>({
     resolver: zodResolver(staffLoginSchema),
   });
 
+  const loginMutation = useMutation({
+    mutationFn: async (data: StaffLoginData) => {
+      const response = await fetch('/api/staff/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        const error = await response.text();
+        throw new Error(error || 'فشل تسجيل الدخول');
+      }
+
+      return response.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "تم تسجيل الدخول بنجاح",
+        description: `مرحباً ${data.name}`,
+      });
+      setLocation("/staff/dashboard");
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "خطأ في تسجيل الدخول",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const onSubmit = (data: StaffLoginData) => {
-    // مؤقتاً، سنقوم بالتوجيه مباشرة إلى لوحة التحكم
-    setLocation("/staff/dashboard");
+    loginMutation.mutate(data);
   };
 
   return (
@@ -44,6 +80,7 @@ export default function StaffLoginPage() {
                     <FormControl>
                       <Input {...field} />
                     </FormControl>
+                    <FormMessage />
                   </FormItem>
                 )}
               />
@@ -56,11 +93,23 @@ export default function StaffLoginPage() {
                     <FormControl>
                       <Input type="password" {...field} />
                     </FormControl>
+                    <FormMessage />
                   </FormItem>
                 )}
               />
-              <Button type="submit" className="w-full">
-                تسجيل الدخول
+              <Button 
+                type="submit" 
+                className="w-full"
+                disabled={loginMutation.isPending}
+              >
+                {loginMutation.isPending ? (
+                  <>
+                    <Loader2 className="ml-2 h-4 w-4 animate-spin" />
+                    جاري تسجيل الدخول...
+                  </>
+                ) : (
+                  'تسجيل الدخول'
+                )}
               </Button>
             </form>
           </Form>
