@@ -1,11 +1,45 @@
-import { pgTable, text, serial, integer, boolean, timestamp, json, decimal } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, decimal, json } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-// تعريف الأدوار
+// تعريف الأدوار المتاحة في النظام
 export const SYSTEM_ROLES = {
   MANAGER: 'مدير',
   STAFF: 'موظف',
+} as const;
+
+// تعريف الصلاحيات الافتراضية
+export const DEFAULT_PERMISSIONS = {
+  // إدارة المستخدمين والصلاحيات
+  MANAGE_USERS: 'manage_users',
+  MANAGE_ROLES: 'manage_roles',
+  MANAGE_PERMISSIONS: 'manage_permissions',
+
+  // إدارة المنتجات والمخزون
+  MANAGE_PRODUCTS: 'manage_products',
+  VIEW_PRODUCTS: 'view_products',
+  MANAGE_INVENTORY: 'manage_inventory',
+
+  // إدارة المبيعات والفواتير
+  MANAGE_SALES: 'manage_sales',
+  CREATE_INVOICE: 'create_invoice',
+  VIEW_INVOICES: 'view_invoices',
+  VOID_INVOICE: 'void_invoice',
+
+  // إدارة العملاء
+  MANAGE_CUSTOMERS: 'manage_customers',
+  VIEW_CUSTOMERS: 'view_customers',
+} as const;
+
+// تعريف الصلاحيات الافتراضية لكل دور
+export const ROLE_PERMISSIONS = {
+  [SYSTEM_ROLES.MANAGER]: Object.values(DEFAULT_PERMISSIONS),
+  [SYSTEM_ROLES.STAFF]: [
+    DEFAULT_PERMISSIONS.VIEW_PRODUCTS,
+    DEFAULT_PERMISSIONS.CREATE_INVOICE,
+    DEFAULT_PERMISSIONS.VIEW_CUSTOMERS,
+    DEFAULT_PERMISSIONS.VIEW_INVOICES,
+  ],
 } as const;
 
 // جدول المستخدمين
@@ -13,8 +47,10 @@ export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
-  name: text("name").notNull(),
-  role: text("role", { enum: [SYSTEM_ROLES.MANAGER, SYSTEM_ROLES.STAFF] })
+  name: text("name"),
+  email: text("email"),
+  phone: text("phone"),
+  role: text("role", { enum: Object.values(SYSTEM_ROLES) })
     .notNull()
     .default(SYSTEM_ROLES.STAFF),
   isActive: boolean("is_active").notNull().default(true),
@@ -23,28 +59,59 @@ export const users = pgTable("users", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
-// جدول سجل النشاط
-export const activityLog = pgTable("activity_log", {
+// جدول الصلاحيات
+export const permissions = pgTable("permissions", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  key: text("key", { enum: Object.values(DEFAULT_PERMISSIONS) }).notNull().unique(),
+  description: text("description"),
+  category: text("category").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// جدول صلاحيات المستخدمين
+export const userPermissions = pgTable("user_permissions", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  permissionId: integer("permission_id").notNull(),
+  granted: boolean("granted").notNull().default(false),
+  grantedBy: integer("granted_by").notNull(),
+  grantedAt: timestamp("granted_at").notNull().defaultNow(),
+  expiresAt: timestamp("expires_at"),
+});
+
+// جدول سجل الصلاحيات
+export const permissionLog = pgTable("permission_log", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull(),
   action: text("action").notNull(),
-  details: json("details"),
+  details: json("details").notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
+  createdBy: integer("created_by").notNull(),
 });
 
 // مخططات إدخال البيانات
 export const insertUserSchema = createInsertSchema(users).extend({
-  password: z.string().min(6, "كلمة المرور يجب أن تكون 6 أحرف على الأقل"),
-  role: z.enum([SYSTEM_ROLES.MANAGER, SYSTEM_ROLES.STAFF]),
+  password: z.string().min(8, "كلمة المرور يجب أن تكون 8 أحرف على الأقل"),
+  email: z.string().email("البريد الإلكتروني غير صالح").optional(),
+  phone: z.string().optional(),
+  role: z.enum(Object.values(SYSTEM_ROLES)),
 });
 
-export const insertActivityLogSchema = createInsertSchema(activityLog);
+export const insertPermissionSchema = createInsertSchema(permissions);
+export const insertUserPermissionSchema = createInsertSchema(userPermissions);
 
 // تصدير الأنواع
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
-export type ActivityLog = typeof activityLog.$inferSelect;
-export type InsertActivityLog = z.infer<typeof insertActivityLogSchema>;
+export type Permission = typeof permissions.$inferSelect;
+export type InsertPermission = z.infer<typeof insertPermissionSchema>;
+export type UserPermission = typeof userPermissions.$inferSelect;
+export type InsertUserPermission = z.infer<typeof insertUserPermissionSchema>;
+export type PermissionLog = typeof permissionLog.$inferSelect;
+
+// Add new default permissions
+const DEFAULT_PERMISSIONS_ARRAY = Object.values(DEFAULT_PERMISSIONS);
 
 export const customers = pgTable("customers", {
   id: serial("id").primaryKey(),
@@ -81,6 +148,7 @@ export const settings = pgTable("settings", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
+// تحديث جدول إعدادات المتجر
 export const storeSettings = pgTable("store_settings", {
   id: serial("id").primaryKey(),
   storeName: text("store_name").notNull(),
@@ -201,7 +269,7 @@ export const products = pgTable("products", {
   name: text("name").notNull(),
   barcode: text("barcode"),
   type: text("type").notNull(),
-  quantity: decimal("quantity").notNull().default(0),
+  quantity: decimal("quantity").notNull().default("0"),
   costPrice: decimal("cost_price").notNull(),
   sellingPrice: decimal("selling_price").notNull(),
   groupId: integer("group_id").notNull(),
@@ -221,14 +289,15 @@ export const invoices = pgTable("invoices", {
     total: number;
   }[]>().notNull(),
   subtotal: decimal("subtotal").notNull(),
-  discount: decimal("discount").notNull().default(0),
-  discountAmount: decimal("discount_amount").notNull().default(0),
+  discount: decimal("discount").notNull().default("0"),
+  discountAmount: decimal("discount_amount").notNull().default("0"),
   finalTotal: decimal("final_total").notNull(),
   note: text("note"),
   date: timestamp("date").notNull().defaultNow(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+// Installment Sales Tables
 export const installmentPlans = pgTable("installment_plans", {
   id: serial("id").primaryKey(),
   invoiceId: integer("invoice_id").notNull(),
@@ -268,6 +337,7 @@ export const insertSettingSchema = createInsertSchema(settings).pick({
   value: true,
 });
 
+// تحديث مخطط إدخال إعدادات المتجر
 export const insertStoreSettingsSchema = createInsertSchema(storeSettings).pick({
   storeName: true,
   storeLogo: true,
@@ -383,6 +453,7 @@ export type Staff = typeof staff.$inferSelect;
 export type InsertStaff = z.infer<typeof insertStaffSchema>;
 export type Setting = typeof settings.$inferSelect;
 export type InsertSetting = z.infer<typeof insertSettingSchema>;
+// تحديث النوع المستخدم في واجهة المستخدم
 export type StoreSetting = typeof storeSettings.$inferSelect;
 export type InsertStoreSetting = z.infer<typeof insertStoreSettingsSchema>;
 export type MarketingCampaign = typeof marketingCampaigns.$inferSelect;
@@ -408,6 +479,8 @@ export type InsertCampaignNotification = z.infer<typeof insertCampaignNotificati
 export type ScheduledPost = typeof scheduledPosts.$inferSelect;
 export type InsertScheduledPost = z.infer<typeof insertScheduledPostSchema>;
 
+
+
 export const suppliers = pgTable("suppliers", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
@@ -425,8 +498,8 @@ export const purchaseOrders = pgTable("purchase_orders", {
   supplierId: integer("supplier_id").notNull(),
   status: text("status").notNull().default("pending"),
   totalAmount: decimal("total_amount").notNull(),
-  paid: decimal("paid").notNull().default(0),
-  remaining: decimal("remaining").notNull().default(0),
+  paid: decimal("paid").notNull().default("0"),
+  remaining: decimal("remaining").notNull().default("0"),
   paymentStatus: text("payment_status").notNull().default("unpaid"),
   paymentDueDate: timestamp("payment_due_date"),
   notes: text("notes"),
@@ -445,6 +518,7 @@ export const purchaseItems = pgTable("purchase_items", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+// Add Zod schemas for validation
 export const insertSupplierSchema = createInsertSchema(suppliers).extend({
   phoneNumber: z.string().min(10, "رقم الهاتف يجب أن لا يقل عن 10 أرقام"),
   email: z.string().email("البريد الإلكتروني غير صالح").optional().nullable(),
@@ -472,6 +546,7 @@ export const insertPurchaseItemSchema = createInsertSchema(purchaseItems).extend
   totalPrice: z.number().min(0),
 });
 
+// Add type exports
 export type Supplier = typeof suppliers.$inferSelect;
 export type InsertSupplier = z.infer<typeof insertSupplierSchema>;
 export type PurchaseOrder = typeof purchaseOrders.$inferSelect;
@@ -500,6 +575,7 @@ export const expenses = pgTable("expenses", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
+// Add Zod schemas for validation
 export const insertExpenseCategorySchema = createInsertSchema(expenseCategories).extend({
   description: z.string().optional().nullable(),
 });
@@ -516,6 +592,7 @@ export const insertExpenseSchema = createInsertSchema(expenses).extend({
   receiptImage: z.string().optional().nullable(),
 });
 
+// Add type exports
 export type ExpenseCategory = typeof expenseCategories.$inferSelect;
 export type InsertExpenseCategory = z.infer<typeof insertExpenseCategorySchema>;
 export type Expense = typeof expenses.$inferSelect;
@@ -531,6 +608,7 @@ export const databaseConnections = pgTable("database_connections", {
   username: text("username"),
   password: text("password"),
   connectionString: text("connection_string"),
+  // New fields for Google Cloud SQL
   projectId: text("project_id"),
   instanceName: text("instance_name"),
   region: text("region"),
@@ -549,6 +627,7 @@ export const insertDatabaseConnectionSchema = createInsertSchema(databaseConnect
   username: z.string().optional(),
   password: z.string().optional(),
   connectionString: z.string().optional(),
+  // Add validation for Google Cloud SQL fields
   projectId: z.string().optional(),
   instanceName: z.string().optional(),
   region: z.string().optional(),

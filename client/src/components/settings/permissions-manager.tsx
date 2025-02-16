@@ -21,24 +21,7 @@ import {
 } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, ShieldAlert, UserCheck } from "lucide-react";
-
-// Define system roles and permissions
-const SYSTEM_ROLES = {
-  MANAGER: "مدير",
-  STAFF: "موظف",
-  SUPER_ADMIN: "مدير النظام"
-} as const;
-
-const DEFAULT_PERMISSIONS = {
-  VIEW_DASHBOARD: "عرض لوحة التحكم",
-  VIEW_REPORTS: "عرض التقارير",
-  MANAGE_PRODUCTS: "إدارة المنتجات",
-  MANAGE_INVENTORY: "إدارة المخزون",
-  MANAGE_USERS: "إدارة المستخدمين",
-  MANAGE_SETTINGS: "إدارة الإعدادات",
-  CREATE_INVOICES: "إنشاء الفواتير",
-  MANAGE_CUSTOMERS: "إدارة العملاء"
-} as const;
+import { SYSTEM_ROLES, DEFAULT_PERMISSIONS } from "@shared/schema";
 
 export function PermissionsManager() {
   const { toast } = useToast();
@@ -145,7 +128,7 @@ export function PermissionsManager() {
 
   // تنظيم الصلاحيات حسب الفئة
   const groupedPermissions = Object.entries(DEFAULT_PERMISSIONS).reduce((acc, [key, value]) => {
-    const category = value.split(' ')[1]?.toLowerCase() || 'عام'; //Corrected line
+    const category = value.split('_')[0].toLowerCase();
     if (!acc[category]) {
       acc[category] = [];
     }

@@ -69,11 +69,7 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (user) {
-      if (user.role === "مدير") {
-        window.location.replace("/dashboard");
-      } else {
-        window.location.replace("/staff");
-      }
+      window.location.replace("/");
     }
   }, [user]);
 
