@@ -54,7 +54,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { PermissionsManager } from "@/components/settings/permissions-manager";
-
+import { SecuritySettings } from "@/components/settings/security-settings";
 
 const socialMediaAccountSchema = z.object({
   platform: z.enum(['facebook', 'instagram', 'snapchat'], {
@@ -597,6 +597,10 @@ export default function SettingsPage() {
               <Building2 className="h-4 w-4" />
               <span>المتجر</span>
             </TabsTrigger>
+            <TabsTrigger value="security" className="space-x-2">
+              <Shield className="h-4 w-4" />
+              <span>الأمان</span>
+            </TabsTrigger>
             <TabsTrigger value="integrations" className="space-x-2">
               <SettingsIcon className="h-4 w-4" />
               <span>التكاملات</span>
@@ -609,12 +613,8 @@ export default function SettingsPage() {
               <Database className="h-4 w-4" />
               <span>قواعد البيانات</span>
             </TabsTrigger>
-            <TabsTrigger value="staff" className="space-x-2">
-              <Users className="h-4 w-4" />
-              <span>الموظفين</span>
-            </TabsTrigger>
             <TabsTrigger value="permissions" className="space-x-2">
-              <Shield className="h-4 w-4" />
+              <Users className="h-4 w-4" />
               <span>الصلاحيات</span>
             </TabsTrigger>
           </TabsList>
@@ -885,7 +885,7 @@ export default function SettingsPage() {
               <CardHeader>
                 <div className="flex items-center space-x-4">
                   <div className="flex gap-2">
-                    <SiFacebook className="h-8 w-8 textblue-600" />
+                    <SiFacebook className="h-8 w8 text-blue-600" />
                     <SiInstagram className="h-8 w-8 text-pink-600" />
                     <SiSnapchat className="h-8 w-8 text-yellow-500" />
                   </div>
@@ -1547,6 +1547,9 @@ export default function SettingsPage() {
                 </div>
               </CardContent>
             </CustomCard>
+          </TabsContent>
+          <TabsContent value="security">
+            <SecuritySettings />
           </TabsContent>
         </Tabs>
       </div>

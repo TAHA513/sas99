@@ -208,7 +208,14 @@ export function SecuritySettings() {
 
   return (
     <div className="space-y-6">
-      {/* إعدادات الأمان الأساسية */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-3xl font-bold">الأمان والصلاحيات</h2>
+          <p className="text-muted-foreground mt-2">إدارة إعدادات الأمان وصلاحيات المستخدمين</p>
+        </div>
+      </div>
+
+      {/* القسم الأول: إعدادات الأمان الأساسية */}
       <Card>
         <CardHeader>
           <div className="flex items-center space-x-4">
@@ -266,16 +273,16 @@ export function SecuritySettings() {
         </CardContent>
       </Card>
 
-      {/* إدارة الموظفين والصلاحيات */}
+      {/* القسم الثاني: إدارة المستخدمين */}
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <Users className="h-8 w-8 text-primary" />
               <div>
-                <CardTitle>إدارة الموظفين والصلاحيات</CardTitle>
+                <CardTitle>إدارة المستخدمين</CardTitle>
                 <CardDescription>
-                  إضافة وإدارة الموظفين وتحديد صلاحياتهم
+                  إضافة وإدارة حسابات المستخدمين في النظام
                 </CardDescription>
               </div>
             </div>
@@ -283,14 +290,14 @@ export function SecuritySettings() {
               <DialogTrigger asChild>
                 <Button>
                   <UserPlus className="h-4 w-4 ml-2" />
-                  إضافة موظف جديد
+                  إضافة مستخدم جديد
                 </Button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>إضافة موظف جديد</DialogTitle>
+                  <DialogTitle>إضافة مستخدم جديد</DialogTitle>
                   <DialogDescription>
-                    أدخل بيانات الموظف الجديد وحدد دوره في النظام
+                    أدخل بيانات المستخدم الجديد وحدد دوره في النظام
                   </DialogDescription>
                 </DialogHeader>
                 <Form {...newStaffForm}>
@@ -369,7 +376,6 @@ export function SecuritySettings() {
         </CardHeader>
         <CardContent>
           <div className="space-y-6">
-            {/* قائمة الموظفين */}
             <div className="grid gap-4">
               {users?.map((user: any) => (
                 <div key={user.id} className="flex items-center justify-between p-4 border rounded-lg">
@@ -416,50 +422,61 @@ export function SecuritySettings() {
                 </div>
               ))}
             </div>
-
-            {/* إدارة صلاحيات المستخدم المحدد */}
-            {selectedUserId && (
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold">صلاحيات المستخدم</h3>
-                {Object.entries(groupedPermissions).map(([category, permissions]) => (
-                  <Card key={category}>
-                    <CardHeader>
-                      <CardTitle className="capitalize">{category}</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="grid gap-4">
-                        {permissions.map(({ key, value }) => {
-                          const hasPermission = userPermissions?.some(
-                            (p: any) => p.key === key && p.granted
-                          );
-                          return (
-                            <div key={key} className="flex items-center justify-between">
-                              <Label htmlFor={key}>{value}</Label>
-                              <Switch
-                                id={key}
-                                checked={hasPermission}
-                                onCheckedChange={(checked) =>
-                                  updatePermissionMutation.mutate({
-                                    userId: selectedUserId,
-                                    permission: key,
-                                    granted: checked,
-                                  })
-                                }
-                              />
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
           </div>
         </CardContent>
       </Card>
 
-      {/* سجل تسجيل الدخول */}
+      {/* القسم الثالث: إدارة الصلاحيات */}
+      {selectedUserId && (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center space-x-4">
+              <Key className="h-8 w-8 text-primary" />
+              <div>
+                <CardTitle>إدارة الصلاحيات</CardTitle>
+                <CardDescription>
+                  تحديد وإدارة صلاحيات المستخدم المحدد
+                </CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {Object.entries(groupedPermissions).map(([category, permissions]) => (
+                <Card key={category}>
+                  <CardHeader>
+                    <CardTitle className="capitalize">{category}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid gap-4">
+                      {permissions.map(({ key, value }) => (
+                        <div key={key} className="flex items-center justify-between">
+                          <Label htmlFor={key}>{value}</Label>
+                          <Switch
+                            id={key}
+                            checked={userPermissions?.some(
+                              (p: any) => p.key === key && p.granted
+                            )}
+                            onCheckedChange={(checked) =>
+                              updatePermissionMutation.mutate({
+                                userId: selectedUserId,
+                                permission: key,
+                                granted: checked,
+                              })
+                            }
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* القسم الرابع: سجل تسجيل الدخول */}
       {settings?.staffLoginHistory && settings.staffLoginHistory.length > 0 && (
         <Card>
           <CardHeader>
@@ -468,7 +485,7 @@ export function SecuritySettings() {
               <div>
                 <CardTitle>سجل تسجيل الدخول</CardTitle>
                 <CardDescription>
-                  آخر محاولات تسجيل الدخول للموظفين
+                  آخر محاولات تسجيل الدخول للمستخدمين
                 </CardDescription>
               </div>
             </div>
