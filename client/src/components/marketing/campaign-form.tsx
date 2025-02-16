@@ -17,6 +17,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { insertMarketingCampaignSchema } from "@shared/schema";
 import { Slider } from "@/components/ui/slider";
 import { useState } from "react";
+import { CampaignPreview } from "./campaign-preview";
 
 const campaignFormSchema = insertMarketingCampaignSchema.extend({
   startDate: z.string(),
@@ -90,6 +91,9 @@ export function CampaignForm({ platform, onSuccess }: CampaignFormProps) {
       });
     },
   });
+
+  const watchContent = form.watch('content');
+  const watchName = form.watch('name');
 
   return (
     <Form {...form}>
@@ -219,6 +223,12 @@ export function CampaignForm({ platform, onSuccess }: CampaignFormProps) {
               </FormControl>
             </FormItem>
           )}
+        />
+
+        <CampaignPreview 
+          platform={platform}
+          content={watchContent}
+          name={watchName}
         />
 
         <Button 
