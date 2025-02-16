@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import express from 'express';
 import { hashPassword, comparePasswords } from "./auth";
+import session from "express-session";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Middleware for handling JSON responses
@@ -11,6 +12,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.setHeader('Content-Type', 'application/json');
     next();
   });
+
+  // Configure session middleware
+  app.use(session({
+    secret: process.env.SESSION_SECRET || 'your-secret-key',
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      secure: false, // set to true in production with HTTPS
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      httpOnly: true
+    }
+  }));
 
   // Simple login endpoint without passport
   app.post("/api/login", async (req, res) => {
@@ -61,20 +74,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Simple logout endpoint
   app.post("/api/logout", (req, res) => {
-    req.session.destroy((err) => {
-      if (err) {
-        console.error("Logout error:", err);
-        return res.status(500).json({ 
-          error: "حدث خطأ في تسجيل الخروج" 
+    if (!req.session) {
+      return res.status(200).json({ message: "تم تسجيل الخروج بنجاح" });
+    }
+
+    if (req.session.user) {
+      delete req.session.user;
+      req.session.save((err) => {
+        if (err) {
+          console.error("Session save error:", err);
+          return res.status(500).json({ 
+            error: "حدث خطأ في تسجيل الخروج" 
+          });
+        }
+        req.session.destroy((err) => {
+          if (err) {
+            console.error("Session destroy error:", err);
+            return res.status(500).json({ 
+              error: "حدث خطأ في تسجيل الخروج" 
+            });
+          }
+          res.json({ message: "تم تسجيل الخروج بنجاح" });
         });
-      }
+      });
+    } else {
       res.json({ message: "تم تسجيل الخروج بنجاح" });
-    });
+    }
   });
 
   // Get current user endpoint
   app.get("/api/user", (req, res) => {
-    const user = req.session.user;
+    const user = req.session?.user;
     if (!user) {
       return res.status(401).json({ 
         error: "المستخدم غير مسجل الدخول" 
