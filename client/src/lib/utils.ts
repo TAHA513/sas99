@@ -15,3 +15,10 @@ export function formatCurrency(amount: number, currency: 'USD' | 'IQD' = 'USD'):
 
   return formatter.format(amount);
 }
+
+export function formatNumber(value: number): string {
+  return new Intl.NumberFormat('ar-IQ', {
+    notation: value > 9999 ? 'compact' : 'standard',
+    maximumFractionDigits: 1
+  }).format(value);
+}

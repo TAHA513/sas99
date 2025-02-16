@@ -27,6 +27,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { CampaignAnalytics } from "./campaign-analytics";
 
 const campaignFormSchema = insertMarketingCampaignSchema.extend({
   startDate: z.string(),
@@ -474,6 +475,23 @@ export function CampaignForm({ platform, onSuccess }: CampaignFormProps) {
           mediaFiles={watchMediaFiles}
           targeting={watchTargeting}
         />
+
+        {/* Add Campaign Analytics Section */}
+        {form.formState.isDirty && (
+          <CampaignAnalytics
+            campaign={{
+              ...form.getValues(),
+              campaignMetrics: {
+                impressions: 0,
+                clicks: 0,
+                engagement: 0,
+                reach: 0,
+                conversion: 0,
+                roi: 0
+              }
+            }}
+          />
+        )}
 
         <Button
           type="submit"
