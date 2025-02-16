@@ -4,6 +4,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from "@/hooks/use-auth";
 import NotFound from "@/pages/not-found";
 import DashboardPage from "@/pages/dashboard-page";
+import LoginPage from "@/pages/auth/login-page";
 import StaffDashboard from "@/pages/staff/dashboard";
 import CustomersPage from "@/pages/customers-page";
 import AppointmentsPage from "@/pages/appointments-page";
@@ -24,7 +25,6 @@ import InventoryReportsPage from "@/pages/inventory-reports-page";
 import { useEffect } from "react";
 import { loadThemeSettings } from "@/lib/theme";
 
-// Create a client
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -35,14 +35,16 @@ const queryClient = new QueryClient({
 });
 
 function Router() {
-  // Load theme settings on app initialization
   useEffect(() => {
     loadThemeSettings();
   }, []);
 
   return (
     <Switch>
-      {/* المسارات الرئيسية */}
+      {/* صفحة تسجيل الدخول */}
+      <Route path="/staff/login" component={LoginPage} />
+
+      {/* المسارات المحمية */}
       <Route path="/" component={DashboardPage} />
       <Route path="/staff" component={StaffDashboard} />
       <Route path="/purchases" component={PurchasesPage} />
