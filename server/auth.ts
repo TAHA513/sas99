@@ -29,6 +29,7 @@ async function comparePasswords(supplied: string, stored: string) {
 }
 
 export function setupAuth(app: Express) {
+  // إعداد الجلسة
   app.use(session({
     secret: process.env.SESSION_SECRET || 'your-secret-key',
     resave: false,
@@ -42,6 +43,7 @@ export function setupAuth(app: Express) {
   app.use(passport.initialize());
   app.use(passport.session());
 
+  // إستراتيجية المصادقة المحلية
   passport.use(
     new LocalStrategy(async (username, password, done) => {
       try {
@@ -84,7 +86,10 @@ export function setupAuth(app: Express) {
     }
   });
 
+  // API نقاط نهاية
   app.post("/api/login", (req, res, next) => {
+    res.setHeader('Content-Type', 'application/json');
+
     passport.authenticate("local", (err, user, info) => {
       if (err) {
         console.error("Login error:", err);
@@ -104,6 +109,8 @@ export function setupAuth(app: Express) {
   });
 
   app.post("/api/logout", (req, res) => {
+    res.setHeader('Content-Type', 'application/json');
+
     try {
       req.logout((err) => {
         if (err) {
@@ -119,6 +126,8 @@ export function setupAuth(app: Express) {
   });
 
   app.get("/api/user", (req, res) => {
+    res.setHeader('Content-Type', 'application/json');
+
     try {
       if (!req.isAuthenticated()) {
         return res.status(401).json({ error: "المستخدم غير مصرح له" });

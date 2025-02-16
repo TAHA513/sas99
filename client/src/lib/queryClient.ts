@@ -43,6 +43,7 @@ export async function apiRequest(
 }
 
 type UnauthorizedBehavior = "returnNull" | "throw";
+
 export const getQueryFn: <T>(options: {
   on401: UnauthorizedBehavior;
 }) => QueryFunction<T> =
@@ -62,9 +63,11 @@ export const getQueryFn: <T>(options: {
 
       await throwIfResNotOk(res);
 
+      // التحقق من نوع المحتوى
       const contentType = res.headers.get("content-type");
       if (!contentType || !contentType.includes("application/json")) {
-        throw new Error("Expected JSON response but received: " + contentType);
+        console.error("Invalid content type received:", contentType);
+        return null; // إرجاع null بدلاً من رمي خطأ لتجنب تكرار الأخطاء
       }
 
       return await res.json();
