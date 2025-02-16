@@ -43,17 +43,20 @@ function Router() {
 
   return (
     <Switch>
+      {/* Public routes that don't require authentication */}
+      <Route path="/">
+        <DashboardPage />
+      </Route>
+
+      {/* Auth routes */}
       <Route path="/auth">
         <AuthPage />
       </Route>
       <Route path="/staff/login">
         <StaffLoginPage />
       </Route>
-      <Route path="/">
-        <ProtectedRoute>
-          <DashboardPage />
-        </ProtectedRoute>
-      </Route>
+
+      {/* Protected routes that require authentication */}
       <Route path="/purchases">
         <ProtectedRoute>
           <PurchasesPage />
