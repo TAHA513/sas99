@@ -49,7 +49,7 @@ export default function LoginPage() {
       return response.json();
     },
     onSuccess: () => {
-      setLocation("/");
+      window.location.replace("/");
     },
     onError: (error: Error) => {
       toast({
@@ -75,7 +75,7 @@ export default function LoginPage() {
       return response.json();
     },
     onSuccess: () => {
-      setLocation("/staff/dashboard");
+      window.location.replace("/staff/dashboard");
     },
     onError: (error: Error) => {
       toast({
