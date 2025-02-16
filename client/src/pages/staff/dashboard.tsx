@@ -9,9 +9,11 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Loader2, Calendar, DollarSign, Package, AlertCircle, Printer } from "lucide-react";
+import { Loader2, Calendar, DollarSign, Package, AlertCircle, Printer, FileDown } from "lucide-react";
 import { Link, useLocation } from "wouter";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { Input } from "@/components/ui/input";
+import * as XLSX from 'xlsx';
 
 // Loading skeleton component
 const SkeletonRow = () => (
@@ -27,6 +29,8 @@ const SkeletonRow = () => (
 export default function StaffDashboard() {
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
+  const [searchTermSales, setSearchTermSales] = useState("");
+  const [searchTermAppointments, setSearchTermAppointments] = useState("");
 
   // Prefetch data
   useEffect(() => {
@@ -54,6 +58,62 @@ export default function StaffDashboard() {
     queryKey: ["/api/alerts"],
     staleTime: 1000 * 60 * 5,
   });
+
+  // Calculate summary stats
+  const totalSales = todaySales?.reduce((sum: number, sale: any) => sum + Number(sale.amount), 0) || 0;
+  const totalAppointments = appointments?.length || 0;
+
+  // Filter functions
+  const filteredSales = todaySales?.filter((sale: any) => {
+    const searchLower = searchTermSales.toLowerCase();
+    return (
+      sale.id.toString().includes(searchLower) ||
+      (sale.customerName || 'عميل نقدي').toLowerCase().includes(searchLower) ||
+      sale.amount.toString().includes(searchLower)
+    );
+  });
+
+  const filteredAppointments = appointments?.filter((appointment: any) => {
+    const searchLower = searchTermAppointments.toLowerCase();
+    return (
+      appointment.customerName.toLowerCase().includes(searchLower) ||
+      appointment.customerPhone.includes(searchLower)
+    );
+  });
+
+  // Export functions
+  const exportDailyReport = () => {
+    const salesData = todaySales?.map((sale: any) => ({
+      'رقم الفاتورة': sale.id,
+      'اسم العميل': sale.customerName || 'عميل نقدي',
+      'المبلغ': sale.amount,
+      'التاريخ': new Date(sale.date).toLocaleString('ar-IQ'),
+      'الحالة': sale.status === 'completed' ? 'مكتمل' :
+                sale.status === 'pending' ? 'معلق' : 'ملغي'
+    }));
+
+    const appointmentsData = appointments?.map((appointment: any) => ({
+      'وقت الموعد': new Date(appointment.time).toLocaleString('ar-IQ'),
+      'اسم العميل': appointment.customerName,
+      'رقم الهاتف': appointment.customerPhone,
+      'الحالة': appointment.status === 'completed' ? 'مكتمل' :
+                appointment.status === 'pending' ? 'معلق' : 'ملغي'
+    }));
+
+    const wb = XLSX.utils.book_new();
+
+    if (salesData?.length) {
+      const ws1 = XLSX.utils.json_to_sheet(salesData);
+      XLSX.utils.book_append_sheet(wb, ws1, "المبيعات");
+    }
+
+    if (appointmentsData?.length) {
+      const ws2 = XLSX.utils.json_to_sheet(appointmentsData);
+      XLSX.utils.book_append_sheet(wb, ws2, "المواعيد");
+    }
+
+    XLSX.writeFile(wb, `تقرير_يومي_${new Date().toLocaleDateString('ar-IQ')}.xlsx`);
+  };
 
   // Handle invoice printing
   const handlePrintInvoice = (invoice: any) => {
@@ -148,6 +208,33 @@ export default function StaffDashboard() {
         </div>
       </div>
 
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Card className="p-4">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-primary/10 rounded-full">
+              <DollarSign className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <h3 className="text-sm font-medium text-muted-foreground">إجمالي المبيعات اليوم</h3>
+              <p className="text-2xl font-bold">{totalSales.toLocaleString()} د.ع</p>
+            </div>
+          </div>
+        </Card>
+
+        <Card className="p-4">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-primary/10 rounded-full">
+              <Calendar className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <h3 className="text-sm font-medium text-muted-foreground">مواعيد اليوم</h3>
+              <p className="text-2xl font-bold">{totalAppointments}</p>
+            </div>
+          </div>
+        </Card>
+      </div>
+
       {/* Alert Section */}
       {alerts?.length > 0 && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
@@ -166,10 +253,29 @@ export default function StaffDashboard() {
       {/* Today's Sales */}
       <Card className="p-4">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-semibold">مبيعات اليوم</h2>
-          <span className="text-muted-foreground text-sm">
-            {new Date().toLocaleDateString('ar-IQ')}
-          </span>
+          <div>
+            <h2 className="text-lg font-semibold">مبيعات اليوم</h2>
+            <span className="text-muted-foreground text-sm">
+              {new Date().toLocaleDateString('ar-IQ')}
+            </span>
+          </div>
+          <Button
+            variant="outline"
+            onClick={exportDailyReport}
+            className="flex items-center gap-2"
+          >
+            <FileDown className="h-4 w-4" />
+            تصدير التقرير
+          </Button>
+        </div>
+
+        <div className="mb-4">
+          <Input
+            placeholder="البحث في المبيعات..."
+            value={searchTermSales}
+            onChange={(e) => setSearchTermSales(e.target.value)}
+            className="max-w-sm"
+          />
         </div>
 
         <div className="rounded-md border">
@@ -187,14 +293,14 @@ export default function StaffDashboard() {
             <TableBody>
               {salesLoading ? (
                 [...Array(3)].map((_, i) => <SkeletonRow key={i} />)
-              ) : todaySales?.length === 0 ? (
+              ) : filteredSales?.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={6} className="text-center py-4 text-muted-foreground">
-                    لا توجد مبيعات لهذا اليوم
+                    لا توجد نتائج للبحث
                   </TableCell>
                 </TableRow>
               ) : (
-                todaySales?.map((sale: any) => (
+                filteredSales?.map((sale: any) => (
                   <TableRow key={sale.id}>
                     <TableCell>#{sale.id}</TableCell>
                     <TableCell>{sale.customerName || 'عميل نقدي'}</TableCell>
@@ -240,6 +346,15 @@ export default function StaffDashboard() {
           </Button>
         </div>
 
+        <div className="mb-4">
+          <Input
+            placeholder="البحث في المواعيد..."
+            value={searchTermAppointments}
+            onChange={(e) => setSearchTermAppointments(e.target.value)}
+            className="max-w-sm"
+          />
+        </div>
+
         <div className="rounded-md border">
           <Table>
             <TableHeader>
@@ -253,14 +368,14 @@ export default function StaffDashboard() {
             <TableBody>
               {appointmentsLoading ? (
                 [...Array(3)].map((_, i) => <SkeletonRow key={i} />)
-              ) : appointments?.length === 0 ? (
+              ) : filteredAppointments?.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={4} className="text-center py-4 text-muted-foreground">
-                    لا توجد مواعيد لهذا اليوم
+                    لا توجد نتائج للبحث
                   </TableCell>
                 </TableRow>
               ) : (
-                appointments?.map((appointment: any) => (
+                filteredAppointments?.map((appointment: any) => (
                   <TableRow key={appointment.id}>
                     <TableCell>{new Date(appointment.time).toLocaleTimeString('ar-IQ')}</TableCell>
                     <TableCell>{appointment.customerName}</TableCell>
