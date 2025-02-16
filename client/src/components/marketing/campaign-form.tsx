@@ -2,7 +2,6 @@ import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -39,7 +38,7 @@ export function CampaignForm({ platform, onSuccess }: CampaignFormProps) {
   const form = useForm<CampaignFormData>({
     resolver: zodResolver(campaignFormSchema),
     defaultValues: {
-      type: "promotional",
+      type: platform === 'sms' ? 'sms' : "promotional",
       platforms: [platform],
       status: 'draft',
       budget: 100,
@@ -71,7 +70,7 @@ export function CampaignForm({ platform, onSuccess }: CampaignFormProps) {
         ...data,
         startDate: new Date(data.startDate),
         endDate: new Date(data.endDate),
-        budget: budget, // Already in USD
+        budget: budget,
       });
       return res.json();
     },
@@ -143,6 +142,7 @@ export function CampaignForm({ platform, onSuccess }: CampaignFormProps) {
                     <option value="engagement">تفاعلية</option>
                     <option value="sales">مبيعات</option>
                     <option value="seasonal">موسمية</option>
+                    <option value="sms">رسائل SMS</option>
                   </select>
                 </FormControl>
               </FormItem>
