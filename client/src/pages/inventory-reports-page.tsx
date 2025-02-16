@@ -10,7 +10,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useQuery } from "@tanstack/react-query";
-import { Package2, DollarSign, LineChart, TrendingUp, Wallet, BarChart3 } from "lucide-react";
+import { Package2, DollarSign, LineChart, TrendingUp, Wallet } from "lucide-react";
 import type { Product } from "@shared/schema";
 import {
   PieChart,
@@ -59,25 +59,6 @@ export default function InventoryReportsPage() {
     }).format(amount);
   };
 
-  // بيانات الرسم البياني الدائري
-  const pieChartData = [
-    { name: 'منتجات المفرد', value: retailProducts.length },
-    { name: 'منتجات الجملة', value: wholesaleProducts.length },
-  ];
-
-  // بيانات الرسم البياني العمودي للمقارنة
-  const barChartData = products.slice(0, 5).map(product => ({
-    name: product.name,
-    'سعر التكلفة': Number(product.costPrice),
-    'سعر البيع': Number(product.sellingPrice),
-  }));
-
-  // بيانات الرسم البياني الخطي للأرباح
-  const profitData = products.slice(0, 5).map(product => ({
-    name: product.name,
-    'الربح المتوقع': Number(product.sellingPrice) - Number(product.costPrice),
-  }));
-
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -86,30 +67,60 @@ export default function InventoryReportsPage() {
           <p className="text-muted-foreground">عرض تفصيلي للسيولة المتوفرة وأرصدة المخزون</p>
         </div>
 
-        {/* قسم السيولة الجديد */}
-        <Card className="bg-primary/5">
-          <CardHeader>
-            <CardTitle>تقرير السيولة المتوفرة</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-4 md:grid-cols-2">
-              <div>
-                <h3 className="font-semibold mb-2">السيولة بسعر التكلفة</h3>
-                <div className="text-2xl font-bold">{formatCurrency(totalInventoryCost)}</div>
-                <p className="text-sm text-muted-foreground">
-                  إجمالي رأس المال المستثمر في المخزون
-                </p>
-              </div>
-              <div>
-                <h3 className="font-semibold mb-2">السيولة بسعر البيع</h3>
-                <div className="text-2xl font-bold">{formatCurrency(totalInventorySalePrice)}</div>
-                <p className="text-sm text-muted-foreground">
-                  إجمالي القيمة المتوقعة عند بيع كامل المخزون
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        {/* قسم السيولة */}
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <Card className="bg-primary/5">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">رأس المال المستثمر</CardTitle>
+              <Wallet className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{formatCurrency(totalInventoryCost)}</div>
+              <p className="text-xs text-muted-foreground mt-1">
+                إجمالي تكلفة المخزون الحالي
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-primary/5">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">القيمة السوقية</CardTitle>
+              <DollarSign className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{formatCurrency(totalInventorySalePrice)}</div>
+              <p className="text-xs text-muted-foreground mt-1">
+                إجمالي قيمة البيع للمخزون
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-primary/5">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">الربح المتوقع</CardTitle>
+              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{formatCurrency(expectedProfit)}</div>
+              <p className="text-xs text-muted-foreground mt-1">
+                إجمالي الربح المتوقع
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-primary/5">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">هامش الربح</CardTitle>
+              <LineChart className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{profitMargin}%</div>
+              <p className="text-xs text-muted-foreground mt-1">
+                نسبة الربح المتوقعة
+              </p>
+            </CardContent>
+          </Card>
+        </div>
 
         {/* قسم احصائيات المخزون */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -164,7 +175,7 @@ export default function InventoryReportsPage() {
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
-                    data={pieChartData}
+                    data={[{ name: 'منتجات المفرد', value: retailProducts.length }, { name: 'منتجات الجملة', value: wholesaleProducts.length }]}
                     dataKey="value"
                     nameKey="name"
                     cx="50%"
@@ -175,7 +186,7 @@ export default function InventoryReportsPage() {
                     animationBegin={0}
                     animationDuration={1500}
                   >
-                    {pieChartData.map((entry, index) => (
+                    {[{ name: 'منتجات المفرد', value: retailProducts.length }, { name: 'منتجات الجملة', value: wholesaleProducts.length }].map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={index === 0 ? '#8884d8' : '#82ca9d'} />
                     ))}
                   </Pie>
@@ -193,29 +204,29 @@ export default function InventoryReportsPage() {
             </CardHeader>
             <CardContent className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
-                <RechartsLineChart data={profitData}>
+                <RechartsLineChart data={products.slice(0, 5).map(product => ({ name: product.name, 'الربح المتوقع': Number(product.sellingPrice) - Number(product.costPrice) }))}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                  <XAxis 
-                    dataKey="name" 
+                  <XAxis
+                    dataKey="name"
                     stroke="#64748b"
                     tick={{ fill: '#64748b', fontSize: 12 }}
                     axisLine={{ stroke: '#e2e8f0' }}
                   />
-                  <YAxis 
+                  <YAxis
                     stroke="#64748b"
                     tick={{ fill: '#64748b', fontSize: 12 }}
                     axisLine={{ stroke: '#e2e8f0' }}
                     tickFormatter={(value) => `${value.toLocaleString('ar-IQ')} د.ع`}
                   />
-                  <Tooltip 
+                  <Tooltip
                     formatter={(value) => [`${value.toLocaleString('ar-IQ')} د.ع`, 'الربح المتوقع']}
                     labelStyle={{ fontFamily: 'inherit', textAlign: 'right' }}
                   />
                   <Legend />
-                  <Line 
-                    type="monotone" 
-                    dataKey="الربح المتوقع" 
-                    stroke="#82ca9d" 
+                  <Line
+                    type="monotone"
+                    dataKey="الربح المتوقع"
+                    stroke="#82ca9d"
                     strokeWidth={2}
                     dot={{ fill: '#82ca9d', strokeWidth: 2 }}
                     activeDot={{ r: 8 }}
@@ -233,34 +244,34 @@ export default function InventoryReportsPage() {
             </CardHeader>
             <CardContent className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={barChartData}>
+                <BarChart data={products.slice(0, 5).map(product => ({ name: product.name, 'سعر التكلفة': Number(product.costPrice), 'سعر البيع': Number(product.sellingPrice) }))}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                  <XAxis 
-                    dataKey="name" 
+                  <XAxis
+                    dataKey="name"
                     stroke="#64748b"
                     tick={{ fill: '#64748b', fontSize: 12 }}
                     axisLine={{ stroke: '#e2e8f0' }}
                   />
-                  <YAxis 
+                  <YAxis
                     stroke="#64748b"
                     tick={{ fill: '#64748b', fontSize: 12 }}
                     axisLine={{ stroke: '#e2e8f0' }}
                     tickFormatter={(value) => `${value.toLocaleString('ar-IQ')} د.ع`}
                   />
-                  <Tooltip 
+                  <Tooltip
                     formatter={(value) => [`${value.toLocaleString('ar-IQ')} د.ع`, '']}
                     labelStyle={{ fontFamily: 'inherit', textAlign: 'right' }}
                   />
                   <Legend />
-                  <Bar 
-                    dataKey="سعر التكلفة" 
-                    fill="#8884d8" 
+                  <Bar
+                    dataKey="سعر التكلفة"
+                    fill="#8884d8"
                     radius={[4, 4, 0, 0]}
                     animationDuration={1500}
                   />
-                  <Bar 
-                    dataKey="سعر البيع" 
-                    fill="#82ca9d" 
+                  <Bar
+                    dataKey="سعر البيع"
+                    fill="#82ca9d"
                     radius={[4, 4, 0, 0]}
                     animationDuration={1500}
                   />
