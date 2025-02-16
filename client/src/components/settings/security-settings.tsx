@@ -55,7 +55,7 @@ const newStaffSchema = z.object({
   username: z.string().min(3, "اسم المستخدم يجب أن يكون 3 أحرف على الأقل"),
   name: z.string().min(2, "الاسم يجب أن يكون حرفين على الأقل"),
   password: z.string().min(8, "كلمة المرور يجب أن تكون 8 أحرف على الأقل"),
-  role: z.enum(Object.values(SYSTEM_ROLES) as [string, ...string[]]),
+  role: z.enum([SYSTEM_ROLES.MANAGER, SYSTEM_ROLES.STAFF]),
 });
 
 type NewStaffFormData = z.infer<typeof newStaffSchema>;
@@ -354,11 +354,8 @@ export function SecuritySettings() {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {Object.entries(SYSTEM_ROLES).map(([key, value]) => (
-                                <SelectItem key={value} value={value}>
-                                  {key}
-                                </SelectItem>
-                              ))}
+                              <SelectItem value={SYSTEM_ROLES.MANAGER}>مدير</SelectItem>
+                              <SelectItem value={SYSTEM_ROLES.STAFF}>موظف</SelectItem>
                             </SelectContent>
                           </Select>
                           <FormMessage />
@@ -366,7 +363,7 @@ export function SecuritySettings() {
                       )}
                     />
                     <Button type="submit" className="w-full">
-                      {addStaffMutation.isPending ? "جاري الإضافة..." : "إضافة الموظف"}
+                      {addStaffMutation.isPending ? "جاري الإضافة..." : "إضافة المستخدم"}
                     </Button>
                   </form>
                 </Form>
@@ -375,53 +372,53 @@ export function SecuritySettings() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="space-y-6">
-            <div className="grid gap-4">
-              {users?.map((user: any) => (
-                <div key={user.id} className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="flex items-center space-x-4">
-                    <UserCheck className="h-6 w-6 text-primary" />
-                    <div>
-                      <div className="font-medium">{user.name || user.username}</div>
-                      <div className="text-sm text-muted-foreground">{user.role}</div>
+          <div className="grid gap-4">
+            {users?.map((user: any) => (
+              <div key={user.id} className="flex items-center justify-between p-4 border rounded-lg">
+                <div className="flex items-center space-x-4">
+                  <UserCheck className="h-6 w-6 text-primary" />
+                  <div>
+                    <div className="font-medium">{user.name || user.username}</div>
+                    <div className="text-sm text-muted-foreground">
+                      {user.role === SYSTEM_ROLES.MANAGER ? "مدير" : "موظف"}
                     </div>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setSelectedUserId(user.id)}
-                    >
-                      <Key className="h-4 w-4 ml-2" />
-                      الصلاحيات
-                    </Button>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button variant="destructive" size="sm">
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>حذف المستخدم</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            هل أنت متأكد من حذف هذا المستخدم؟ لا يمكن التراجع عن هذا الإجراء.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>إلغاء</AlertDialogCancel>
-                          <AlertDialogAction
-                            onClick={() => deleteUserMutation.mutate(user.id)}
-                          >
-                            حذف
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </div>
                 </div>
-              ))}
-            </div>
+                <div className="flex items-center space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setSelectedUserId(user.id)}
+                  >
+                    <Key className="h-4 w-4 ml-2" />
+                    الصلاحيات
+                  </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="destructive" size="sm">
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>حذف المستخدم</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          هل أنت متأكد من حذف هذا المستخدم؟ لا يمكن التراجع عن هذا الإجراء.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>إلغاء</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => deleteUserMutation.mutate(user.id)}
+                        >
+                          حذف
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
+              </div>
+            ))}
           </div>
         </CardContent>
       </Card>
