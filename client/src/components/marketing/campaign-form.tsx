@@ -100,9 +100,9 @@ export function CampaignForm({ platform, onSuccess }: CampaignFormProps) {
           name="name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-xs">اسم الحملة</FormLabel>
+              <FormLabel className="text-xs font-medium">اسم الحملة</FormLabel>
               <FormControl>
-                <Input {...field} placeholder="أدخل اسماً مميزاً للحملة" className="h-7 text-sm" />
+                <Input {...field} placeholder="أدخل اسماً مميزاً للحملة" className="h-7 text-xs" />
               </FormControl>
             </FormItem>
           )}
@@ -113,13 +113,13 @@ export function CampaignForm({ platform, onSuccess }: CampaignFormProps) {
           name="description"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-xs">وصف الحملة</FormLabel>
+              <FormLabel className="text-xs font-medium">وصف الحملة</FormLabel>
               <FormControl>
                 <Textarea
                   {...field}
                   value={field.value || ""}
                   placeholder="اكتب وصفاً مختصراً للحملة"
-                  className="h-16 text-sm"
+                  className="h-16 text-xs resize-none"
                 />
               </FormControl>
             </FormItem>
@@ -132,7 +132,7 @@ export function CampaignForm({ platform, onSuccess }: CampaignFormProps) {
             name="type"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-xs">نوع الحملة</FormLabel>
+                <FormLabel className="text-xs font-medium">نوع الحملة</FormLabel>
                 <FormControl>
                   <select
                     {...field}
@@ -143,7 +143,6 @@ export function CampaignForm({ platform, onSuccess }: CampaignFormProps) {
                     <option value="engagement">تفاعلية</option>
                     <option value="sales">مبيعات</option>
                     <option value="seasonal">موسمية</option>
-                    <option value="sms">رسائل SMS</option>
                   </select>
                 </FormControl>
               </FormItem>
@@ -155,7 +154,7 @@ export function CampaignForm({ platform, onSuccess }: CampaignFormProps) {
             name="budget"
             render={() => (
               <FormItem>
-                <FormLabel className="text-xs">الميزانية (دولار)</FormLabel>
+                <FormLabel className="text-xs font-medium">الميزانية (دولار)</FormLabel>
                 <FormControl>
                   <div className="space-y-1">
                     <Slider
@@ -182,7 +181,7 @@ export function CampaignForm({ platform, onSuccess }: CampaignFormProps) {
             name="startDate"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-xs">تاريخ البدء</FormLabel>
+                <FormLabel className="text-xs font-medium">تاريخ البدء</FormLabel>
                 <FormControl>
                   <Input type="date" {...field} className="h-7 text-xs" />
                 </FormControl>
@@ -195,7 +194,7 @@ export function CampaignForm({ platform, onSuccess }: CampaignFormProps) {
             name="endDate"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-xs">تاريخ الانتهاء</FormLabel>
+                <FormLabel className="text-xs font-medium">تاريخ الانتهاء</FormLabel>
                 <FormControl>
                   <Input type="date" {...field} className="h-7 text-xs" />
                 </FormControl>
@@ -209,20 +208,24 @@ export function CampaignForm({ platform, onSuccess }: CampaignFormProps) {
           name="content"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-xs">محتوى الإعلان</FormLabel>
+              <FormLabel className="text-xs font-medium">محتوى الإعلان</FormLabel>
               <FormControl>
                 <Textarea
                   {...field}
                   value={field.value || ""}
                   placeholder="اكتب نص الإعلان هنا"
-                  className="h-20 text-sm"
+                  className="h-20 text-xs resize-none"
                 />
               </FormControl>
             </FormItem>
           )}
         />
 
-        <Button type="submit" disabled={createCampaign.isPending} className="w-full h-7 text-xs mt-1">
+        <Button 
+          type="submit" 
+          disabled={createCampaign.isPending} 
+          className="w-full h-7 text-xs font-medium"
+        >
           {createCampaign.isPending ? "جاري الإنشاء..." : "إنشاء الحملة"}
         </Button>
       </form>

@@ -153,21 +153,22 @@ export default function MarketingPage() {
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-xl max-h-[85vh] overflow-y-auto">
-              <DialogHeader className="space-y-2 sticky top-0 bg-background pt-6 pb-2 mb-2">
-                <DialogTitle className="text-xl">إنشاء حملة جديدة</DialogTitle>
-                <DialogDescription className="text-sm">
+              <DialogHeader className="space-y-1.5 sticky top-0 bg-background pt-4 pb-2 mb-2 border-b">
+                <DialogTitle className="text-lg font-semibold">إنشاء حملة جديدة</DialogTitle>
+                <DialogDescription className="text-xs text-muted-foreground">
                   اختر المنصة التي تريد إنشاء الحملة عليها
                 </DialogDescription>
               </DialogHeader>
+
               {unconfiguredPlatforms.length > 0 && (
-                <Alert variant="default" className="mb-3 sticky top-[105px] bg-background z-10">
+                <Alert variant="default" className="mx-1 mb-3 sticky top-[85px] bg-background z-10">
                   <AlertCircle className="h-3 w-3" />
-                  <AlertTitle className="text-sm">تنبيه</AlertTitle>
+                  <AlertTitle className="text-xs font-semibold">تنبيه</AlertTitle>
                   <AlertDescription className="text-xs">
                     بعض منصات التواصل الاجتماعي غير مكتملة الإعداد. يرجى إكمال إعداد:
                     {' '}
                     {unconfiguredPlatforms.map(platform => (
-                      <Badge key={platform} variant="outline" className="mx-1 text-xs">
+                      <Badge key={platform} variant="outline" className="mx-1 text-[10px]">
                         {platform === 'facebook' ? 'فيسبوك' :
                          platform === 'instagram' ? 'انستغرام' :
                          platform === 'snapchat' ? 'سناب شات' :
@@ -180,56 +181,69 @@ export default function MarketingPage() {
                   </AlertDescription>
                 </Alert>
               )}
+
               <div className="px-1">
-                <Tabs defaultValue="facebook" className="mt-2">
-                  <TabsList className="grid grid-cols-4 gap-2 sticky top-[160px] bg-background z-10">
+                <Tabs defaultValue="facebook" className="mt-1">
+                  <TabsList className="grid grid-cols-4 gap-1.5 sticky top-[140px] bg-background z-10 px-0.5">
                     <TabsTrigger
                       value="facebook"
-                      className="text-center py-1.5"
+                      className="text-center py-1.5 px-1"
                       disabled={!platformStatus.facebook}
                     >
-                      <SiFacebook className="h-3 w-3 text-blue-600 mb-1" />
-                      <span className="text-xs">فيسبوك</span>
+                      <div className="flex flex-col items-center gap-0.5">
+                        <SiFacebook className="h-3 w-3 text-blue-600" />
+                        <span className="text-[10px]">فيسبوك</span>
+                      </div>
                       {!platformStatus.facebook && (
-                        <AlertCircle className="h-2 w-2 text-yellow-500 mr-1" />
+                        <AlertCircle className="h-2 w-2 text-yellow-500 absolute top-0.5 right-0.5" />
                       )}
                     </TabsTrigger>
+
                     <TabsTrigger
                       value="instagram"
-                      className="text-center py-1.5"
+                      className="text-center py-1.5 px-1"
                       disabled={!platformStatus.instagram}
                     >
-                      <SiInstagram className="h-3 w-3 text-pink-600 mb-1" />
-                      <span className="text-xs">انستغرام</span>
+                      <div className="flex flex-col items-center gap-0.5">
+                        <SiInstagram className="h-3 w-3 text-pink-600" />
+                        <span className="text-[10px]">انستغرام</span>
+                      </div>
                       {!platformStatus.instagram && (
-                        <AlertCircle className="h-2 w-2 text-yellow-500 mr-1" />
+                        <AlertCircle className="h-2 w-2 text-yellow-500 absolute top-0.5 right-0.5" />
                       )}
                     </TabsTrigger>
+
                     <TabsTrigger
                       value="snapchat"
-                      className="text-center py-1.5"
+                      className="text-center py-1.5 px-1"
                       disabled={!platformStatus.snapchat}
                     >
-                      <SiSnapchat className="h-3 w-3 text-yellow-500 mb-1" />
-                      <span className="text-xs">سناب شات</span>
+                      <div className="flex flex-col items-center gap-0.5">
+                        <SiSnapchat className="h-3 w-3 text-yellow-500" />
+                        <span className="text-[10px]">سناب شات</span>
+                      </div>
                       {!platformStatus.snapchat && (
-                        <AlertCircle className="h-2 w-2 text-yellow-500 mr-1" />
+                        <AlertCircle className="h-2 w-2 text-yellow-500 absolute top-0.5 right-0.5" />
                       )}
                     </TabsTrigger>
+
                     <TabsTrigger
                       value="sms"
-                      className="text-center py-1.5"
+                      className="text-center py-1.5 px-1"
                     >
-                      <MessageSquare className="h-3 w-3 text-gray-600 mb-1" />
-                      <span className="text-xs">SMS</span>
+                      <div className="flex flex-col items-center gap-0.5">
+                        <MessageSquare className="h-3 w-3 text-gray-600" />
+                        <span className="text-[10px]">SMS</span>
+                      </div>
                     </TabsTrigger>
                   </TabsList>
-                  <div className="mt-3">
+
+                  <div className="mt-3 px-0.5">
                     <TabsContent value="facebook">
                       <Card>
-                        <CardHeader className="pb-2">
-                          <CardTitle className="text-base">حملة إعلانية على فيسبوك</CardTitle>
-                          <CardDescription className="text-xs">
+                        <CardHeader className="pb-2 space-y-1">
+                          <CardTitle className="text-sm font-medium">حملة إعلانية على فيسبوك</CardTitle>
+                          <CardDescription className="text-xs text-muted-foreground">
                             قم بإنشاء حملة إعلانية مستهدفة على فيسبوك
                           </CardDescription>
                         </CardHeader>
@@ -238,11 +252,12 @@ export default function MarketingPage() {
                         </CardContent>
                       </Card>
                     </TabsContent>
+
                     <TabsContent value="instagram">
                       <Card>
-                        <CardHeader className="pb-2">
-                          <CardTitle className="text-base">حملة إعلانية على انستغرام</CardTitle>
-                          <CardDescription className="text-xs">
+                        <CardHeader className="pb-2 space-y-1">
+                          <CardTitle className="text-sm font-medium">حملة إعلانية على انستغرام</CardTitle>
+                          <CardDescription className="text-xs text-muted-foreground">
                             قم بإنشاء حملة إعلانية مستهدفة على انستغرام
                           </CardDescription>
                         </CardHeader>
@@ -251,11 +266,12 @@ export default function MarketingPage() {
                         </CardContent>
                       </Card>
                     </TabsContent>
+
                     <TabsContent value="snapchat">
                       <Card>
-                        <CardHeader className="pb-2">
-                          <CardTitle className="text-base">حملة إعلانية على سناب شات</CardTitle>
-                          <CardDescription className="text-xs">
+                        <CardHeader className="pb-2 space-y-1">
+                          <CardTitle className="text-sm font-medium">حملة إعلانية على سناب شات</CardTitle>
+                          <CardDescription className="text-xs text-muted-foreground">
                             قم بإنشاء حملة إعلانية مستهدفة على سناب شات
                           </CardDescription>
                         </CardHeader>
@@ -264,11 +280,12 @@ export default function MarketingPage() {
                         </CardContent>
                       </Card>
                     </TabsContent>
+
                     <TabsContent value="sms">
                       <Card>
-                        <CardHeader className="pb-2">
-                          <CardTitle className="text-base">حملة رسائل SMS</CardTitle>
-                          <CardDescription className="text-xs">
+                        <CardHeader className="pb-2 space-y-1">
+                          <CardTitle className="text-sm font-medium">حملة رسائل SMS</CardTitle>
+                          <CardDescription className="text-xs text-muted-foreground">
                             قم بإنشاء حملة رسائل نصية قصيرة للوصول إلى عملائك
                           </CardDescription>
                         </CardHeader>
