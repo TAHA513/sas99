@@ -6,21 +6,8 @@ export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
-  email: text("email").notNull().unique(),
-  role: text("role").notNull().default("employee"),
+  role: text("role").notNull().default("staff"),
   name: text("name").notNull(),
-  lastLoginAt: timestamp("last_login_at"),
-  status: text("status").notNull().default("active"),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-  updatedAt: timestamp("updated_at").notNull().defaultNow(),
-});
-
-export const loginLogs = pgTable("login_logs", {
-  id: serial("id").primaryKey(),
-  username: text("username").notNull(),
-  success: boolean("success").notNull(),
-  ip: text("ip").notNull(),
-  timestamp: timestamp("timestamp").notNull().defaultNow(),
 });
 
 export const customers = pgTable("customers", {
@@ -230,12 +217,10 @@ export const installmentPayments = pgTable("installment_payments", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
-export const insertUserSchema = createInsertSchema(users).extend({
-  username: z.string().min(3, "اسم المستخدم يجب أن يكون 3 أحرف على الأقل"),
-  email: z.string().email("البريد الإلكتروني غير صالح"),
-  password: z.string().min(8, "كلمة المرور يجب أن تكون 8 أحرف على الأقل"),
-  role: z.enum(["admin", "employee"]),
-  name: z.string().min(2, "الاسم يجب أن يكون حرفين على الأقل"),
+export const insertUserSchema = createInsertSchema(users).pick({
+  username: true,
+  password: true,
+  name: true,
 });
 
 export const insertCustomerSchema = createInsertSchema(customers);
@@ -347,7 +332,42 @@ export const insertScheduledPostSchema = createInsertSchema(scheduledPosts).exte
   mediaUrls: z.array(z.string()).optional(),
 });
 
-export const insertLoginLogSchema = createInsertSchema(loginLogs);
+
+export type User = typeof users.$inferSelect;
+export type InsertUser = z.infer<typeof insertUserSchema>;
+export type Customer = typeof customers.$inferSelect;
+export type InsertCustomer = z.infer<typeof insertCustomerSchema>;
+export type Appointment = typeof appointments.$inferSelect;
+export type InsertAppointment = z.infer<typeof insertAppointmentSchema>;
+export type Staff = typeof staff.$inferSelect;
+export type InsertStaff = z.infer<typeof insertStaffSchema>;
+export type Setting = typeof settings.$inferSelect;
+export type InsertSetting = z.infer<typeof insertSettingSchema>;
+export type StoreSetting = typeof storeSettings.$inferSelect;
+export type InsertStoreSetting = z.infer<typeof insertStoreSettingsSchema>;
+export type MarketingCampaign = typeof marketingCampaigns.$inferSelect;
+export type InsertMarketingCampaign = z.infer<typeof insertMarketingCampaignSchema>;
+export type Promotion = typeof promotions.$inferSelect;
+export type InsertPromotion = z.infer<typeof insertPromotionSchema>;
+export type DiscountCode = typeof discountCodes.$inferSelect;
+export type InsertDiscountCode = z.infer<typeof insertDiscountCodeSchema>;
+export type SocialMediaAccount = typeof socialMediaAccounts.$inferSelect;
+export type InsertSocialMediaAccount = z.infer<typeof insertSocialMediaAccountSchema>;
+export type ProductGroup = typeof productGroups.$inferSelect;
+export type InsertProductGroup = z.infer<typeof insertProductGroupSchema>;
+export type Product = typeof products.$inferSelect;
+export type InsertProduct = z.infer<typeof insertProductSchema>;
+export type Invoice = typeof invoices.$inferSelect;
+export type InsertInvoice = z.infer<typeof insertInvoiceSchema>;
+export type InstallmentPlan = typeof installmentPlans.$inferSelect;
+export type InsertInstallmentPlan = z.infer<typeof insertInstallmentPlanSchema>;
+export type InstallmentPayment = typeof installmentPayments.$inferSelect;
+export type InsertInstallmentPayment = z.infer<typeof insertInstallmentPaymentSchema>;
+export type CampaignNotification = typeof campaignNotifications.$inferSelect;
+export type InsertCampaignNotification = z.infer<typeof insertCampaignNotificationSchema>;
+export type ScheduledPost = typeof scheduledPosts.$inferSelect;
+export type InsertScheduledPost = z.infer<typeof insertScheduledPostSchema>;
+
 
 export const suppliers = pgTable("suppliers", {
   id: serial("id").primaryKey(),
@@ -503,40 +523,3 @@ export const insertDatabaseConnectionSchema = createInsertSchema(databaseConnect
 
 export type DatabaseConnection = typeof databaseConnections.$inferSelect;
 export type InsertDatabaseConnection = z.infer<typeof insertDatabaseConnectionSchema>;
-
-export type User = typeof users.$inferSelect;
-export type InsertUser = z.infer<typeof insertUserSchema>;
-export type Customer = typeof customers.$inferSelect;
-export type InsertCustomer = z.infer<typeof insertCustomerSchema>;
-export type Appointment = typeof appointments.$inferSelect;
-export type InsertAppointment = z.infer<typeof insertAppointmentSchema>;
-export type Staff = typeof staff.$inferSelect;
-export type InsertStaff = z.infer<typeof insertStaffSchema>;
-export type Setting = typeof settings.$inferSelect;
-export type InsertSetting = z.infer<typeof insertSettingSchema>;
-export type StoreSetting = typeof storeSettings.$inferSelect;
-export type InsertStoreSetting = z.infer<typeof insertStoreSettingsSchema>;
-export type MarketingCampaign = typeof marketingCampaigns.$inferSelect;
-export type InsertMarketingCampaign = z.infer<typeof insertMarketingCampaignSchema>;
-export type Promotion = typeof promotions.$inferSelect;
-export type InsertPromotion = z.infer<typeof insertPromotionSchema>;
-export type DiscountCode = typeof discountCodes.$inferSelect;
-export type InsertDiscountCode = z.infer<typeof insertDiscountCodeSchema>;
-export type SocialMediaAccount = typeof socialMediaAccounts.$inferSelect;
-export type InsertSocialMediaAccount = z.infer<typeof insertSocialMediaAccountSchema>;
-export type ProductGroup = typeof productGroups.$inferSelect;
-export type InsertProductGroup = z.infer<typeof insertProductGroupSchema>;
-export type Product = typeof products.$inferSelect;
-export type InsertProduct = z.infer<typeof insertProductSchema>;
-export type Invoice = typeof invoices.$inferSelect;
-export type InsertInvoice = z.infer<typeof insertInvoiceSchema>;
-export type InstallmentPlan = typeof installmentPlans.$inferSelect;
-export type InsertInstallmentPlan = z.infer<typeof insertInstallmentPlanSchema>;
-export type InstallmentPayment = typeof installmentPayments.$inferSelect;
-export type InsertInstallmentPayment = z.infer<typeof insertInstallmentPaymentSchema>;
-export type CampaignNotification = typeof campaignNotifications.$inferSelect;
-export type InsertCampaignNotification = z.infer<typeof insertCampaignNotificationSchema>;
-export type ScheduledPost = typeof scheduledPosts.$inferSelect;
-export type InsertScheduledPost = z.infer<typeof insertScheduledPostSchema>;
-export type LoginLog = typeof loginLogs.$inferSelect;
-export type InsertLoginLog = z.infer<typeof insertLoginLogSchema>;
