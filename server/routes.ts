@@ -2,6 +2,10 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import express from 'express';
+import multer from 'multer';
+import { backupService } from './services/backup-service';
+
+const upload = multer({ dest: 'uploads/' });
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Staff Dashboard APIs
@@ -28,6 +32,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
         customerName: invoice.customerName
       }))
     });
+  });
+
+  // Backup and Restore endpoints
+  app.post('/api/backup/generate', async (_req, res) => {
+    try {
+      const backupPath = await backupService.generateBackup();
+      res.download(backupPath);
+    } catch (error) {
+      console.error('Error generating backup:', error);
+      res.status(500).json({ error: 'فشل إنشاء النسخة الاحتياطية' });
+    }
+  });
+
+  app.post('/api/backup/restore', upload.single('backup'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: 'لم يتم تحميل أي ملف' });
+      }
+
+      await backupService.restoreBackup(req.file.path);
+      res.json({ message: 'تم استعادة النسخة الاحتياطية بنجاح' });
+    } catch (error) {
+      console.error('Error restoring backup:', error);
+      res.status(500).json({ error: 'فشل استعادة النسخة الاحتياطية' });
+    }
   });
 
   app.get("/api/appointments/today", async (_req, res) => {
