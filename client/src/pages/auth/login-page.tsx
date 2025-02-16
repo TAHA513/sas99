@@ -15,16 +15,16 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  async function handleLogin(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
     setIsLoading(true);
     setError("");
 
-    const formData = new FormData(event.currentTarget);
-    const username = formData.get("username") as string;
-    const password = formData.get("password") as string;
-
     try {
+      const formData = new FormData(e.currentTarget);
+      const username = formData.get("username");
+      const password = formData.get("password");
+
       const response = await fetch("/api/login", {
         method: "POST",
         headers: {
@@ -40,13 +40,18 @@ export default function LoginPage() {
         throw new Error(data.error || "حدث خطأ في تسجيل الدخول");
       }
 
-      // استخدام window.location.replace للتوجيه
-      window.location.replace(data.redirectTo);
+      if (data.success) {
+        // تأخير قصير قبل التوجيه
+        await new Promise(resolve => setTimeout(resolve, 500));
+        window.location.replace(data.redirect);
+      }
     } catch (err) {
+      console.error("Login error:", err);
       setError(err instanceof Error ? err.message : "حدث خطأ غير متوقع");
+    } finally {
       setIsLoading(false);
     }
-  };
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
@@ -58,7 +63,7 @@ export default function LoginPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="username">اسم المستخدم</Label>
               <Input
@@ -68,6 +73,7 @@ export default function LoginPage() {
                 required
                 disabled={isLoading}
                 placeholder="أدخل اسم المستخدم"
+                autoComplete="username"
               />
             </div>
             <div className="space-y-2">
@@ -79,6 +85,7 @@ export default function LoginPage() {
                 required
                 disabled={isLoading}
                 placeholder="أدخل كلمة المرور"
+                autoComplete="current-password"
               />
             </div>
             {error && (

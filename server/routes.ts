@@ -8,10 +8,6 @@ import session from "express-session";
 export async function registerRoutes(app: Express): Promise<Server> {
   // Middleware for handling JSON responses
   app.use(express.json());
-  app.use('/api', (req, res, next) => {
-    res.setHeader('Content-Type', 'application/json');
-    next();
-  });
 
   // تكوين الجلسة
   app.use(session({
@@ -30,45 +26,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { username, password } = req.body;
 
+      // التحقق من وجود اسم المستخدم وكلمة المرور
       if (!username || !password) {
         return res.status(400).json({ error: "يجب إدخال اسم المستخدم وكلمة المرور" });
       }
 
+      // البحث عن المستخدم في قاعدة البيانات
       const user = await storage.getUserByUsername(username);
       if (!user) {
         return res.status(401).json({ error: "اسم المستخدم غير صحيح" });
       }
 
+      // التحقق من صحة كلمة المرور
       const isValidPassword = await comparePasswords(password, user.password);
       if (!isValidPassword) {
         return res.status(401).json({ error: "كلمة المرور غير صحيحة" });
       }
 
-      // حفظ معلومات المستخدم في الجلسة
-      req.session.user = {
-        id: user.id,
-        username: user.username,
-        role: user.role,
-        name: user.name
-      };
+      // تخزين بيانات المستخدم في الجلسة
+      req.session.regenerate((err) => {
+        if (err) {
+          console.error("Session regeneration error:", err);
+          return res.status(500).json({ error: "حدث خطأ في تسجيل الدخول" });
+        }
 
-      // انتظار حفظ الجلسة قبل الرد
-      await new Promise((resolve, reject) => {
-        req.session.save((err) => {
-          if (err) reject(err);
-          else resolve(true);
-        });
-      });
-
-      // إرسال البيانات مع مسار التوجيه
-      res.json({
-        user: {
+        req.session.user = {
           id: user.id,
           username: user.username,
           role: user.role,
           name: user.name
-        },
-        redirectTo: user.role === "admin" ? "/" : "/staff"
+        };
+
+        req.session.save((err) => {
+          if (err) {
+            console.error("Session save error:", err);
+            return res.status(500).json({ error: "حدث خطأ في حفظ الجلسة" });
+          }
+
+          // إرسال البيانات والمسار للتوجيه
+          res.json({
+            success: true,
+            redirect: user.role === "admin" ? "/" : "/staff"
+          });
+        });
       });
     } catch (error) {
       console.error("Login error:", error);
@@ -83,16 +83,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.error("Logout error:", err);
         return res.status(500).json({ error: "حدث خطأ في تسجيل الخروج" });
       }
-      res.json({ message: "تم تسجيل الخروج بنجاح" });
+      res.json({ success: true });
     });
   });
 
-  // الحصول على معلومات المستخدم الحالي
-  app.get("/api/user", (req, res) => {
-    if (!req.session.user) {
-      return res.status(401).json({ error: "المستخدم غير مسجل الدخول" });
+  // التحقق من حالة تسجيل الدخول
+  app.get("/api/auth/check", (req, res) => {
+    if (req.session.user) {
+      res.json({ 
+        isAuthenticated: true, 
+        user: req.session.user 
+      });
+    } else {
+      res.json({ 
+        isAuthenticated: false 
+      });
     }
-    res.json(req.session.user);
   });
 
   // Staff Dashboard APIs
