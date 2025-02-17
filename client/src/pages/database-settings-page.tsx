@@ -8,8 +8,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Database, Trash2 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { Plus, Database } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -22,37 +22,11 @@ import { motion } from "framer-motion";
 import type { DatabaseConnection } from "@shared/schema";
 import { DatabaseConnectionForm } from "@/components/settings/database-connection-form";
 import { Badge } from "@/components/ui/badge";
-import { apiRequest } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
 
 export default function DatabaseSettingsPage() {
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-
   // جلب قائمة الاتصالات
   const { data: connections = [] } = useQuery<DatabaseConnection[]>({
     queryKey: ["/api/database-connections"],
-  });
-
-  // حذف اتصال
-  const deleteMutation = useMutation({
-    mutationFn: async (id: number) => {
-      await apiRequest("DELETE", `/api/database-connections/${id}`);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/database-connections"] });
-      toast({
-        title: "تم الحذف",
-        description: "تم حذف الاتصال بنجاح",
-      });
-    },
-    onError: () => {
-      toast({
-        title: "خطأ",
-        description: "فشل حذف الاتصال",
-        variant: "destructive",
-      });
-    },
   });
 
   return (
@@ -129,13 +103,7 @@ export default function DatabaseSettingsPage() {
                       <Button variant="outline" size="sm">
                         تحرير
                       </Button>
-                      <Button 
-                        variant="destructive" 
-                        size="sm"
-                        onClick={() => deleteMutation.mutate(connection.id)}
-                        disabled={deleteMutation.isPending}
-                      >
-                        <Trash2 className="h-4 w-4 ml-2" />
+                      <Button variant="destructive" size="sm">
                         حذف
                       </Button>
                     </div>

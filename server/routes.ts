@@ -28,51 +28,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         id: invoice.id,
         amount: invoice.finalTotal,
         date: invoice.date,
+        status: invoice.status,
         customerName: invoice.customerName
       }))
     });
-  });
-
-  // Database Connection APIs
-  app.get("/api/database-connections", async (_req, res) => {
-    try {
-      const connections = await storage.getDatabaseConnections();
-      res.json(connections);
-    } catch (error) {
-      res.status(500).json({ error: "فشل في جلب قائمة الاتصالات" });
-    }
-  });
-
-  app.post("/api/database-connections", async (req, res) => {
-    try {
-      const newConnection = await storage.createDatabaseConnection(req.body);
-      res.json(newConnection);
-    } catch (error) {
-      res.status(500).json({ error: "فشل في إنشاء الاتصال" });
-    }
-  });
-
-  app.delete("/api/database-connections/:id", async (req, res) => {
-    try {
-      const id = parseInt(req.params.id);
-      await storage.deleteDatabaseConnection(id);
-      res.json({ message: "تم حذف الاتصال بنجاح" });
-    } catch (error) {
-      res.status(500).json({ error: "فشل في حذف الاتصال" });
-    }
-  });
-
-  app.post("/api/database-connections/test", async (req, res) => {
-    try {
-      const result = await storage.testDatabaseConnection(req.body);
-      if (result) {
-        res.json({ message: "تم الاتصال بنجاح" });
-      } else {
-        res.status(400).json({ error: "فشل الاتصال" });
-      }
-    } catch (error) {
-      res.status(500).json({ error: "فشل اختبار الاتصال" });
-    }
   });
 
   // Backup and Restore endpoints
