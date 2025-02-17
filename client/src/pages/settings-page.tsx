@@ -1,6 +1,6 @@
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import { Button } from "@/components/ui/button";
-import { Card as CardComponent, CardContent, CardHeader, CardTitle, CardProps as CardComponentProps, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
@@ -13,74 +13,10 @@ import { SiFacebook, SiInstagram, SiSnapchat } from "react-icons/si";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useState, useEffect } from "react";
-import { Switch } from "@/components/ui/switch";
-import { Slider } from "@/components/ui/slider";
-import { updateThemeColors, updateThemeFonts, loadThemeSettings } from "@/lib/theme";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-  getStoreSettings,
-  setStoreSettings,
-  getSocialAccounts,
-  addSocialAccount,
-  getWhatsAppSettings,
-  setWhatsAppSettings,
-  getGoogleCalendarSettings,
-  setGoogleCalendarSettings,
-  getSocialMediaSettings,
-  setSocialMediaSettings,
-  type StoreSettings,
-  type SocialMediaAccount,
-  type WhatsAppSettings,
-  type GoogleCalendarSettings,
-  type SocialMediaSettings
-} from "@/lib/storage";
-import { DatabaseConnectionForm } from "@/components/settings/database-connection-form";
-import type { DatabaseConnection } from "@shared/schema";
-import { motion } from "framer-motion";
-import { Table, TableBody, TableCell, TableHeader, TableHead, TableRow } from "@/components/ui/table";
-import { Separator } from "@/components/ui/separator";
+import { ComponentProps } from "react";
+import { useState, useEffect } from 'react';
 
-
-const socialMediaAccountSchema = z.object({
-  platform: z.enum(['facebook', 'instagram', 'snapchat'], {
-    required_error: "يرجى اختيار المنصة"
-  }),
-  username: z.string().min(1, "اسم المستخدم مطلوب").max(50, "اسم المستخدم طويل جداً"),
-  password: z.string().min(6, "كلمة المرور يجب أن تكون 6 أحرف على الأقل").max(50, "كلمة المرور طويلة جداً"),
-});
-
-type SocialMediaAccountFormData = z.infer<typeof socialMediaAccountSchema>;
-
-const whatsappSchema = z.object({
-  WHATSAPP_API_TOKEN: z.string().min(1, "رمز الوصول مطلوب"),
-  WHATSAPP_BUSINESS_PHONE_NUMBER: z.string().min(1, "رقم الهاتف مطلوب"),
-});
-
-const googleCalendarSchema = z.object({
-  GOOGLE_CLIENT_ID: z.string().min(1, "معرف العميل مطلوب"),
-  GOOGLE_CLIENT_SECRET: z.string().min(1, "الرمز السري مطلوب"),
-});
-
-const socialMediaSchema = z.object({
-  FACEBOOK_APP_ID: z.string().min(1, "معرف التطبيق مطلوب"),
-  FACEBOOK_APP_SECRET: z.string().min(1, "الرمز السري مطلوب"),
-  INSTAGRAM_ACCESS_TOKEN: z.string().min(1, "رمز الوصول مطلوب"),
-});
-
-const currencySettingsSchema = z.object({
-  defaultCurrency: z.enum(['USD', 'IQD'], {
-    required_error: "يرجى اختيار العملة الافتراضية"
-  }),
-  usdToIqdRate: z.number()
-    .min(1, "يجب أن يكون سعر الصرف أكبر من 0")
-    .max(999999, "سعر الصرف غير صالح"),
-});
-
-type CurrencySettings = z.infer<typeof currencySettingsSchema>;
 
 const passwordSchema = z.object({
   currentPassword: z.string().min(1, "كلمة المرور الحالية مطلوبة"),
@@ -89,60 +25,21 @@ const passwordSchema = z.object({
 }).refine((data) => data.newPassword === data.confirmPassword, {
   message: "كلمة المرور الجديدة وتأكيدها غير متطابقين",
   path: ["confirmPassword"],
-}).refine((data) => data.currentPassword === "12345678", {
+}).refine((data) => data.currentPassword === (localStorage.getItem("admin_password") || "12345678"), {
   message: "كلمة المرور الحالية غير صحيحة",
   path: ["currentPassword"],
 });
 
 type PasswordFormData = z.infer<typeof passwordSchema>;
 
-const CustomCard = ({ className, ...props }: CardComponentProps) => (
-  <CardComponent className={cn("w-full", className)} {...props} />
+const CustomCard = ({ className, ...props }: ComponentProps<typeof Card>) => (
+  <Card className={cn("w-full", className)} {...props} />
 );
-
-const colorOptions = [
-  { type: 'solid', color: "#0ea5e9", name: "أزرق" },
-  { type: 'solid', color: "#10b981", name: "أخضر" },
-  { type: 'solid', color: "#8b5cf6", name: "بنفسجي" },
-  { type: 'solid', color: "#ef4444", name: "أحمر" },
-  { type: 'solid', color: "#f59e0b", name: "برتقالي" },
-  { type: 'gradient', colors: ["#00c6ff", "#0072ff"], name: "تدرج أزرق" },
-  { type: 'gradient', colors: ["#11998e", "#38ef7d"], name: "تدرج أخضر" },
-  { type: 'gradient', colors: ["#fc466b", "#3f5efb"], name: "تدرج وردي" },
-  { type: 'gradient', colors: ["#f12711", "#f5af19"], name: "تدرج برتقالي" },
-  { type: 'gradient', colors: ["#8e2de2", "#4a00e0"], name: "تدرج بنفسجي" },
-];
-
-const createGradient = (color1: string, color2: string) => `linear-gradient(to right, ${color1}, ${color2})`;
-
-async function generateBackup() {
-  try {
-    const response = await fetch('/api/backup/generate', {
-      method: 'POST',
-    });
-
-    if (!response.ok) throw new Error('فشل إنشاء النسخة الاحتياطية');
-
-    const blob = await response.blob();
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `backup-${new Date().toISOString().split('T')[0]}.zip`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    window.URL.revokeObjectURL(url);
-
-    return true;
-  } catch (error) {
-    console.error('Error generating backup:', error);
-    return false;
-  }
-}
 
 export default function SettingsPage() {
   const { toast } = useToast();
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false); 
+
   const queryClient = useQueryClient();
 
   // Load theme settings on mount
@@ -181,7 +78,7 @@ export default function SettingsPage() {
     resolver: zodResolver(currencySettingsSchema),
     defaultValues: {
       defaultCurrency: 'USD',
-      usdToIqdRate: 1460, // Default exchange rate
+      usdToIqdRate: 1460, 
     }
   });
 
@@ -320,7 +217,6 @@ export default function SettingsPage() {
   const { data: connections } = useQuery({
     queryKey: ['databaseConnections'],
     queryFn: () => {
-      // Replace with your actual database connection fetching logic
       return Promise.resolve([{
         id: '1',
         name: 'Main Database',
@@ -339,16 +235,16 @@ export default function SettingsPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold">إعدادات النظام</h1>
-            <p className="text-muted-foreground mt-2">إدارة إعدادات المتجر والتكاملات</p>
+            <p className="text-muted-foreground mt-2">إدارة إعدادات النظام وكلمة المرور</p>
           </div>
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}> 
             <DialogTrigger asChild>
               <Button>
                 <Plus className="h-4 w-4 ml-2" />
                 إضافة حساب جديد
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[500px]">
+            <DialogContent className="sm:max-w-[500px]"> 
               <DialogHeader>
                 <DialogTitle>ربط حسابات التواصل الاجتماعي</DialogTitle>
                 <DialogDescription>
@@ -361,7 +257,6 @@ export default function SettingsPage() {
                   variant="outline"
                   className="w-full flex items-center justify-start gap-3 h-14"
                   onClick={() => {
-                    // سيتم إضافة منطق تسجيل الدخول لفيسبوك
                     toast({
                       title: "قريباً",
                       description: "سيتم إضافة خيار تسجيل الدخول بفيسبوك قريباً",
@@ -379,7 +274,6 @@ export default function SettingsPage() {
                   variant="outline"
                   className="w-full flex items-center justify-start gap-3 h-14"
                   onClick={() => {
-                    // سيتم إضافة منطق تسجيل الدخول لانستغرام
                     toast({
                       title: "قريباً",
                       description: "سيتم إضافة خيار تسجيل الدخول بانستغرام قريباً",
@@ -397,7 +291,6 @@ export default function SettingsPage() {
                   variant="outline"
                   className="w-full flex items-center justify-start gap-3 h-14"
                   onClick={() => {
-                    // سيتم إضافة منطق تسجيل الدخول لسناب شات
                     toast({
                       title: "قريباً",
                       description: "سيتم إضافة خيار تسجيل الدخول بسناب شات قريباً",
@@ -483,8 +376,8 @@ export default function SettingsPage() {
                   </Button>
                 </form>
               </Form>
-            </DialogContent>
-          </Dialog>
+            </DialogContent> 
+          </Dialog> 
         </div>
 
         <Tabs defaultValue="store" className="space-y-6">
@@ -1024,13 +917,13 @@ export default function SettingsPage() {
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead>اسم الاتصال</TableHead>
-                          <TableHead>النوع</TableHead>
-                          <TableHead>المضيف</TableHead>
-                          <TableHead>قاعدة البيانات</TableHead>
-                          <TableHead>الحالة</TableHead>
-                          <TableHead>تاريخ الإنشاء</TableHead>
-                          <TableHead>الإجراءات</TableHead>
+                          <TableCell>اسم الاتصال</TableCell>
+                          <TableCell>النوع</TableCell>
+                          <TableCell>المضيف</TableCell>
+                          <TableCell>قاعدة البيانات</TableCell>
+                          <TableCell>الحالة</TableCell>
+                          <TableCell>تاريخ الإنشاء</TableCell>
+                          <TableCell>الإجراءات</TableCell>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
