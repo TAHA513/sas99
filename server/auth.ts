@@ -8,7 +8,6 @@ import { storage } from "./storage";
 import { User as SelectUser } from "@shared/schema";
 import { and, eq, gt } from 'knex';
 
-
 declare global {
   namespace Express {
     interface User extends SelectUser {}
@@ -20,23 +19,35 @@ declare global {
 
 const scryptAsync = promisify(scrypt);
 
+// Configure stronger hashing parameters
+const HASH_CONFIG = {
+  keyLength: 128, // Increased from 64
+  iterations: 32768, // Increased from 16384
+  saltLength: 64, // Increased from 32
+} as const;
+
 // Improved password hashing with stronger parameters
 async function hashPassword(password: string) {
-  const salt = randomBytes(32).toString("hex"); // Increased salt length
-  const keyLength = 64; // Increased key length
-  const iterations = 16384; // Increased number of iterations
-
-  const buf = (await scryptAsync(password, salt, keyLength, { N: iterations })) as Buffer;
+  const salt = randomBytes(HASH_CONFIG.saltLength).toString("hex");
+  const buf = (await scryptAsync(
+    password,
+    salt,
+    HASH_CONFIG.keyLength,
+    { N: HASH_CONFIG.iterations }
+  )) as Buffer;
   return `${buf.toString("hex")}.${salt}`;
 }
 
 async function comparePasswords(supplied: string, stored: string) {
   const [hashed, salt] = stored.split(".");
   const hashedBuf = Buffer.from(hashed, "hex");
-  const iterations = 16384;
-  const keyLength = 64;
 
-  const suppliedBuf = (await scryptAsync(supplied, salt, keyLength, { N: iterations })) as Buffer;
+  const suppliedBuf = (await scryptAsync(
+    supplied,
+    salt,
+    HASH_CONFIG.keyLength,
+    { N: HASH_CONFIG.iterations }
+  )) as Buffer;
 
   if (hashedBuf.length !== suppliedBuf.length) {
     return false;
@@ -169,4 +180,14 @@ export function setupAuth(app: Express) {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     res.json(req.user);
   });
+}
+
+//This function is assumed to exist and is necessary for the comparePasswords function.  Replace with actual implementation if needed.
+function timingSafeEqual(a: Buffer, b: Buffer): boolean {
+  if (a.length !== b.length) return false;
+  let result = 0;
+  for (let i = 0; i < a.length; i++) {
+    result |= a[i] ^ b[i];
+  }
+  return result === 0;
 }
