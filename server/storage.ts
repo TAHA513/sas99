@@ -661,8 +661,38 @@ export class DatabaseStorage implements IStorage {
   }
 
   async testDatabaseConnection(connection: schema.InsertDatabaseConnection): Promise<boolean> {
-    // TODO: Implement actual connection testing logic based on the database type
-    return true;
+    try {
+      let connectionString = '';
+
+      switch (connection.type) {
+        case 'postgres':
+          connectionString = `postgres://${connection.username}:${connection.password}@${connection.host}:${connection.port}/${connection.database}`;
+          const testPool = new Pool({ connectionString });
+          await testPool.query('SELECT 1');
+          await testPool.end();
+          break;
+
+        case 'sqlite':
+          // For SQLite, we'll just check if the file exists or can be created
+          const fs = require('fs');
+          const path = require('path');
+          const dbPath = path.resolve(connection.database || 'local.db');
+
+          if (!fs.existsSync(dbPath)) {
+            // Create the file if it doesn't exist
+            fs.writeFileSync(dbPath, '');
+          }
+          break;
+
+        default:
+          throw new Error(`Database type ${connection.type} not supported for local installation`);
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Database connection test failed:', error);
+      return false;
+    }
   }
 
   // Campaign Notification operations

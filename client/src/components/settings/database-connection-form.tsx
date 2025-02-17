@@ -25,16 +25,21 @@ import {
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
 
+const defaultValues: Partial<InsertDatabaseConnection> = {
+  type: 'postgres',
+  host: 'localhost',
+  port: '5432',
+  database: 'store_db',
+  username: 'postgres',
+};
+
 export function DatabaseConnectionForm() {
   const { toast } = useToast();
   const [isTesting, setIsTesting] = useState(false);
 
   const form = useForm<InsertDatabaseConnection>({
     resolver: zodResolver(insertDatabaseConnectionSchema),
-    defaultValues: {
-      name: "",
-      type: "postgres",
-    },
+    defaultValues,
   });
 
   const watchType = form.watch("type");
@@ -108,9 +113,9 @@ export function DatabaseConnectionForm() {
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="postgres">PostgreSQL</SelectItem>
+                  <SelectItem value="postgres">PostgreSQL (محلي)</SelectItem>
                   <SelectItem value="mysql">MySQL</SelectItem>
-                  <SelectItem value="sqlite">SQLite</SelectItem>
+                  <SelectItem value="sqlite">SQLite (محلي)</SelectItem>
                   <SelectItem value="firestore">Firestore</SelectItem>
                   <SelectItem value="googlecloud">Google Cloud SQL</SelectItem>
                 </SelectContent>
@@ -265,8 +270,8 @@ export function DatabaseConnectionForm() {
               إلغاء
             </Button>
           </DialogClose>
-          <Button 
-            type="button" 
+          <Button
+            type="button"
             variant="secondary"
             onClick={testConnection}
             disabled={isTesting}
