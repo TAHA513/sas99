@@ -4,6 +4,9 @@ import { storage } from "./storage";
 import express from 'express';
 import multer from 'multer';
 import { backupService } from './services/backup-service';
+import { db } from './db';
+import { eq } from 'drizzle-orm';
+import bcrypt from 'bcrypt';
 
 const upload = multer({ dest: 'uploads/' });
 
@@ -156,6 +159,106 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
+  // Change Password
+  app.post('/api/security/change-password', async (req, res) => {
+    try {
+      const { currentPassword, newPassword, userId } = req.body;
+
+      // Check current password
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ error: 'المستخدم غير موجود' });
+      }
+
+      const isPasswordValid = await bcrypt.compare(currentPassword, user.password);
+      if (!isPasswordValid) {
+        return res.status(400).json({ error: 'كلمة المرور الحالية غير صحيحة' });
+      }
+
+      // Hash new password
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+      // Update password
+      await storage.updateUserPassword(userId, hashedPassword);
+
+      // Log activity
+      await storage.logSecurityActivity({
+        userId,
+        action: 'password_change',
+        timestamp: new Date(),
+        ipAddress: req.ip,
+      });
+
+      res.json({ message: 'تم تغيير كلمة المرور بنجاح' });
+    } catch (error) {
+      console.error('Error changing password:', error);
+      res.status(500).json({ error: 'فشل تغيير كلمة المرور' });
+    }
+  });
+
+  // Enable 2FA
+  app.post('/api/security/2fa/enable', async (req, res) => {
+    try {
+      const { userId } = req.body;
+      const secret = generateTOTPSecret();
+
+      await storage.enable2FA(userId, secret);
+
+      res.json({
+        secret,
+        qrCode: generateTOTPQRCode(secret),
+      });
+    } catch (error) {
+      console.error('Error enabling 2FA:', error);
+      res.status(500).json({ error: 'فشل تفعيل المصادقة الثنائية' });
+    }
+  });
+
+  // Fetch activity log
+  app.get('/api/security/activity-log', async (req, res) => {
+    try {
+      const { userId } = req.query;
+      const activities = await storage.getSecurityActivities(Number(userId));
+      res.json(activities);
+    } catch (error) {
+      console.error('Error fetching activity log:', error);
+      res.status(500).json({ error: 'فشل جلب سجل الأنشطة' });
+    }
+  });
+
+  // Revoke all sessions
+  app.post('/api/security/sessions/revoke-all', async (req, res) => {
+    try {
+      const { userId } = req.body;
+      await storage.revokeAllSessions(userId);
+
+      // Log activity
+      await storage.logSecurityActivity({
+        userId,
+        action: 'revoke_all_sessions',
+        timestamp: new Date(),
+        ipAddress: req.ip,
+      });
+
+      res.json({ message: 'تم إنهاء جميع الجلسات بنجاح' });
+    } catch (error) {
+      console.error('Error revoking sessions:', error);
+      res.status(500).json({ error: 'فشل إنهاء الجلسات' });
+    }
+  });
+
+
   const httpServer = createServer(app);
   return httpServer;
+}
+
+// Helper functions for 2FA
+function generateTOTPSecret() {
+  // Implementation for generating TOTP secret  (Replace with actual implementation)
+  return 'base32-encoded-secret';
+}
+
+function generateTOTPQRCode(secret: string) {
+  // Implementation for generating QR code (Replace with actual implementation)
+  return `otpauth://totp/YourApp:${secret}`;
 }

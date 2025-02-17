@@ -5,10 +5,14 @@ import * as schema from '@shared/schema';
 import session from "express-session";
 import createMemoryStore from "memorystore";
 import connectPg from "connect-pg-simple";
+import type { IStorage } from "./storage";
+import bcrypt from "bcrypt";
+import { authenticator } from "otplib"; // Fixed import
 
 const PostgresSessionStore = connectPg(session);
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 
+// Add the following methods to the IStorage interface
 export interface IStorage {
   // User operations
   getUser(id: number): Promise<schema.User | undefined>;
@@ -33,7 +37,7 @@ export interface IStorage {
   getStaff(): Promise<schema.Staff[]>;
   getStaffMember(id: number): Promise<schema.Staff | undefined>;
   createStaff(staff: schema.InsertStaff): Promise<schema.Staff>;
-  updateStaff(id: number, staff: Partial<schema.InsertStaff>): Promise<schema.Staff>;
+  updateStaff(id: number, updates: Partial<schema.InsertStaff>): Promise<schema.Staff>;
   deleteStaff(id: number): Promise<void>;
 
   // Settings operations
@@ -45,14 +49,14 @@ export interface IStorage {
   getCampaigns(): Promise<schema.MarketingCampaign[]>;
   getCampaign(id: number): Promise<schema.MarketingCampaign | undefined>;
   createCampaign(campaign: schema.InsertMarketingCampaign): Promise<schema.MarketingCampaign>;
-  updateCampaign(id: number, campaign: Partial<schema.InsertMarketingCampaign>): Promise<schema.MarketingCampaign>;
+  updateCampaign(id: number, updates: Partial<schema.InsertMarketingCampaign>): Promise<schema.MarketingCampaign>;
   deleteCampaign(id: number): Promise<void>;
 
   // Promotion operations
   getPromotions(): Promise<schema.Promotion[]>;
   getPromotion(id: number): Promise<schema.Promotion | undefined>;
   createPromotion(promotion: schema.InsertPromotion): Promise<schema.Promotion>;
-  updatePromotion(id: number, promotion: Partial<schema.InsertPromotion>): Promise<schema.Promotion>;
+  updatePromotion(id: number, updates: Partial<schema.InsertPromotion>): Promise<schema.Promotion>;
   deletePromotion(id: number): Promise<void>;
 
   // Discount Code operations
@@ -60,21 +64,21 @@ export interface IStorage {
   getDiscountCode(id: number): Promise<schema.DiscountCode | undefined>;
   getDiscountCodeByCode(code: string): Promise<schema.DiscountCode | undefined>;
   createDiscountCode(code: schema.InsertDiscountCode): Promise<schema.DiscountCode>;
-  updateDiscountCode(id: number, code: Partial<schema.InsertDiscountCode>): Promise<schema.DiscountCode>;
+  updateDiscountCode(id: number, updates: Partial<schema.InsertDiscountCode>): Promise<schema.DiscountCode>;
   deleteDiscountCode(id: number): Promise<void>;
 
   // Social Media Account operations
   getSocialMediaAccounts(): Promise<schema.SocialMediaAccount[]>;
   getSocialMediaAccount(id: number): Promise<schema.SocialMediaAccount | undefined>;
   createSocialMediaAccount(account: schema.InsertSocialMediaAccount): Promise<schema.SocialMediaAccount>;
-  updateSocialMediaAccount(id: number, account: Partial<schema.InsertSocialMediaAccount>): Promise<schema.SocialMediaAccount>;
+  updateSocialMediaAccount(id: number, updates: Partial<schema.InsertSocialMediaAccount>): Promise<schema.SocialMediaAccount>;
   deleteSocialMediaAccount(id: number): Promise<void>;
 
   // Product Group operations
   getProductGroups(): Promise<schema.ProductGroup[]>;
   getProductGroup(id: number): Promise<schema.ProductGroup | undefined>;
   createProductGroup(group: schema.InsertProductGroup): Promise<schema.ProductGroup>;
-  updateProductGroup(id: number, group: Partial<schema.InsertProductGroup>): Promise<schema.ProductGroup>;
+  updateProductGroup(id: number, updates: Partial<schema.InsertProductGroup>): Promise<schema.ProductGroup>;
   deleteProductGroup(id: number): Promise<void>;
 
   // Product operations
@@ -143,6 +147,13 @@ export interface IStorage {
   createScheduledPost(post: schema.InsertScheduledPost): Promise<schema.ScheduledPost>;
   updateScheduledPost(id: number, post: Partial<schema.InsertScheduledPost>): Promise<schema.ScheduledPost>;
   getPendingScheduledPosts(): Promise<schema.ScheduledPost[]>;
+
+  // Security related methods
+  updateUserPassword(userId: number, hashedPassword: string): Promise<void>;
+  logSecurityActivity(activity: schema.InsertSecurityActivity): Promise<schema.SecurityActivity>;
+  enable2FA(userId: number, secret: string): Promise<schema.TwoFactorAuth>;
+  getSecurityActivities(userId: number): Promise<schema.SecurityActivity[]>;
+  revokeAllSessions(userId: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -735,6 +746,61 @@ export class DatabaseStorage implements IStorage {
       .from(schema.scheduledPosts)
       .where(eq(schema.scheduledPosts.status, 'pending'))
       .orderBy(schema.scheduledPosts.scheduledTime);
+  }
+
+  // Security related methods implementation
+  async updateUserPassword(userId: number, hashedPassword: string): Promise<void> {
+    await db
+      .update(schema.users)
+      .set({ password: hashedPassword })
+      .where(eq(schema.users.id, userId));
+  }
+
+  async logSecurityActivity(activity: schema.InsertSecurityActivity): Promise<schema.SecurityActivity> {
+    const [newActivity] = await db
+      .insert(schema.securityActivities)
+      .values(activity)
+      .returning();
+    return newActivity;
+  }
+
+  async enable2FA(userId: number, secret: string): Promise<schema.TwoFactorAuth> {
+    const backupCodes = Array.from({ length: 10 }, () =>
+      authenticator.generateSecret(16)
+    );
+
+    const [twoFactorAuth] = await db.insert(schema.twoFactorAuth)
+      .values({
+        userId,
+        secret,
+        enabled: true,
+        backupCodes,
+      })
+      .onConflictDoUpdate({      target: schema.twoFactorAuth.userId,
+        set: {
+          secret,
+          enabled: true,
+          backupCodes,
+          updatedAt: new Date(),
+        },
+      })
+      .returning();
+
+    return twoFactorAuth;
+  }
+
+  async getSecurityActivities(userId: number): Promise<schema.SecurityActivity[]> {
+    return await db
+      .select()
+      .from(schema.securityActivities)
+      .where(eq(schema.securityActivities.userId, userId))
+      .orderBy(schema.securityActivities.timestamp);
+  }
+
+  async revokeAllSessions(userId: number): Promise<void> {
+    await db
+      .delete(schema.userSessions)
+      .where(eq(schema.userSessions.userId, userId));
   }
 }
 

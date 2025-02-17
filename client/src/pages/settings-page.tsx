@@ -11,7 +11,7 @@ import { MessageSquare, Upload, Plus, Building2, Settings as SettingsIcon, Paint
 import { SiGooglecalendar } from "react-icons/si";
 import { SiFacebook, SiInstagram, SiSnapchat } from "react-icons/si";
 import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -45,7 +45,7 @@ import { Table, TableBody, TableCell, TableHeader, TableHead, TableRow } from "@
 import { Separator } from "@/components/ui/separator";
 import { format } from 'date-fns'
 import { ar } from 'date-fns/locale'
-
+import { useAuth } from "@/lib/auth";
 
 const socialMediaAccountSchema = z.object({
   platform: z.enum(['facebook', 'instagram', 'snapchat'], {
@@ -128,10 +128,28 @@ async function generateBackup() {
   }
 }
 
+// Add new schema for password change
+const changePasswordSchema = z.object({
+  currentPassword: z.string().min(6, "كلمة المرور الحالية يجب أن تكون 6 أحرف على الأقل"),
+  newPassword: z.string().min(6, "كلمة المرور الجديدة يجب أن تكون 6 أحرف على الأقل"),
+  confirmPassword: z.string().min(6, "تأكيد كلمة المرور يجب أن تكون 6 أحرف على الأقل"),
+}).refine((data) => data.newPassword === data.confirmPassword, {
+  message: "كلمة المرور الجديدة وتأكيدها غير متطابقين",
+  path: ["confirmPassword"],
+});
+
+type ChangePasswordFormData = z.infer<typeof changePasswordSchema>;
+
+
 export default function SettingsPage() {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const queryClient = useQueryClient();
+  const [showActivityLog, setShowActivityLog] = useState(false);
+  const [twoFactorEnabled, setTwoFactorEnabled] = useState(false); //initial state for 2fa
+  const [twoFactorQRCode, setTwoFactorQRCode] = useState<string | null>(null); //state for 2fa qrcode
+  const [showTwoFactorDialog, setShowTwoFactorDialog] = useState(false); //state for 2fa dialog
 
   // Load theme settings on mount
   useEffect(() => {
@@ -148,6 +166,17 @@ export default function SettingsPage() {
     queryKey: ['socialAccounts'],
     queryFn: getSocialAccounts,
   });
+
+  const { data: activityLog, isLoading: activityLogLoading } = useQuery({ //fetch activity log
+    queryKey: ['securityActivities'],
+    queryFn: async () => {
+      const response = await fetch(`/api/security/activity-log?userId=${user?.id}`);
+      if (!response.ok) throw new Error('Failed to fetch activity log');
+      return response.json();
+    },
+    enabled: showActivityLog
+  })
+
 
   // Forms
   const whatsappForm = useForm<WhatsAppSettings>({
@@ -171,6 +200,24 @@ export default function SettingsPage() {
       defaultCurrency: 'USD',
       usdToIqdRate: 1460, // Default exchange rate
     }
+  });
+
+  const changePasswordForm = useForm<ChangePasswordFormData>({
+    resolver: zodResolver(changePasswordSchema),
+    defaultValues: {
+      currentPassword: '',
+      newPassword: '',
+      confirmPassword: '',
+    },
+  });
+
+  const form = useForm<SocialMediaAccountFormData>({
+    resolver: zodResolver(socialMediaAccountSchema),
+    defaultValues: {
+      platform: undefined,
+      username: '',
+      password: '',
+    },
   });
 
   // Mutations
@@ -242,14 +289,42 @@ export default function SettingsPage() {
     },
   });
 
-  const form = useForm<SocialMediaAccountFormData>({
-    resolver: zodResolver(socialMediaAccountSchema),
-    defaultValues: {
-      platform: undefined,
-      username: '',
-      password: '',
+  const changePasswordMutation = useMutation({
+    mutationFn: async (data: ChangePasswordFormData) => {
+      const response = await fetch('/api/security/change-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          currentPassword: data.currentPassword,
+          newPassword: data.newPassword,
+          userId: user.id,
+        }),
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error);
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "تم",
+        description: "تم تغيير كلمة المرور بنجاح",
+      });
+      changePasswordForm.reset();
+    },
+    onError: (error) => {
+      toast({
+        title: "خطأ",
+        description: error.message,
+        variant: "destructive",
+      });
     },
   });
+
+  const onChangePassword = (data: ChangePasswordFormData) => {
+    changePasswordMutation.mutate(data);
+  };
 
   const onSubmit = (data: SocialMediaAccountFormData) => {
     accountMutation.mutate(data);
@@ -774,21 +849,24 @@ export default function SettingsPage() {
                     {socialAccounts?.map((account) => (
                       <div key={account.id} className="flex items-center justify-between p-4 border rounded-lg">
                         <div className="flex items-center gap-4">
-                          {account.platform === 'facebook' && <SiFacebook className="h-6 w-6 text-blue-600" />}
-                          {account.platform === 'instagram' && <SiInstagram className="h-6 w-6 text-pink-600" />}
-                          {account.platform === 'snapchat' && <SiSnapchat className="h-6 w-6 text-yellow-500" />}
+                          {account.platform === 'facebook' && <SiFacebook className="h-8 w-8 text-blue-600" />}
+                          {account.platform === 'instagram' && <SiInstagram className="h-8 w-8 text-pink-600" />}
+                          {account.platform === 'snapchat' && <SiSnapchat className="h-8 w-8 text-yellow-500" />}
                           <div>
                             <p className="font-medium">{account.username}</p>
                             <p className="text-sm text-muted-foreground">
-                              {account.platform === 'facebook' ? 'فيسبوك' :
-                                account.platform === 'instagram' ? 'انستغرام' : 'سناب شات'}
+                              {account.platform === 'facebook' && 'فيسبوك'}
+                              {account.platform === 'instagram' && 'انستغرام'}
+                              {account.platform === 'snapchat' && 'سناب شات'}
                             </p>
                           </div>
                         </div>
-                        <Badge variant={account.status === 'active' ? 'default' : 'secondary'}>
-                          {account.status === 'active' ? 'نشط' : 'غير نشط'}
-                        </Badge>
-                      </div>
+                        <div>
+                          <Badge variant={account.status === 'active' ? 'default' : 'secondary'}>
+                              {account.status === 'active' ? "نشط" : "غير نشط"}
+                            </Badge>
+                          </div>
+                        </div>
                     ))}
                   </div>
                 </div>
@@ -1212,18 +1290,67 @@ export default function SettingsPage() {
                         تحديث كلمة المرور الخاصة بك بشكل دوري يساعد في حماية حسابك
                       </p>
                     </div>
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        // سيتم إضافة منطق تغيير كلمة المرور
-                        toast({
-                          title: "قريباً",
-                          description: "سيتم إضافة خيار تغيير كلمة المرور قريباً",
-                        });
-                      }}
-                    >
-                      تغيير كلمة المرور
-                    </Button>
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button variant="outline">
+                          تغيير كلمة المرور
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>تغيير كلمة المرور</DialogTitle>
+                          <DialogDescription>
+                            قم بإدخال كلمة المرور الحالية وكلمة المرور الجديدة
+                          </DialogDescription>
+                        </DialogHeader>
+                        <Form {...changePasswordForm}>
+                          <form onSubmit={changePasswordForm.handleSubmit(onChangePassword)} className="space-y-4">
+                            <FormField
+                              control={changePasswordForm.control}
+                              name="currentPassword"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>كلمة المرور الحالية</FormLabel>
+                                  <FormControl>
+                                    <Input type="password" {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={changePasswordForm.control}
+                              name="newPassword"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>كلمة المرور الجديدة</FormLabel>
+                                  <FormControl>
+                                    <Input type="password" {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={changePasswordForm.control}
+                              name="confirmPassword"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>تأكيد كلمة المرور الجديدة</FormLabel>
+                                  <FormControl>
+                                    <Input type="password" {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            <Button type="submit" className="w-full" disabled={changePasswordMutation.isPending}>
+                              {changePasswordMutation.isPending ? "جاري تغيير كلمة المرور..." : "تغيير كلمة المرور"}
+                            </Button>
+                          </form>
+                        </Form>
+                      </DialogContent>
+                    </Dialog>
                   </div>
                 </div>
 
@@ -1242,12 +1369,26 @@ export default function SettingsPage() {
                       </p>
                     </div>
                     <Switch
-                      checked={false}
-                      onCheckedChange={() => {
-                        toast({
-                          title: "قريباً",
-                          description: "سيتم إضافة خيار المصادقة الثنائية قريباً",
-                        });
+                      checked={twoFactorEnabled}
+                      onCheckedChange={async (enabled) => {
+                        if (enabled) {
+                          try {
+                            const response = await fetch('/api/security/2fa/enable', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ userId: user.id }),
+                            });
+                            const data = await response.json();
+                            setTwoFactorQRCode(data.qrCode);
+                            setShowTwoFactorDialog(true);
+                          } catch (error) {
+                            toast({
+                              title: "خطأ",
+                              description: "حدث خطأ أثناء تفعيل المصادقة الثنائية",
+                              variant: "destructive",
+                            });
+                          }
+                        }
                       }}
                     />
                   </div>
@@ -1267,10 +1408,44 @@ export default function SettingsPage() {
                         مراجعة آخر عمليات تسجيل الدخول والأنشطة المشبوهة
                       </p>
                     </div>
-                    <Button variant="outline">
+                    <Button
+                      variant="outline"
+                      onClick={() => setShowActivityLog(true)}
+                    >
                       عرض السجل
                     </Button>
                   </div>
+                  {showActivityLog && (
+                    <div className="mt-4">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>التاريخ</TableHead>
+                            <TableHead>النشاط</TableHead>
+                            <TableHead>عنوان IP</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {activityLog?.map((activity) => (
+                            <TableRow key={activity.id}>
+                              <TableCell>
+                                {format(new Date(activity.timestamp), 'dd MMMM yyyy HH:mm', { locale: ar })}
+                              </TableCell>
+                              <TableCell>
+                                {activity.action === 'login' && 'تسجيل دخول'}
+                                {activity.action === 'logout' && 'تسجيل خروج'}
+                                {activity.action === 'password_change' && 'تغيير كلمة المرور'}
+                                {activity.action === 'enable_2fa' && 'تفعيل المصادقة الثنائية'}
+                                {activity.action === 'disable_2fa' && 'تعطيل المصادقة الثنائية'}
+                                {activity.action === 'revoke_all_sessions' && 'إنهاء جميع الجلسات'}
+                              </TableCell>
+                              <TableCell>{activity.ipAddress}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  )}
                 </div>
 
                 <Separator />
@@ -1289,11 +1464,24 @@ export default function SettingsPage() {
                     </div>
                     <Button
                       variant="destructive"
-                      onClick={() => {
-                        toast({
-                          title: "قريباً",
-                          description: "سيتم إضافة خيار إنهاء الجلسات قريباً",
-                        });
+                      onClick={async () => {
+                        try {
+                          await fetch('/api/security/sessions/revoke-all', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ userId: user.id }),
+                          });
+                          toast({
+                            title: "تم",
+                            description: "تم إنهاء جميع الجلسات بنجاح",
+                          });
+                        } catch (error) {
+                          toast({
+                            title: "خطأ",
+                            description: "حدث خطأ أثناء إنهاء الجلسات",
+                            variant: "destructive",
+                          });
+                        }
                       }}
                     >
                       إنهاء جميع الجلسات
@@ -1305,6 +1493,33 @@ export default function SettingsPage() {
           </TabsContent>
         </Tabs>
       </div>
+      <Dialog open={showTwoFactorDialog} onOpenChange={setShowTwoFactorDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>تفعيل المصادقة الثنائية</DialogTitle>
+            <DialogDescription>
+              امسح رمز QR باستخدام تطبيق المصادقة على هاتفك
+            </DialogDescription>
+          </DialogHeader>
+          {twoFactorQRCode && (
+            <div className="flex flex-col items-center space-y-4">
+              <img
+                src={twoFactorQRCode}
+                alt="QR Code"
+                className="w-64 h-64"
+              />
+              <p className="text-sm text-muted-foreground text-center">
+                بعد مسح الرمز، ستحتاج إلى إدخال رمز التحقق في كل مرة تقوم فيها بتسجيل الدخول
+              </p>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowTwoFactorDialog(false)}>
+              إغلاق
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 }
