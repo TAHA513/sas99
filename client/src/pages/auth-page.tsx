@@ -8,9 +8,6 @@ import { insertUserSchema } from "@shared/schema";
 import { useForm } from "react-hook-form";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useLocation } from "wouter";
-import type { InsertUser } from "@shared/schema";
-
-type LoginData = Pick<InsertUser, "username" | "password">;
 
 export default function AuthPage() {
   const { loginMutation, registerMutation, user } = useAuth();
@@ -21,21 +18,12 @@ export default function AuthPage() {
     return null;
   }
 
-  const loginForm = useForm<LoginData>({
+  const loginForm = useForm({
     resolver: zodResolver(insertUserSchema.omit({ name: true })),
-    defaultValues: {
-      username: "",
-      password: "",
-    },
   });
 
-  const registerForm = useForm<InsertUser>({
+  const registerForm = useForm({
     resolver: zodResolver(insertUserSchema),
-    defaultValues: {
-      username: "",
-      password: "",
-      name: "",
-    },
   });
 
   return (

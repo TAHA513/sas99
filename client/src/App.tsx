@@ -1,8 +1,6 @@
 import { Switch, Route } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
-import { NetworkAwareFeature } from "@/components/NetworkAwareFeature";
-import { initNetworkListener } from "@/lib/network";
 import NotFound from "@/pages/not-found";
 import DashboardPage from "@/pages/dashboard-page";
 import StaffDashboard from "@/pages/staff/dashboard";
@@ -36,10 +34,9 @@ const queryClient = new QueryClient({
 });
 
 function Router() {
-  // Load theme settings and initialize network listener on app initialization
+  // Load theme settings on app initialization
   useEffect(() => {
     loadThemeSettings();
-    initNetworkListener();
   }, []);
 
   return (
@@ -52,18 +49,8 @@ function Router() {
       <Route path="/customers" component={CustomersPage} />
       <Route path="/appointments" component={AppointmentsPage} />
       <Route path="/staff-management" component={StaffPage} />
-      {/* المسارات التي تحتاج إلى إنترنت */}
-      <Route path="/marketing">
-        <NetworkAwareFeature feature="marketing">
-          <MarketingPage />
-        </NetworkAwareFeature>
-      </Route>
-      <Route path="/promotions">
-        <NetworkAwareFeature feature="marketing">
-          <PromotionsPage />
-        </NetworkAwareFeature>
-      </Route>
-      {/* المسارات المتبقية */}
+      <Route path="/marketing" component={MarketingPage} />
+      <Route path="/promotions" component={PromotionsPage} />
       <Route path="/products" component={ProductsPage} />
       <Route path="/invoices" component={InvoicesPage} />
       <Route path="/installments" component={InstallmentsPage} />
