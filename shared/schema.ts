@@ -368,7 +368,6 @@ export type InsertCampaignNotification = z.infer<typeof insertCampaignNotificati
 export type ScheduledPost = typeof scheduledPosts.$inferSelect;
 export type InsertScheduledPost = z.infer<typeof insertScheduledPostSchema>;
 
-
 export const suppliers = pgTable("suppliers", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
@@ -523,3 +522,16 @@ export const insertDatabaseConnectionSchema = createInsertSchema(databaseConnect
 
 export type DatabaseConnection = typeof databaseConnections.$inferSelect;
 export type InsertDatabaseConnection = z.infer<typeof insertDatabaseConnectionSchema>;
+
+// Add to existing schema.ts after the last table definition
+export const loginAttempts = pgTable("login_attempts", {
+  id: serial("id").primaryKey(),
+  username: text("username").notNull(),
+  ipAddress: text("ip_address").notNull(),
+  timestamp: timestamp("timestamp").notNull().defaultNow(),
+  success: boolean("success").notNull(),
+});
+
+// Add to existing type exports
+export type LoginAttempt = typeof loginAttempts.$inferSelect;
+export type InsertLoginAttempt = typeof loginAttempts.$inferInsert;
