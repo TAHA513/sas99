@@ -495,7 +495,6 @@ export class MemoryStorage implements IStorage {
     return Array.from(this.data.values()).filter(item => item.purchaseId === purchaseId && item.type === 'purchaseItem');
   }
 
-
   async getExpenseCategories(): Promise<schema.ExpenseCategory[]> {
     return Array.from(this.data.values()).filter(item => item.type === 'expenseCategory');
   }
@@ -560,8 +559,15 @@ export class MemoryStorage implements IStorage {
 
   async createDatabaseConnection(connection: schema.InsertDatabaseConnection): Promise<schema.DatabaseConnection> {
     const newId = this.generateId('databaseConnection');
-    this.data.set(`databaseConnection-${newId}`, { ...connection, id: newId, type: 'databaseConnection' });
-    return { ...connection, id: newId, type: 'databaseConnection' };
+    const newConnection = { 
+      ...connection, 
+      id: newId, 
+      type: 'databaseConnection',
+      isActive: true,
+      createdAt: new Date().toISOString()
+    };
+    this.data.set(`databaseConnection-${newId}`, newConnection);
+    return newConnection;
   }
 
   async updateDatabaseConnection(id: number, connection: Partial<schema.InsertDatabaseConnection>): Promise<schema.DatabaseConnection> {
@@ -575,11 +581,15 @@ export class MemoryStorage implements IStorage {
   }
 
   async deleteDatabaseConnection(id: number): Promise<void> {
-    this.data.delete(`databaseConnection-${id}`);
+    const key = `databaseConnection-${id}`;
+    if (!this.data.has(key)) {
+      throw new Error("Database connection not found");
+    }
+    this.data.delete(key);
   }
 
   async testDatabaseConnection(connection: schema.InsertDatabaseConnection): Promise<boolean> {
-    return true; // Placeholder - No actual connection testing needed
+    return true; // Since we're using memory storage, we'll always return true
   }
 
   async getCampaignNotifications(campaignId: number): Promise<schema.CampaignNotification[]> {
