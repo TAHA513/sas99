@@ -174,7 +174,7 @@ export default function SettingsPage() {
       if (!response.ok) throw new Error('Failed to fetch activity log');
       return response.json();
     },
-    enabled: showActivityLog
+    enabled: showActivityLog && user
   })
 
 
@@ -291,13 +291,16 @@ export default function SettingsPage() {
 
   const changePasswordMutation = useMutation({
     mutationFn: async (data: ChangePasswordFormData) => {
+      if (!user) {
+        throw new Error('يجب تسجيل الدخول أولاً');
+      }
       const response = await fetch('/api/security/change-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           currentPassword: data.currentPassword,
           newPassword: data.newPassword,
-          userId: user.id,
+          userId: user?.id,
         }),
       });
       if (!response.ok) {
@@ -322,6 +325,7 @@ export default function SettingsPage() {
     },
   });
 
+  // طلب تغيير كلمة المرور
   const onChangePassword = (data: ChangePasswordFormData) => {
     changePasswordMutation.mutate(data);
   };
@@ -1304,60 +1308,74 @@ export default function SettingsPage() {
                         </DialogHeader>
                         <Form {...changePasswordForm}>
                           <form onSubmit={changePasswordForm.handleSubmit(onChangePassword)} className="space-y-4">
-                            <FormField
-                              control={changePasswordForm.control}
-                              name="currentPassword"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>كلمة المرور الحالية</FormLabel>
-                                  <FormControl>
-                                    <Input type="password" {...field} placeholder="أدخل كلمة المرور الحالية" />
-                                  </FormControl>
-                                  <FormDescription>
-                                    كلمة المرور الافتراضية للنظام هي: admin123
-                                    {"\n"}
-                                    إذا كنت تستخدم النظام لأول مرة، استخدم كلمة المرور هذه
-                                  </FormDescription>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                            <FormField
-                              control={changePasswordForm.control}
-                              name="newPassword"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>كلمة المرور الجديدة</FormLabel>
-                                  <FormControl>
-                                    <Input type="password" {...field} placeholder="أدخل كلمة المرور الجديدة" />
-                                  </FormControl>
-                                  <FormDescription>
-                                    يجب أن تحتوي على 6 أحرف على الأقل
-                                  </FormDescription>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
+                            {!user ? (
+                              <div className="text-center py-4">
+                                <p className="text-red-500">يجب تسجيل الدخول أولاً لتغيير كلمة المرور</p>
+                              </div>
+                            ) : (
+                              <>
+                                <FormField
+                                  control={changePasswordForm.control}
+                                  name="currentPassword"
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormLabel>كلمة المرور الحالية</FormLabel>
+                                      <FormControl>
+                                        <Input type="password" {...field} placeholder="أدخل كلمة المرور الحالية" />
+                                      </FormControl>
+                                      <FormDescription>
+                                        كلمة المرور الافتراضية للنظام هي: admin123
+                                        {"\n"}
+                                        إذا كنت تستخدم النظام لأول مرة، استخدم كلمة المرور هذه
+                                      </FormDescription>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
 
-                            <FormField
-                              control={changePasswordForm.control}
-                              name="confirmPassword"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>تأكيد كلمة المرور الجديدة</FormLabel>
-                                  <FormControl>
-                                    <Input type="password" {...field} placeholder="أعد إدخال كلمة المرور الجديدة" />
-                                  </FormControl>
-                                  <FormDescription>
-                                    يجب أن تتطابق مع كلمة المرور الجديدة
-                                  </FormDescription>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                            <Button type="submit" className="w-full" disabled={changePasswordMutation.isPending}>
-                              {changePasswordMutation.isPending ? "جاري تغيير كلمة المرور..." : "تغيير كلمة المرور"}
-                            </Button>
+                                <FormField
+                                  control={changePasswordForm.control}
+                                  name="newPassword"
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormLabel>كلمة المرور الجديدة</FormLabel>
+                                      <FormControl>
+                                        <Input type="password" {...field} placeholder="أدخل كلمة المرور الجديدة" />
+                                      </FormControl>
+                                      <FormDescription>
+                                        يجب أن تحتوي على 6 أحرف على الأقل
+                                      </FormDescription>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+
+                                <FormField
+                                  control={changePasswordForm.control}
+                                  name="confirmPassword"
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormLabel>تأكيد كلمة المرور الجديدة</FormLabel>
+                                      <FormControl>
+                                        <Input type="password" {...field} placeholder="أعد إدخال كلمة المرور الجديدة" />
+                                      </FormControl>
+                                      <FormDescription>
+                                        يجب أن تتطابق مع كلمة المرور الجديدة
+                                      </FormDescription>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+
+                                <Button 
+                                  type="submit" 
+                                  disabled={changePasswordMutation.isPending || !user}
+                                  className="w-full"
+                                >
+                                  {changePasswordMutation.isPending ? "جاري تغيير كلمة المرور..." : "تغيير كلمة المرور"}
+                                </Button>
+                              </>
+                            )}
                           </form>
                         </Form>
                       </DialogContent>
@@ -1387,7 +1405,7 @@ export default function SettingsPage() {
                             const response = await fetch('/api/security/2fa/enable', {
                               method: 'POST',
                               headers: { 'Content-Type': 'application/json' },
-                              body: JSON.stringify({ userId: user.id }),
+                              body: JSON.stringify({ userId: user?.id }),
                             });
                             const data = await response.json();
                             setTwoFactorQRCode(data.qrCode);
@@ -1480,7 +1498,7 @@ export default function SettingsPage() {
                           await fetch('/api/security/sessions/revoke-all', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ userId: user.id }),
+                            body: JSON.stringify({ userId: user?.id }),
                           });
                           toast({
                             title: "تم",
