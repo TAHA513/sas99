@@ -16,12 +16,10 @@ import {
   Truck,
   DollarSign,
   FolderIcon,
-  ClipboardList,
-  LogOut,
+  ClipboardList, // Add import for inventory report icon
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
-import { useAuth } from "@/hooks/use-auth";
 
 const navItems = [
   {
@@ -112,17 +110,7 @@ const navItems = [
 ];
 
 export function DashboardNav() {
-  const [, setLocation] = useLocation();
-  const { logoutMutation } = useAuth();
-
-  const handleLogout = async () => {
-    try {
-      await logoutMutation.mutateAsync();
-      setLocation("/auth"); // تغيير المسار إلى صفحة تسجيل الدخول الرئيسية
-    } catch (error) {
-      console.error("Logout failed:", error);
-    }
-  };
+  const [location] = useLocation();
 
   return (
     <div className="h-screen w-64 border-l bg-card p-4 flex flex-col">
@@ -148,17 +136,6 @@ export function DashboardNav() {
           </Link>
         ))}
       </nav>
-
-      {/* زر تسجيل الخروج */}
-      <Button
-        variant="ghost"
-        className="w-full mt-4 flex items-center justify-start gap-3 px-3 py-2 h-10 hover:bg-destructive hover:text-destructive-foreground"
-        onClick={handleLogout}
-        disabled={logoutMutation.isPending}
-      >
-        <LogOut className="h-4 w-4" />
-        {logoutMutation.isPending ? "جاري تسجيل الخروج..." : "تسجيل الخروج"}
-      </Button>
     </div>
   );
 }

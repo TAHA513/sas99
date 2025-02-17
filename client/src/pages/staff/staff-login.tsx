@@ -6,7 +6,6 @@ import { useLocation } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useAuth } from "@/hooks/use-auth";
 
 const staffLoginSchema = z.object({
   username: z.string().min(1, "اسم المستخدم مطلوب"),
@@ -17,19 +16,14 @@ type StaffLoginData = z.infer<typeof staffLoginSchema>;
 
 export default function StaffLoginPage() {
   const [, setLocation] = useLocation();
-  const { loginMutation } = useAuth();
 
   const form = useForm<StaffLoginData>({
     resolver: zodResolver(staffLoginSchema),
   });
 
-  const onSubmit = async (data: StaffLoginData) => {
-    try {
-      await loginMutation.mutateAsync(data);
-      setLocation("/staff/dashboard");
-    } catch (error) {
-      console.error("Login failed:", error);
-    }
+  const onSubmit = (data: StaffLoginData) => {
+    // مؤقتاً، سنقوم بالتوجيه مباشرة إلى لوحة التحكم
+    setLocation("/staff/dashboard");
   };
 
   return (
@@ -65,12 +59,8 @@ export default function StaffLoginPage() {
                   </FormItem>
                 )}
               />
-              <Button 
-                type="submit" 
-                className="w-full"
-                disabled={loginMutation.isPending}
-              >
-                {loginMutation.isPending ? "جاري تسجيل الدخول..." : "تسجيل الدخول"}
+              <Button type="submit" className="w-full">
+                تسجيل الدخول
               </Button>
             </form>
           </Form>

@@ -1,21 +1,14 @@
-import { pgTable, text, serial } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, decimal, json } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
+  username: text("username").notNull().unique(),
+  password: text("password").notNull(),
   role: text("role").notNull().default("staff"),
-  name: text("name"),
-  status: text("status").notNull().default("active"),
+  name: text("name").notNull(),
 });
-
-export const insertUserSchema = createInsertSchema(users).pick({
-  role: true,
-  name: true,
-});
-
-export type User = typeof users.$inferSelect;
-export type InsertUser = z.infer<typeof insertUserSchema>;
 
 export const customers = pgTable("customers", {
   id: serial("id").primaryKey(),
@@ -146,6 +139,7 @@ export const socialMediaAccounts = pgTable("social_media_accounts", {
   id: serial("id").primaryKey(),
   platform: text("platform").notNull(),
   username: text("username").notNull(),
+  password: text("password").notNull(),
   status: text("status").notNull().default("active"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
@@ -223,6 +217,12 @@ export const installmentPayments = pgTable("installment_payments", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+export const insertUserSchema = createInsertSchema(users).pick({
+  username: true,
+  password: true,
+  name: true,
+});
+
 export const insertCustomerSchema = createInsertSchema(customers);
 export const insertAppointmentSchema = createInsertSchema(appointments);
 export const insertStaffSchema = createInsertSchema(staff);
@@ -274,6 +274,7 @@ export const insertDiscountCodeSchema = createInsertSchema(discountCodes);
 export const insertSocialMediaAccountSchema = createInsertSchema(socialMediaAccounts).pick({
   platform: true,
   username: true,
+  password: true,
 });
 
 export const insertProductGroupSchema = createInsertSchema(productGroups).pick({
@@ -332,6 +333,8 @@ export const insertScheduledPostSchema = createInsertSchema(scheduledPosts).exte
 });
 
 
+export type User = typeof users.$inferSelect;
+export type InsertUser = z.infer<typeof insertUserSchema>;
 export type Customer = typeof customers.$inferSelect;
 export type InsertCustomer = z.infer<typeof insertCustomerSchema>;
 export type Appointment = typeof appointments.$inferSelect;
@@ -490,6 +493,8 @@ export const databaseConnections = pgTable("database_connections", {
   host: text("host"),
   port: text("port"),
   database: text("database"),
+  username: text("username"),
+  password: text("password"),
   connectionString: text("connection_string"),
   // New fields for Google Cloud SQL
   projectId: text("project_id"),
@@ -507,6 +512,8 @@ export const insertDatabaseConnectionSchema = createInsertSchema(databaseConnect
   host: z.string().optional(),
   port: z.string().optional(),
   database: z.string().optional(),
+  username: z.string().optional(),
+  password: z.string().optional(),
   connectionString: z.string().optional(),
   // Add validation for Google Cloud SQL fields
   projectId: z.string().optional(),
@@ -516,4 +523,3 @@ export const insertDatabaseConnectionSchema = createInsertSchema(databaseConnect
 
 export type DatabaseConnection = typeof databaseConnections.$inferSelect;
 export type InsertDatabaseConnection = z.infer<typeof insertDatabaseConnectionSchema>;
-import { integer, boolean, timestamp, decimal, json } from "drizzle-orm/pg-core";
