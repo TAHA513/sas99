@@ -16,7 +16,8 @@ import {
   Truck,
   DollarSign,
   FolderIcon,
-  ClipboardList, // Add import for inventory report icon
+  ClipboardList,
+  LogOut, // إضافة أيقونة تسجيل الخروج
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
@@ -110,7 +111,12 @@ const navItems = [
 ];
 
 export function DashboardNav() {
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
+
+  const handleLogout = () => {
+    localStorage.removeItem("isAuthenticated");
+    setLocation("/login");
+  };
 
   return (
     <div className="h-screen w-64 border-l bg-card p-4 flex flex-col">
@@ -137,6 +143,16 @@ export function DashboardNav() {
           </Link>
         ))}
       </nav>
+
+      {/* زر تسجيل الخروج */}
+      <Button
+        variant="ghost"
+        className="w-full flex items-center justify-start gap-3 px-3 py-2 h-10 mt-4 text-destructive hover:bg-destructive hover:text-destructive-foreground"
+        onClick={handleLogout}
+      >
+        <LogOut className="h-4 w-4" />
+        تسجيل الخروج
+      </Button>
     </div>
   );
 }
