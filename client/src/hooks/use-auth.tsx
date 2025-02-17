@@ -12,12 +12,9 @@ type AuthContextType = {
   user: SelectUser | null;
   isLoading: boolean;
   error: Error | null;
-  loginMutation: UseMutationResult<SelectUser, Error, LoginData>;
+  loginMutation: UseMutationResult<SelectUser, Error, { username: string }>;
   logoutMutation: UseMutationResult<void, Error, void>;
-  registerMutation: UseMutationResult<SelectUser, Error, InsertUser>;
 };
-
-type LoginData = Pick<InsertUser, "username" | "password">;
 
 export const AuthContext = createContext<AuthContextType | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -32,7 +29,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   });
 
   const loginMutation = useMutation({
-    mutationFn: async (credentials: LoginData) => {
+    mutationFn: async (credentials: { username: string }) => {
       const res = await apiRequest("POST", "/api/login", credentials);
       return await res.json();
     },
@@ -40,34 +37,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       queryClient.setQueryData(["/api/user"], user);
       toast({
         title: "تم تسجيل الدخول بنجاح",
-        description: `مرحباً ${user.name}`,
+        description: `مرحباً ${user.name ?? user.username}`,
       });
     },
     onError: (error: Error) => {
       toast({
         title: "فشل تسجيل الدخول",
-        description: "اسم المستخدم أو كلمة المرور غير صحيحة",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const registerMutation = useMutation({
-    mutationFn: async (credentials: InsertUser) => {
-      const res = await apiRequest("POST", "/api/register", credentials);
-      return await res.json();
-    },
-    onSuccess: (user: SelectUser) => {
-      queryClient.setQueryData(["/api/user"], user);
-      toast({
-        title: "تم إنشاء الحساب بنجاح",
-        description: `مرحباً ${user.name}`,
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "فشل إنشاء الحساب",
-        description: "اسم المستخدم مستخدم بالفعل",
+        description: "اسم المستخدم غير صحيح",
         variant: "destructive",
       });
     },
@@ -100,7 +76,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         error,
         loginMutation,
         logoutMutation,
-        registerMutation,
       }}
     >
       {children}

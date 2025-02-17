@@ -5,9 +5,8 @@ import { z } from "zod";
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
-  password: text("password"), // Removed notNull constraint
   role: text("role").notNull().default("staff"),
-  name: text("name"), // Removed notNull constraint
+  name: text("name"),
 });
 
 export const customers = pgTable("customers", {

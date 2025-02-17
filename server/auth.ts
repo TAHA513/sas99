@@ -25,13 +25,17 @@ export function setupAuth(app: Express) {
   app.use(passport.session());
 
   passport.use(
-    new LocalStrategy(async (username, password, done) => {
-      const user = await storage.getUserByUsername(username);
-      if (!user) {
-        return done(null, false);
+    // تبسيط استراتيجية المصادقة للتحقق من اسم المستخدم فقط
+    new LocalStrategy(
+      { passwordField: 'none' }, // تجاهل حقل كلمة المرور
+      async (username, password, done) => {
+        const user = await storage.getUserByUsername(username);
+        if (!user) {
+          return done(null, false);
+        }
+        return done(null, user);
       }
-      return done(null, user);
-    }),
+    )
   );
 
   passport.serializeUser((user, done) => done(null, user.id));
