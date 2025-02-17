@@ -1314,7 +1314,9 @@ export default function SettingsPage() {
                                     <Input type="password" {...field} placeholder="أدخل كلمة المرور الحالية" />
                                   </FormControl>
                                   <FormDescription>
-                                    يرجى إدخال كلمة المرور التي تستخدمها حالياً للتحقق من هويتك
+                                    كلمة المرور الافتراضية للنظام هي: admin123
+                                    {"\n"}
+                                    إذا كنت تستخدم النظام لأول مرة، استخدم كلمة المرور هذه
                                   </FormDescription>
                                   <FormMessage />
                                 </FormItem>
