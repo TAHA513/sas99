@@ -6,22 +6,9 @@ export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
-  role: text("role").notNull().default("sales_staff"),
+  role: text("role").notNull().default("staff"),
   name: text("name").notNull(),
 });
-
-// Add role validation to the insert schema
-export const insertUserSchema = createInsertSchema(users)
-  .pick({
-    username: true,
-    password: true,
-    name: true,
-  })
-  .extend({
-    role: z.enum(["sales_staff", "inventory_staff", "accounting_staff", "manager"], {
-      errorMap: () => ({ message: "نوع المستخدم غير صالح" })
-    }).default("sales_staff"),
-  });
 
 export const customers = pgTable("customers", {
   id: serial("id").primaryKey(),
@@ -228,6 +215,12 @@ export const installmentPayments = pgTable("installment_payments", {
   status: text("status").notNull().default("paid"),
   notes: text("notes"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const insertUserSchema = createInsertSchema(users).pick({
+  username: true,
+  password: true,
+  name: true,
 });
 
 export const insertCustomerSchema = createInsertSchema(customers);
