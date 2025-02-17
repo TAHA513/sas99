@@ -112,13 +112,13 @@ const navItems = [
 ];
 
 export function DashboardNav() {
-  const [location] = useLocation();
+  const [, setLocation] = useLocation();
   const { logoutMutation } = useAuth();
 
   const handleLogout = async () => {
     try {
       await logoutMutation.mutateAsync();
-      window.location.href = "/staff/login"; // Force refresh to login page
+      setLocation("/auth"); // تغيير المسار إلى صفحة تسجيل الدخول الرئيسية
     } catch (error) {
       console.error("Logout failed:", error);
     }
@@ -149,7 +149,7 @@ export function DashboardNav() {
         ))}
       </nav>
 
-      {/* Logout Button */}
+      {/* زر تسجيل الخروج */}
       <Button
         variant="ghost"
         className="w-full mt-4 flex items-center justify-start gap-3 px-3 py-2 h-10 hover:bg-destructive hover:text-destructive-foreground"
