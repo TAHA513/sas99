@@ -114,8 +114,9 @@ export function DashboardNav() {
 
   return (
     <div className="h-screen w-64 border-l bg-card p-4 flex flex-col">
-      <div className="flex items-center justify-center h-16 mb-8">
+      <div className="flex flex-col items-center justify-center h-16 mb-8">
         <h1 className="text-2xl font-bold">نظام الإدارة</h1>
+        <h2 className="text-lg text-muted-foreground">SAS</h2>
       </div>
 
       <nav className="space-y-2 flex-1 overflow-y-auto">
