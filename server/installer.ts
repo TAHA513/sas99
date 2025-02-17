@@ -6,16 +6,23 @@ const createInstaller = async () => {
   try {
     console.log('بدء إنشاء حزمة التثبيت...');
 
-    // Create a write stream
-    const output = fs.createWriteStream('digital-business-manager-installer.zip');
+    // Create build directory
+    const buildDir = path.join(process.cwd(), 'build-temp');
+    if (!fs.existsSync(buildDir)) {
+      fs.mkdirSync(buildDir, { recursive: true });
+    }
+
+    // Copy test checklist
+    const testChecklistPath = path.join(process.cwd(), 'test-checklist.md');
+    const testChecklistDest = path.join(buildDir, 'test-checklist.md');
+    fs.copyFileSync(testChecklistPath, testChecklistDest);
+    console.log('تم نسخ قائمة الفحص');
 
     // Create archive
+    const output = fs.createWriteStream('digital-business-manager-installer.zip');
     const archive = archiver('zip', {
-      zlib: { level: 9 } // Maximum compression
+      zlib: { level: 9 }
     });
-
-    // Pipe archive data to the file
-    archive.pipe(output);
 
     // Handle archive warnings
     archive.on('warning', (err) => {
@@ -34,16 +41,17 @@ const createInstaller = async () => {
     // Log when the archive is finalized
     output.on('close', () => {
       console.log(`تم إنشاء حزمة التثبيت بنجاح: ${archive.pointer()} بايت`);
+      // Clean up build directory
+      if (fs.existsSync(buildDir)) {
+        fs.rmSync(buildDir, { recursive: true });
+      }
     });
 
-    // Add test checklist first
-    const testChecklistPath = path.join(process.cwd(), 'test-checklist.md');
-    if (fs.existsSync(testChecklistPath)) {
-      archive.file(testChecklistPath, { name: 'test-checklist.md' });
-      console.log('تمت إضافة قائمة الفحص إلى الحزمة');
-    } else {
-      console.warn('تحذير: لم يتم العثور على ملف قائمة الفحص');
-    }
+    archive.pipe(output);
+
+    // Add test checklist from build directory
+    archive.file(testChecklistDest, { name: 'test-checklist.md' });
+    console.log('تمت إضافة قائمة الفحص إلى الحزمة');
 
     // Add configuration files
     archive.file('package.json', { name: 'package.json' });
@@ -61,7 +69,7 @@ const createInstaller = async () => {
     archive.directory('shared/', 'shared');
     console.log('تمت إضافة مجلدات الكود المصدري');
 
-    // Add desktop shortcut creator
+    // Add desktop shortcut creator script
     const desktopShortcutScript = `#!/bin/bash
 # Function to detect the desktop directory
 get_desktop_dir() {
@@ -217,7 +225,7 @@ echo "2. أو افتح terminal في هذا المجلد واكتب: npm run dev
     archive.file('generated-icon.png', { name: 'generated-icon.png' });
     console.log('تمت إضافة أيقونة التطبيق');
 
-    // Finalize the archive and wait for completion
+    // Finalize the archive
     await archive.finalize();
     console.log('تم إنشاء حزمة التثبيت بنجاح!');
 
