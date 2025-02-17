@@ -59,26 +59,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/backup/schedule', async (_req, res) => {
-    try {
-      const schedule = backupService.getSchedule();
-      res.json(schedule);
-    } catch (error) {
-      console.error('Error getting backup schedule:', error);
-      res.status(500).json({ error: 'فشل جلب إعدادات النسخ الاحتياطي' });
-    }
-  });
-
-  app.post('/api/backup/schedule', async (req, res) => {
-    try {
-      await backupService.updateSchedule(req.body);
-      res.json({ message: 'تم تحديث إعدادات النسخ الاحتياطي بنجاح' });
-    } catch (error) {
-      console.error('Error updating backup schedule:', error);
-      res.status(500).json({ error: 'فشل تحديث إعدادات النسخ الاحتياطي' });
-    }
-  });
-
   app.get("/api/appointments/today", async (_req, res) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);

@@ -43,8 +43,6 @@ import type { DatabaseConnection } from "@shared/schema";
 import { motion } from "framer-motion";
 import { Table, TableBody, TableCell, TableHeader, TableHead, TableRow } from "@/components/ui/table";
 import { Separator } from "@/components/ui/separator";
-import { format } from 'date-fns'
-import { ar } from 'date-fns/locale'
 
 
 const socialMediaAccountSchema = z.object({
@@ -182,12 +180,6 @@ export default function SettingsPage() {
       fontSize?: string;
       fontFamily?: string;
       currencySettings?: CurrencySettings;
-      backupSchedule?: {
-        enabled?: boolean;
-        frequency?: 'daily' | 'weekly' | 'monthly';
-        retentionDays?: number;
-        lastBackup?: string;
-      };
     }) => {
       // Update store settings
       if (data.storeName !== undefined || data.storeLogo !== undefined) {
@@ -212,9 +204,6 @@ export default function SettingsPage() {
       }
       if (data.currencySettings) {
         setStoreSettings({ ...storeSettings, currencySettings: data.currencySettings });
-      }
-      if (data.backupSchedule) {
-          setStoreSettings({...storeSettings, backupSchedule: data.backupSchedule})
       }
     },
     onSuccess: () => {
@@ -998,91 +987,6 @@ export default function SettingsPage() {
                 </div>
               </CardHeader>
               <CardContent className="space-y-6">
-                {/* جدولة النسخ الاحتياطي */}
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <h3 className="text-lg font-semibold">النسخ الاحتياطي التلقائي</h3>
-                      <p className="text-sm text-muted-foreground">
-                        جدولة عمليات النسخ الاحتياطي التلقائي
-                      </p>
-                    </div>
-                    <Switch
-                      checked={storeSettings?.backupSchedule?.enabled || false}
-                      onCheckedChange={(enabled) => {
-                        storeSettingsMutation.mutate({
-                          backupSchedule: {
-                            ...storeSettings?.backupSchedule,
-                            enabled,
-                          },
-                        });
-                      }}
-                    />
-                  </div>
-
-                  {storeSettings?.backupSchedule?.enabled && (
-                    <div className="grid gap-4">
-                      <div className="grid gap-2">
-                        <Label>تكرار النسخ الاحتياطي</Label>
-                        <Select
-                          value={storeSettings?.backupSchedule?.frequency || 'daily'}
-                          onValueChange={(frequency) => {
-                            storeSettingsMutation.mutate({
-                              backupSchedule: {
-                                ...storeSettings?.backupSchedule,
-                                frequency,
-                              },
-                            });
-                          }}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="اختر تكرار النسخ الاحتياطي" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="daily">يومياً</SelectItem>
-                            <SelectItem value="weekly">أسبوعياً</SelectItem>
-                            <SelectItem value="monthly">شهرياً</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div className="grid gap-2">
-                        <Label>مدة الاحتفاظ بالنسخ الاحتياطية (بالأيام)</Label>
-                        <div className="grid gap-4">
-                          <Slider
-                            value={[storeSettings?.backupSchedule?.retentionDays || 30]}
-                            onValueChange={([retentionDays]) => {
-                              storeSettingsMutation.mutate({
-                                backupSchedule: {
-                                  ...storeSettings?.backupSchedule,
-                                  retentionDays,
-                                },
-                              });
-                            }}
-                            max={90}
-                            min={7}
-                            step={1}
-                          />
-                          <div className="flex justify-between text-xs text-muted-foreground">
-                            <span>7 أيام</span>
-                            <span>30 يوم</span>
-                            <span>90 يوم</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {storeSettings?.backupSchedule?.lastBackup && (
-                        <p className="text-sm text-muted-foreground">
-                          آخر نسخة احتياطية: {format(new Date(storeSettings.backupSchedule.lastBackup), 'dd MMMM yyyy HH:mm', { locale: ar })}
-                        </p>
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                <Separator className="my-6" />
-
-                {/* النسخ الاحتياطي اليدوي */}
                 <div className="space-y-4">
                   <div className="flex justify-between items-center">
                     <div>
