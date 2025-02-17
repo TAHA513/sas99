@@ -39,19 +39,7 @@ export default function DatabaseSettingsPage() {
         <div className="flex justify-between items-center mb-6">
           <div>
             <h1 className="text-3xl font-bold mb-2">إدارة قواعد البيانات</h1>
-            <p className="text-muted-foreground">
-              إدارة اتصالات قواعد البيانات في النظام. للتشغيل المحلي، يمكنك استخدام PostgreSQL أو SQLite.
-            </p>
-            {/* إرشادات التثبيت المحلي */}
-            <div className="mt-4 p-4 bg-muted rounded-lg">
-              <h2 className="text-lg font-semibold mb-2">إرشادات التثبيت المحلي</h2>
-              <ul className="list-disc list-inside space-y-2">
-                <li>قم بتثبيت PostgreSQL على جهازك</li>
-                <li>أنشئ قاعدة بيانات جديدة</li>
-                <li>استخدم معلومات الاتصال المحلية (localhost)</li>
-                <li>تأكد من تشغيل خدمة PostgreSQL قبل الاتصال</li>
-              </ul>
-            </div>
+            <p className="text-muted-foreground">إدارة اتصالات قواعد البيانات في النظام</p>
           </div>
           <Dialog>
             <DialogTrigger asChild>
