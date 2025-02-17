@@ -7,7 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { MessageSquare, Upload, Plus, Building2, Settings as SettingsIcon, Paintbrush, Database, Download } from "lucide-react";
+import { MessageSquare, Upload, Plus, Building2, Settings as SettingsIcon, Paintbrush, Database, Download, Lock } from "lucide-react";
 import { SiGooglecalendar } from "react-icons/si";
 import { SiFacebook, SiInstagram, SiSnapchat } from "react-icons/si";
 import { Label } from "@/components/ui/label";
@@ -119,16 +119,28 @@ async function generateBackup() {
     document.body.removeChild(a);
     window.URL.revokeObjectURL(url);
 
-    return true;
   } catch (error) {
     console.error('Error generating backup:', error);
-    return false;
   }
 }
+
+const adminPasswordSchema = z.object({
+  currentPassword: z.string().min(1, "كلمة المرور الحالية مطلوبة"),
+  newPassword: z.string().min(6, "كلمة المرور الجديدة يجب أن تكون 6 أحرف على الأقل"),
+  confirmPassword: z.string()
+}).refine((data) => data.newPassword === data.confirmPassword, {
+  message: "كلمتا المرور غير متطابقتين",
+  path: ["confirmPassword"],
+});
 
 export default function SettingsPage() {
   const { toast } = useToast();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [showAuthDialog, setShowAuthDialog] = useState(false);
+  const [showChangePasswordDialog, setShowChangePasswordDialog] = useState(false);
+  const [authPassword, setAuthPassword] = useState("");
+  const [selectedTab, setSelectedTab] = useState("store");
   const queryClient = useQueryClient();
 
   // Load theme settings on mount
@@ -170,6 +182,16 @@ export default function SettingsPage() {
       usdToIqdRate: 1460, // Default exchange rate
     }
   });
+
+  const passwordForm = useForm<z.infer<typeof adminPasswordSchema>>({
+    resolver: zodResolver(adminPasswordSchema),
+    defaultValues: {
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: "",
+    },
+  });
+
 
   // Mutations
   const storeSettingsMutation = useMutation({
@@ -297,6 +319,77 @@ export default function SettingsPage() {
     }
   });
 
+  const verifyAdminPassword = async (password: string) => {
+    try {
+      const response = await fetch('/api/settings/verify-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password }),
+      });
+
+      if (response.ok) {
+        setIsAuthenticated(true);
+        setShowAuthDialog(false);
+        setAuthPassword("");
+      } else {
+        toast({
+          title: "خطأ",
+          description: "كلمة المرور غير صحيحة",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "خطأ",
+        description: "حدث خطأ أثناء التحقق من كلمة المرور",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleTabChange = (value: string) => {
+    if (value !== "staff" && !isAuthenticated) {
+      setShowAuthDialog(true);
+      setSelectedTab("staff");
+      return;
+    }
+    setSelectedTab(value);
+  };
+
+  const onChangePassword = async (data: z.infer<typeof adminPasswordSchema>) => {
+    try {
+      const response = await fetch('/api/settings/change-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          currentPassword: data.currentPassword,
+          newPassword: data.newPassword,
+        }),
+      });
+
+      if (response.ok) {
+        toast({
+          title: "تم بنجاح",
+          description: "تم تغيير كلمة المرور",
+        });
+        setShowChangePasswordDialog(false);
+        passwordForm.reset();
+      } else {
+        toast({
+          title: "خطأ",
+          description: "كلمة المرور الحالية غير صحيحة",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "خطأ",
+        description: "حدث خطأ أثناء تغيير كلمة المرور",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <DashboardLayout>
       <div className="space-y-8">
@@ -305,153 +398,96 @@ export default function SettingsPage() {
             <h1 className="text-3xl font-bold">إعدادات النظام</h1>
             <p className="text-muted-foreground mt-2">إدارة إعدادات المتجر والتكاملات</p>
           </div>
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="h-4 w-4 ml-2" />
-                إضافة حساب جديد
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[500px]">
-              <DialogHeader>
-                <DialogTitle>ربط حسابات التواصل الاجتماعي</DialogTitle>
-                <DialogDescription>
-                  اختر إحدى المنصات التالية للربط مع حسابك
-                </DialogDescription>
-              </DialogHeader>
-
-              <div className="grid gap-4 py-4">
-                <Button
-                  variant="outline"
-                  className="w-full flex items-center justify-start gap-3 h-14"
-                  onClick={() => {
-                    // سيتم إضافة منطق تسجيل الدخول لفيسبوك
-                    toast({
-                      title: "قريباً",
-                      description: "سيتم إضافة خيار تسجيل الدخول بفيسبوك قريباً",
-                    });
-                  }}
-                >
-                  <SiFacebook className="h-6 w-6 text-blue-600" />
-                  <div className="flex flex-col items-start">
-                    <span className="font-semibold">تسجيل الدخول بفيسبوك</span>
-                    <span className="text-sm text-muted-foreground">ربط حساب فيسبوك الخاص بك</span>
-                  </div>
-                </Button>
-
-                <Button
-                  variant="outline"
-                  className="w-full flex items-center justify-start gap-3 h-14"
-                  onClick={() => {
-                    // سيتم إضافة منطق تسجيل الدخول لانستغرام
-                    toast({
-                      title: "قريباً",
-                      description: "سيتم إضافة خيار تسجيل الدخول بانستغرام قريباً",
-                    });
-                  }}
-                >
-                  <SiInstagram className="h-6 w-6 text-pink-600" />
-                  <div className="flex flex-col items-start">
-                    <span className="font-semibold">تسجيل الدخول بانستغرام</span>
-                    <span className="text-sm text-muted-foreground">ربط حساب انستغرام الخاص بك</span>
-                  </div>
-                </Button>
-
-                <Button
-                  variant="outline"
-                  className="w-full flex items-center justify-start gap-3 h-14"
-                  onClick={() => {
-                    // سيتم إضافة منطق تسجيل الدخول لسناب شات
-                    toast({
-                      title: "قريباً",
-                      description: "سيتم إضافة خيار تسجيل الدخول بسناب شات قريباً",
-                    });
-                  }}
-                >
-                  <SiSnapchat className="h-6 w-6 text-yellow-500" />
-                  <div className="flex flex-col items-start">
-                    <span className="font-semibold">تسجيل الدخول بسناب شات</span>
-                    <span className="text-sm text-muted-foreground">ربط حساب سناب شات الخاص بك</span>
-                  </div>
-                </Button>
-              </div>
-
-              <div className="mt-4 text-center">
-                <p className="text-sm text-muted-foreground">
-                  أو يمكنك إدخال بيانات الحساب يدوياً
-                </p>
-              </div>
-
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 mt-4">
-                  <FormField
-                    control={form.control}
-                    name="platform"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>المنصة</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="اختر المنصة" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="facebook">فيسبوك</SelectItem>
-                            <SelectItem value="instagram">انستغرام</SelectItem>
-                            <SelectItem value="snapchat">سناب شات</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="username"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>اسم المستخدم / رقم الهاتف</FormLabel>
-                        <FormControl>
-                          <Input {...field} placeholder="أدخل اسم المستخدم أو رقم الهاتف" />
-                        </FormControl>
-                        <FormDescription>
-                          يمكنك إدخال اسم المستخدم أو رقم الهاتف الخاص بالحساب
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="password"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>كلمة المرور</FormLabel>
-                        <FormControl>
-                          <Input type="password" {...field} placeholder="أدخل كلمة المرور" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <Button
-                    type="submit"
-                    disabled={accountMutation.isLoading || !form.formState.isValid}
-                    className="w-full"
-                  >
-                    {accountMutation.isLoading ? "جاري الحفظ..." : "حفظ الحساب"}
-                  </Button>
-                </form>
-              </Form>
-            </DialogContent>
-          </Dialog>
+          {isAuthenticated && (
+            <Button variant="outline" onClick={() => setShowChangePasswordDialog(true)}>
+              <Lock className="h-4 w-4 ml-2" />
+              تغيير كلمة المرور
+            </Button>
+          )}
         </div>
 
-        <Tabs defaultValue="store" className="space-y-6">
+        {/* Authentication Dialog */}
+        <Dialog open={showAuthDialog} onOpenChange={setShowAuthDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>التحقق من كلمة المرور</DialogTitle>
+              <DialogDescription>
+                يرجى إدخال كلمة المرور للوصول إلى إعدادات النظام
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Input
+                  type="password"
+                  placeholder="كلمة المرور"
+                  value={authPassword}
+                  onChange={(e) => setAuthPassword(e.target.value)}
+                />
+              </div>
+              <Button
+                className="w-full"
+                onClick={() => verifyAdminPassword(authPassword)}
+              >
+                تأكيد
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Change Password Dialog */}
+        <Dialog open={showChangePasswordDialog} onOpenChange={setShowChangePasswordDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>تغيير كلمة المرور</DialogTitle>
+              <DialogDescription>
+                قم بإدخال كلمة المرور الحالية وكلمة المرور الجديدة
+              </DialogDescription>
+            </DialogHeader>
+            <form onSubmit={passwordForm.handleSubmit(onChangePassword)} className="space-y-4">
+              <div className="space-y-2">
+                <Input
+                  type="password"
+                  placeholder="كلمة المرور الحالية"
+                  {...passwordForm.register("currentPassword")}
+                />
+                {passwordForm.formState.errors.currentPassword && (
+                  <p className="text-sm text-red-500">
+                    {passwordForm.formState.errors.currentPassword.message}
+                  </p>
+                )}
+              </div>
+              <div className="space-y-2">
+                <Input
+                  type="password"
+                  placeholder="كلمة المرور الجديدة"
+                  {...passwordForm.register("newPassword")}
+                />
+                {passwordForm.formState.errors.newPassword && (
+                  <p className="text-sm text-red-500">
+                    {passwordForm.formState.errors.newPassword.message}
+                  </p>
+                )}
+              </div>
+              <div className="space-y-2">
+                <Input
+                  type="password"
+                  placeholder="تأكيد كلمة المرور الجديدة"
+                  {...passwordForm.register("confirmPassword")}
+                />
+                {passwordForm.formState.errors.confirmPassword && (
+                  <p className="text-sm text-red-500">
+                    {passwordForm.formState.errors.confirmPassword.message}
+                  </p>
+                )}
+              </div>
+              <Button type="submit" className="w-full">
+                تغيير كلمة المرور
+              </Button>
+            </form>
+          </DialogContent>
+        </Dialog>
+
+        <Tabs value={selectedTab} onValueChange={handleTabChange} className="space-y-6">
           <TabsList className="grid w-full grid-cols-2 lg:grid-cols-5 gap-4">
             <TabsTrigger value="store" className="space-x-2">
               <Building2 className="h-4 w-4" />
@@ -780,6 +816,7 @@ export default function SettingsPage() {
               </CardContent>
             </CustomCard>
           </TabsContent>
+
           <TabsContent value="appearance" className="space-y-6">
             <CustomCard>
               <CardHeader>
@@ -847,14 +884,11 @@ export default function SettingsPage() {
                     </SelectContent>
                   </Select>
                 </div>
-
-                <div className="space-y-4">
-                  <Label>نوع الخط</Label>
+                <div className="space-y-2">
+                  <Label>الخط</Label>
                   <Select
                     defaultValue={localStorage.getItem('theme-font-family') || 'tajawal'}
-                    onValueChange={(value) => {
-                      storeSettingsMutation.mutate({ fontFamily: value });
-                    }}
+                    onValueChange={(value) => storeSettingsMutation.mutate({ fontFamily: value })}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="اختر نوع الخط" />
@@ -862,6 +896,7 @@ export default function SettingsPage() {
                     <SelectContent>
                       <SelectItem value="tajawal">Tajawal</SelectItem>
                       <SelectItem value="cairo">Cairo</SelectItem>
+                      <SelectItem value="noto">Noto Kufi Arabic</SelectItem>
                       <SelectItem value="noto-sans-arabic">Noto Sans Arabic</SelectItem>
                       <SelectItem value="dubai">Dubai</SelectItem>
                       <SelectItem value="ibm-plex-sans-arabic">IBM Plex Sans Arabic</SelectItem>
@@ -876,21 +911,22 @@ export default function SettingsPage() {
               </CardContent>
             </CustomCard>
           </TabsContent>
+
           <TabsContent value="database" className="space-y-6">
             <CustomCard>
               <CardHeader>
                 <div className="flex items-center space-x-4">
                   <Database className="h-8 w-8 text-primary" />
                   <div>
-                    <CardTitle>إدارة قواعد البيانات</CardTitle>
+                    <CardTitle>الاتصالات بقواعد البيانات</CardTitle>
                     <CardDescription>
-                      إدارة اتصالات قواعد البيانات في النظام
+                      إدارة الاتصالات بقواعد البيانات المختلفة
                     </CardDescription>
                   </div>
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="space-y-6">
+                <div className="space-y-4">
                   <Dialog>
                     <DialogTrigger asChild>
                       <Button>
@@ -909,12 +945,7 @@ export default function SettingsPage() {
                     </DialogContent>
                   </Dialog>
 
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5 }}
-                    className="border rounded-lg"
-                  >
+                  <div className="border rounded-lg">
                     <Table>
                       <TableHeader>
                         <TableRow>
@@ -923,29 +954,20 @@ export default function SettingsPage() {
                           <TableHead>المضيف</TableHead>
                           <TableHead>قاعدة البيانات</TableHead>
                           <TableHead>الحالة</TableHead>
-                          <TableHead>تاريخ الإنشاء</TableHead>
                           <TableHead>الإجراءات</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {connections?.map((connection) => (
+                        {connections?.map((connection: DatabaseConnection) => (
                           <TableRow key={connection.id}>
-                            <TableCell className="font-medium">{connection.name}</TableCell>
-                            <TableCell>
-                              <div className="flex items-center">
-                                <Database className="h-4 w-4 ml-2" />
-                                {connection.type}
-                              </div>
-                            </TableCell>
-                            <TableCell>{connection.host || '-'}</TableCell>
-                            <TableCell>{connection.database || '-'}</TableCell>
+                            <TableCell>{connection.name}</TableCell>
+                            <TableCell>{connection.type}</TableCell>
+                            <TableCell>{connection.host}</TableCell>
+                            <TableCell>{connection.database}</TableCell>
                             <TableCell>
                               <Badge variant={connection.isActive ? "default" : "secondary"}>
                                 {connection.isActive ? 'نشط' : 'غير نشط'}
                               </Badge>
-                            </TableCell>
-                            <TableCell>
-                              {new Date(connection.createdAt).toLocaleDateString('ar-IQ')}
                             </TableCell>
                             <TableCell>
                               <div className="flex items-center gap-2">
@@ -961,18 +983,19 @@ export default function SettingsPage() {
                         ))}
                         {!connections?.length && (
                           <TableRow>
-                            <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                            <TableCell colSpan={6} className="text-center py-4">
                               لا توجد اتصالات حالياً
                             </TableCell>
                           </TableRow>
                         )}
                       </TableBody>
                     </Table>
-                  </motion.div>
+                  </div>
                 </div>
               </CardContent>
             </CustomCard>
           </TabsContent>
+
           <TabsContent value="backup" className="space-y-6">
             <CardComponent>
               <CardHeader>
@@ -981,106 +1004,35 @@ export default function SettingsPage() {
                   <div>
                     <CardTitle>النسخ الاحتياطي</CardTitle>
                     <CardDescription>
-                      إنشاء واستعادة نسخ احتياطية للنظام
+                      إدارة النسخ الاحتياطي واستعادة البيانات
                     </CardDescription>
                   </div>
                 </div>
               </CardHeader>
-              <CardContent className="space-y-6">
+              <CardContent>
                 <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <h3 className="text-lg font-semibold mb-1">إنشاء نسخة احتياطية</h3>
-                      <p className="text-sm text-muted-foreground">
-                        تصدير نسخة احتياطية كاملة من النظام تتضمن:
-                      </p>
-                      <ul className="mt-2 space-y-1 text-sm text-muted-foreground list-disc list-inside">
-                        <li>قاعدة البيانات</li>
-                        <li>إعدادات النظام</li>
-                        <li>الملفات والصور</li>
-                        <li>التكاملات والإعدادات</li>
-                      </ul>
-                    </div>
+                  <div className="flex flex-col gap-4">
                     <Button
-                      onClick={async () => {
-                        const success = await generateBackup();
-                        if (success) {
-                          toast({
-                            title: "تم بنجاح",
-                            description: "تم إنشاء النسخة الاحتياطية وتحميلها",
-                          });
-                        } else {
-                          toast({
-                            title: "حدث خطأ",
-                            description: "فشل إنشاء النسخة الاحتياطية",
-                            variant: "destructive",
-                          });
-                        }
-                      }}
-                      className="min-w-[150px]"
-                    >
-                      <Download className="h-4 w-4 ml-2" />
-                      تصدير نسخة احتياطية
-                    </Button>
-                  </div>
-
-                  <Separator className="my-6" />
-
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-semibold">استعادة نسخة احتياطية</h3>
-                    <div className="flex flex-col items-center gap-4 p-8 border-2 border-dashed rounded-lg">
-                      <Upload className="h-12 w-12 text-muted-foreground" />
-                      <p className="text-sm text-center text-muted-foreground">
-                        اسحب وأفلت ملف النسخة الاحتياطية هنا أو اضغط لاختيار الملف
-                      </p>
-                      <Input
-                        type="file"
-                        accept=".zip"
-                        className="hidden"
-                        id="backup-upload"
-                        onChange={async (e) => {
-                          const file = e.target.files?.[0];
-                          if (!file) return;
-
-                          const formData = new FormData();
-                          formData.append('backup', file);
-
-                          try {
-                            const response = await fetch('/api/backup/restore', {
-                              method: 'POST',
-                              body: formData,
-                            });
-
-                            if (!response.ok) throw new Error('فشل استعادة النسخة الاحتياطية');
-
+                      onClick={() => {
+                        generateBackup().then((success) => {
+                          if (success) {
                             toast({
                               title: "تم بنجاح",
-                              description: "تم استعادة النسخة الاحتياطية",
+                              description: "تم إنشاء وتحميل النسخة الاحتياطية",
                             });
-                          } catch (error) {
-                            console.error('Error restoring backup:', error);
+                          } else {
                             toast({
-                              title: "حدث خطأ",
-                              description: "فشل استعادة النسخة الاحتياطية",
+                              title: "خطأ",
+                              description: "حدث خطأ أثناء إنشاء النسخة الاحتياطية",
                               variant: "destructive",
                             });
                           }
-                        }}
-                      />
-                      <Button
-                        variant="outline"
-                        onClick={() => {
-                          const input = document.getElementById('backup-upload') as HTMLInputElement;
-                          if (input) input.click();
-                        }}
-                      >
-                        <Upload className="h-4 w-4 ml-2" />
-                        اختيار ملف
-                      </Button>
-                    </div>
-                    <p className="text-sm text-muted-foreground mt-2">
-                      * سيتم إيقاف النظام مؤقتاً أثناء عملية الاستعادة
-                    </p>
+                        });
+                      }}
+                    >
+                      <Download className="h-4 w-4 ml-2" />
+                      إنشاء نسخة احتياطية
+                    </Button>
                   </div>
                 </div>
               </CardContent>

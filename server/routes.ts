@@ -4,8 +4,13 @@ import { storage } from "./storage";
 import express from 'express';
 import multer from 'multer';
 import { backupService } from './services/backup-service';
+import crypto from 'crypto';
 
 const upload = multer({ dest: 'uploads/' });
+
+// كلمة المرور الافتراضية للنظام (يمكن تغييرها لاحقاً)
+const DEFAULT_ADMIN_PASSWORD = "admin123456";
+let adminPasswordHash = crypto.createHash('sha256').update(DEFAULT_ADMIN_PASSWORD).digest('hex');
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Staff Dashboard APIs
@@ -134,6 +139,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
       lowStockCount,
       salesCount: todaySales.length
     });
+  });
+
+  // إعدادات النظام - التحقق من كلمة المرور
+  app.post("/api/settings/verify-password", (req, res) => {
+    const { password } = req.body;
+    const hashedPassword = crypto.createHash('sha256').update(password).digest('hex');
+
+    if (hashedPassword === adminPasswordHash) {
+      res.json({ success: true });
+    } else {
+      res.status(401).json({ error: 'كلمة المرور غير صحيحة' });
+    }
+  });
+
+  // تغيير كلمة المرور
+  app.post("/api/settings/change-password", (req, res) => {
+    const { currentPassword, newPassword } = req.body;
+    const currentHashedPassword = crypto.createHash('sha256').update(currentPassword).digest('hex');
+
+    if (currentHashedPassword !== adminPasswordHash) {
+      return res.status(401).json({ error: 'كلمة المرور الحالية غير صحيحة' });
+    }
+
+    // تحديث كلمة المرور
+    adminPasswordHash = crypto.createHash('sha256').update(newPassword).digest('hex');
+    res.json({ success: true });
   });
 
   const httpServer = createServer(app);
