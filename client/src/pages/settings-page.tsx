@@ -863,10 +863,9 @@ export default function SettingsPage() {
                         </div>
                         <div>
                           <Badge variant={account.status === 'active' ? 'default' : 'secondary'}>
-                              {account.status === 'active' ? "نشط" : "غير نشط"}
-                            </Badge>
-                          </div>
+                            {account.status === 'active' ? "نشط" : "غير نشط"}                          </Badge>
                         </div>
+                      </div>
                     ))}
                   </div>
                 </div>
@@ -1312,8 +1311,11 @@ export default function SettingsPage() {
                                 <FormItem>
                                   <FormLabel>كلمة المرور الحالية</FormLabel>
                                   <FormControl>
-                                    <Input type="password" {...field} />
+                                    <Input type="password" {...field} placeholder="أدخل كلمة المرور الحالية" />
                                   </FormControl>
+                                  <FormDescription>
+                                    يرجى إدخال كلمة المرور التي تستخدمها حالياً للتحقق من هويتك
+                                  </FormDescription>
                                   <FormMessage />
                                 </FormItem>
                               )}
@@ -1325,12 +1327,16 @@ export default function SettingsPage() {
                                 <FormItem>
                                   <FormLabel>كلمة المرور الجديدة</FormLabel>
                                   <FormControl>
-                                    <Input type="password" {...field} />
+                                    <Input type="password" {...field} placeholder="أدخل كلمة المرور الجديدة" />
                                   </FormControl>
+                                  <FormDescription>
+                                    يجب أن تحتوي على 6 أحرف على الأقل
+                                  </FormDescription>
                                   <FormMessage />
                                 </FormItem>
                               )}
                             />
+
                             <FormField
                               control={changePasswordForm.control}
                               name="confirmPassword"
@@ -1338,8 +1344,11 @@ export default function SettingsPage() {
                                 <FormItem>
                                   <FormLabel>تأكيد كلمة المرور الجديدة</FormLabel>
                                   <FormControl>
-                                    <Input type="password" {...field} />
+                                    <Input type="password" {...field} placeholder="أعد إدخال كلمة المرور الجديدة" />
                                   </FormControl>
+                                  <FormDescription>
+                                    يجب أن تتطابق مع كلمة المرور الجديدة
+                                  </FormDescription>
                                   <FormMessage />
                                 </FormItem>
                               )}
