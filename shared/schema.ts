@@ -217,37 +217,6 @@ export const installmentPayments = pgTable("installment_payments", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
-export const securityActivities = pgTable("security_activities", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull(),
-  action: text("action").notNull(),
-  timestamp: timestamp("timestamp").notNull().defaultNow(),
-  ipAddress: text("ip_address"),
-  userAgent: text("user_agent"),
-  details: text("details"),
-});
-
-export const twoFactorAuth = pgTable("two_factor_auth", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().unique(),
-  secret: text("secret").notNull(),
-  enabled: boolean("enabled").notNull().default(false),
-  backupCodes: text("backup_codes").array(),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-  updatedAt: timestamp("updated_at").notNull().defaultNow(),
-});
-
-export const userSessions = pgTable("user_sessions", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull(),
-  token: text("token").notNull(),
-  ipAddress: text("ip_address"),
-  userAgent: text("user_agent"),
-  lastActive: timestamp("last_active").notNull(),
-  expiresAt: timestamp("expires_at").notNull(),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-});
-
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
@@ -352,16 +321,6 @@ export const insertInstallmentPaymentSchema = createInsertSchema(installmentPaym
   paymentNumber: z.number().min(1),
 });
 
-export const insertSecurityActivitySchema = createInsertSchema(securityActivities).extend({
-  action: z.enum(['login', 'logout', 'password_change', 'enable_2fa', 'disable_2fa', 'revoke_all_sessions']),
-});
-
-export const insertTwoFactorAuthSchema = createInsertSchema(twoFactorAuth).extend({
-  backupCodes: z.array(z.string()).optional(),
-});
-
-export const insertUserSessionSchema = createInsertSchema(userSessions);
-
 export const insertCampaignNotificationSchema = createInsertSchema(campaignNotifications).extend({
   type: z.enum(['end_date', 'budget_limit', 'engagement_goal']),
   status: z.enum(['pending', 'sent', 'read']).default('pending'),
@@ -404,12 +363,6 @@ export type InstallmentPlan = typeof installmentPlans.$inferSelect;
 export type InsertInstallmentPlan = z.infer<typeof insertInstallmentPlanSchema>;
 export type InstallmentPayment = typeof installmentPayments.$inferSelect;
 export type InsertInstallmentPayment = z.infer<typeof insertInstallmentPaymentSchema>;
-export type SecurityActivity = typeof securityActivities.$inferSelect;
-export type InsertSecurityActivity = z.infer<typeof insertSecurityActivitySchema>;
-export type TwoFactorAuth = typeof twoFactorAuth.$inferSelect;
-export type InsertTwoFactorAuth = z.infer<typeof insertTwoFactorAuthSchema>;
-export type UserSession = typeof userSessions.$inferSelect;
-export type InsertUserSession = z.infer<typeof insertUserSessionSchema>;
 export type CampaignNotification = typeof campaignNotifications.$inferSelect;
 export type InsertCampaignNotification = z.infer<typeof insertCampaignNotificationSchema>;
 export type ScheduledPost = typeof scheduledPosts.$inferSelect;

@@ -22,7 +22,6 @@ import SettingsPage from "@/pages/settings-page";
 import InventoryReportsPage from "@/pages/inventory-reports-page";
 import { useEffect } from "react";
 import { loadThemeSettings } from "@/lib/theme";
-import { AuthProvider } from "@/lib/auth";
 
 // Create a client
 const queryClient = new QueryClient({
@@ -69,10 +68,8 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <Router />
-        <Toaster />
-      </AuthProvider>
+      <Router />
+      <Toaster />
     </QueryClientProvider>
   );
 }
