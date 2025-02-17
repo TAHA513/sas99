@@ -30,15 +30,20 @@ export function setupAuth(app: Express) {
   });
 
   app.post("/api/login", async (req, res) => {
-    // إنشاء مستخدم جديد تلقائياً
-    const user = await storage.createUser({
-      role: "staff"
-    });
+    try {
+      // إنشاء مستخدم جديد تلقائياً
+      const user = await storage.createUser({
+        role: "staff"
+      });
 
-    req.login(user, (err) => {
-      if (err) return res.status(500).json({ error: err.message });
-      res.status(200).json(user);
-    });
+      req.login(user, (err) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.status(200).json(user);
+      });
+    } catch (error) {
+      console.error("Login error:", error);
+      res.status(500).json({ error: "فشل تسجيل الدخول" });
+    }
   });
 
   app.post("/api/logout", (req, res, next) => {
