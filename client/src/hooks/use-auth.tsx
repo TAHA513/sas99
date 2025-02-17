@@ -4,7 +4,7 @@ import {
   useMutation,
   UseMutationResult,
 } from "@tanstack/react-query";
-import { insertUserSchema, User as SelectUser, InsertUser } from "@shared/schema";
+import { User as SelectUser } from "@shared/schema";
 import { getQueryFn, apiRequest, queryClient } from "../lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
@@ -12,7 +12,7 @@ type AuthContextType = {
   user: SelectUser | null;
   isLoading: boolean;
   error: Error | null;
-  loginMutation: UseMutationResult<SelectUser, Error, { username: string }>;
+  loginMutation: UseMutationResult<SelectUser, Error, {}>;
   logoutMutation: UseMutationResult<void, Error, void>;
 };
 
@@ -29,21 +29,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   });
 
   const loginMutation = useMutation({
-    mutationFn: async (credentials: { username: string }) => {
-      const res = await apiRequest("POST", "/api/login", credentials);
+    mutationFn: async () => {
+      const res = await apiRequest("POST", "/api/login", {});
       return await res.json();
     },
     onSuccess: (user: SelectUser) => {
       queryClient.setQueryData(["/api/user"], user);
       toast({
-        title: "تم تسجيل الدخول بنجاح",
-        description: `مرحباً ${user.name ?? user.username}`,
+        title: "تم الدخول بنجاح",
+        description: "مرحباً بك في النظام",
       });
     },
     onError: (error: Error) => {
       toast({
-        title: "فشل تسجيل الدخول",
-        description: "اسم المستخدم غير صحيح",
+        title: "فشل الدخول للنظام",
+        description: "حدث خطأ أثناء الدخول",
         variant: "destructive",
       });
     },

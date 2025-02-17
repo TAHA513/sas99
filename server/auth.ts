@@ -24,28 +24,22 @@ export function setupAuth(app: Express) {
   app.use(passport.initialize());
   app.use(passport.session());
 
-  passport.use(
-    // تبسيط استراتيجية المصادقة للتحقق من اسم المستخدم فقط
-    new LocalStrategy(
-      { passwordField: 'none' }, // تجاهل حقل كلمة المرور
-      async (username, password, done) => {
-        const user = await storage.getUserByUsername(username);
-        if (!user) {
-          return done(null, false);
-        }
-        return done(null, user);
-      }
-    )
-  );
-
   passport.serializeUser((user, done) => done(null, user.id));
   passport.deserializeUser(async (id: number, done) => {
     const user = await storage.getUser(id);
     done(null, user);
   });
 
-  app.post("/api/login", passport.authenticate("local"), (req, res) => {
-    res.status(200).json(req.user);
+  app.post("/api/login", async (req, res) => {
+    // إنشاء مستخدم جديد تلقائياً
+    const user = await storage.createUser({
+      role: "staff"
+    });
+
+    req.login(user, (err) => {
+      if (err) return res.status(500).json({ error: err.message });
+      res.status(200).json(user);
+    });
   });
 
   app.post("/api/logout", (req, res, next) => {

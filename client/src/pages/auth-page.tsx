@@ -1,25 +1,18 @@
 import { useAuth } from "@/hooks/use-auth";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { insertUserSchema } from "@shared/schema";
-import { useForm } from "react-hook-form";
 import { useLocation } from "wouter";
+import { useEffect } from "react";
 
 export default function AuthPage() {
   const { loginMutation, user } = useAuth();
   const [, setLocation] = useLocation();
 
-  if (user) {
-    setLocation("/");
-    return null;
-  }
-
-  const loginForm = useForm({
-    resolver: zodResolver(insertUserSchema.pick({ username: true })),
-  });
+  useEffect(() => {
+    if (user) {
+      setLocation("/");
+    }
+  }, [user, setLocation]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
@@ -29,25 +22,13 @@ export default function AuthPage() {
             نظام إدارة الأعمال
           </CardHeader>
           <CardContent>
-            <Form {...loginForm}>
-              <form onSubmit={loginForm.handleSubmit((data) => loginMutation.mutate(data))} className="space-y-4">
-                <FormField
-                  control={loginForm.control}
-                  name="username"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>اسم المستخدم</FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-                <Button type="submit" className="w-full" disabled={loginMutation.isPending}>
-                  {loginMutation.isPending ? "جاري التحميل..." : "تسجيل الدخول"}
-                </Button>
-              </form>
-            </Form>
+            <Button 
+              onClick={() => loginMutation.mutate({})} 
+              className="w-full"
+              disabled={loginMutation.isPending}
+            >
+              {loginMutation.isPending ? "جاري الدخول..." : "دخول للنظام"}
+            </Button>
           </CardContent>
         </Card>
 
