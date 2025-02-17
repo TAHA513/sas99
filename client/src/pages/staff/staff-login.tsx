@@ -1,11 +1,13 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useLocation } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { useAuth } from "@/hooks/use-auth";
+import { Loader2 } from "lucide-react";
 
 const staffLoginSchema = z.object({
   username: z.string().min(1, "اسم المستخدم مطلوب"),
@@ -16,14 +18,20 @@ type StaffLoginData = z.infer<typeof staffLoginSchema>;
 
 export default function StaffLoginPage() {
   const [, setLocation] = useLocation();
+  const { loginMutation } = useAuth();
 
   const form = useForm<StaffLoginData>({
     resolver: zodResolver(staffLoginSchema),
   });
 
-  const onSubmit = (data: StaffLoginData) => {
-    // مؤقتاً، سنقوم بالتوجيه مباشرة إلى لوحة التحكم
-    setLocation("/staff/dashboard");
+  const onSubmit = async (data: StaffLoginData) => {
+    try {
+      await loginMutation.mutateAsync(data);
+      setLocation("/staff/dashboard");
+    } catch (error) {
+      // Error handling is done in the loginMutation's onError callback
+      console.error("Login failed:", error);
+    }
   };
 
   return (
@@ -44,6 +52,7 @@ export default function StaffLoginPage() {
                     <FormControl>
                       <Input {...field} />
                     </FormControl>
+                    <FormMessage />
                   </FormItem>
                 )}
               />
@@ -56,11 +65,20 @@ export default function StaffLoginPage() {
                     <FormControl>
                       <Input type="password" {...field} />
                     </FormControl>
+                    <FormMessage />
                   </FormItem>
                 )}
               />
-              <Button type="submit" className="w-full">
-                تسجيل الدخول
+              <Button 
+                type="submit" 
+                className="w-full"
+                disabled={loginMutation.isPending}
+              >
+                {loginMutation.isPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  "تسجيل الدخول"
+                )}
               </Button>
             </form>
           </Form>
