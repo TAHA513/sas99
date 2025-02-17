@@ -12,9 +12,8 @@ export default function LoginPage() {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    const storedPassword = localStorage.getItem("admin_password") || "12345678";
-
-    if (username === "admin" && password === storedPassword) {
+    // بيانات تسجيل الدخول الثابتة
+    if (username === "admin" && password === "12345678") {
       localStorage.setItem("isAuthenticated", "true");
       setLocation("/");
       toast({
@@ -37,7 +36,7 @@ export default function LoginPage() {
           <h1 className="text-3xl font-bold">نظام الإدارة</h1>
           <h2 className="text-xl text-muted-foreground">SAS</h2>
         </div>
-
+        
         <form onSubmit={handleLogin} className="space-y-4">
           <div className="space-y-2">
             <label className="text-sm font-medium">اسم المستخدم</label>
@@ -49,7 +48,7 @@ export default function LoginPage() {
               required
             />
           </div>
-
+          
           <div className="space-y-2">
             <label className="text-sm font-medium">كلمة المرور</label>
             <Input
