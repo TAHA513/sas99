@@ -1,741 +1,642 @@
-import { Pool } from '@neondatabase/serverless';
-import { eq, and, sql } from 'drizzle-orm';
-import { db } from './db';
 import * as schema from '@shared/schema';
 import session from "express-session";
 import createMemoryStore from "memorystore";
-import connectPg from "connect-pg-simple";
 
-const PostgresSessionStore = connectPg(session);
-const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+const MemoryStore = createMemoryStore(session);
 
 export interface IStorage {
-  // User operations
+  sessionStore: session.Store;
   getUser(id: number): Promise<schema.User | undefined>;
   getUserByUsername(username: string): Promise<schema.User | undefined>;
   createUser(user: schema.InsertUser): Promise<schema.User>;
-
-  // Customer operations
   getCustomers(): Promise<schema.Customer[]>;
   getCustomer(id: number): Promise<schema.Customer | undefined>;
   createCustomer(customer: schema.InsertCustomer): Promise<schema.Customer>;
   updateCustomer(id: number, customer: Partial<schema.InsertCustomer>): Promise<schema.Customer>;
   deleteCustomer(id: number): Promise<void>;
-
-  // Appointment operations
   getAppointments(): Promise<schema.Appointment[]>;
   getAppointment(id: number): Promise<schema.Appointment | undefined>;
   createAppointment(appointment: schema.InsertAppointment): Promise<schema.Appointment>;
   updateAppointment(id: number, appointment: Partial<schema.InsertAppointment>): Promise<schema.Appointment>;
   deleteAppointment(id: number): Promise<void>;
-
-  // Staff operations
   getStaff(): Promise<schema.Staff[]>;
   getStaffMember(id: number): Promise<schema.Staff | undefined>;
   createStaff(staff: schema.InsertStaff): Promise<schema.Staff>;
   updateStaff(id: number, staff: Partial<schema.InsertStaff>): Promise<schema.Staff>;
   deleteStaff(id: number): Promise<void>;
-
-  // Settings operations
   getSetting(key: string): Promise<schema.Setting | undefined>;
   getSettings(): Promise<schema.Setting[]>;
   setSetting(key: string, value: string): Promise<schema.Setting>;
-
-  // Marketing Campaign operations
   getCampaigns(): Promise<schema.MarketingCampaign[]>;
   getCampaign(id: number): Promise<schema.MarketingCampaign | undefined>;
   createCampaign(campaign: schema.InsertMarketingCampaign): Promise<schema.MarketingCampaign>;
   updateCampaign(id: number, campaign: Partial<schema.InsertMarketingCampaign>): Promise<schema.MarketingCampaign>;
   deleteCampaign(id: number): Promise<void>;
-
-  // Promotion operations
   getPromotions(): Promise<schema.Promotion[]>;
   getPromotion(id: number): Promise<schema.Promotion | undefined>;
   createPromotion(promotion: schema.InsertPromotion): Promise<schema.Promotion>;
-  updatePromotion(id: number, promotion: Partial<schema.InsertPromotion>): Promise<schema.Promotion>;
+  updatePromotion(id: number, updates: Partial<schema.InsertPromotion>): Promise<schema.Promotion>;
   deletePromotion(id: number): Promise<void>;
-
-  // Discount Code operations
   getDiscountCodes(): Promise<schema.DiscountCode[]>;
   getDiscountCode(id: number): Promise<schema.DiscountCode | undefined>;
   getDiscountCodeByCode(code: string): Promise<schema.DiscountCode | undefined>;
   createDiscountCode(code: schema.InsertDiscountCode): Promise<schema.DiscountCode>;
-  updateDiscountCode(id: number, code: Partial<schema.InsertDiscountCode>): Promise<schema.DiscountCode>;
+  updateDiscountCode(id: number, updates: Partial<schema.InsertDiscountCode>): Promise<schema.DiscountCode>;
   deleteDiscountCode(id: number): Promise<void>;
-
-  // Social Media Account operations
   getSocialMediaAccounts(): Promise<schema.SocialMediaAccount[]>;
   getSocialMediaAccount(id: number): Promise<schema.SocialMediaAccount | undefined>;
   createSocialMediaAccount(account: schema.InsertSocialMediaAccount): Promise<schema.SocialMediaAccount>;
-  updateSocialMediaAccount(id: number, account: Partial<schema.InsertSocialMediaAccount>): Promise<schema.SocialMediaAccount>;
+  updateSocialMediaAccount(id: number, updates: Partial<schema.InsertSocialMediaAccount>): Promise<schema.SocialMediaAccount>;
   deleteSocialMediaAccount(id: number): Promise<void>;
-
-  // Product Group operations
   getProductGroups(): Promise<schema.ProductGroup[]>;
   getProductGroup(id: number): Promise<schema.ProductGroup | undefined>;
   createProductGroup(group: schema.InsertProductGroup): Promise<schema.ProductGroup>;
-  updateProductGroup(id: number, group: Partial<schema.InsertProductGroup>): Promise<schema.ProductGroup>;
+  updateProductGroup(id: number, updates: Partial<schema.InsertProductGroup>): Promise<schema.ProductGroup>;
   deleteProductGroup(id: number): Promise<void>;
-
-  // Product operations
   getProducts(): Promise<schema.Product[]>;
   getProduct(id: number): Promise<schema.Product | undefined>;
   getProductByBarcode(barcode: string): Promise<schema.Product | undefined>;
   createProduct(product: schema.InsertProduct): Promise<schema.Product>;
-  updateProduct(id: number, product: Partial<schema.InsertProduct>): Promise<schema.Product>;
+  updateProduct(id: number, updates: Partial<schema.InsertProduct>): Promise<schema.Product>;
   deleteProduct(id: number): Promise<void>;
-
-  // Invoice operations
   getInvoices(): Promise<schema.Invoice[]>;
   getInvoice(id: number): Promise<schema.Invoice | undefined>;
   createInvoice(invoice: schema.InsertInvoice): Promise<schema.Invoice>;
-
-  sessionStore: session.Store;
-  // Store Settings operations
   getStoreSettings(): Promise<schema.StoreSetting | undefined>;
   updateStoreSettings(settings: { storeName: string; storeLogo?: string }): Promise<schema.StoreSetting>;
-
-  // Supplier operations
   getSuppliers(): Promise<schema.Supplier[]>;
   getSupplier(id: number): Promise<schema.Supplier | undefined>;
   createSupplier(supplier: schema.InsertSupplier): Promise<schema.Supplier>;
   updateSupplier(id: number, supplier: Partial<schema.InsertSupplier>): Promise<schema.Supplier>;
   deleteSupplier(id: number): Promise<void>;
-
-  // Purchase operations
   getPurchaseOrders(): Promise<schema.PurchaseOrder[]>;
   getPurchaseOrder(id: number): Promise<schema.PurchaseOrder | undefined>;
   createPurchaseOrder(purchase: schema.InsertPurchaseOrder): Promise<schema.PurchaseOrder>;
-  updatePurchaseOrder(id: number, purchase: Partial<schema.InsertPurchaseOrder>): Promise<schema.PurchaseOrder>;
+  updatePurchaseOrder(id: number, updates: Partial<schema.InsertPurchaseOrder>): Promise<schema.PurchaseOrder>;
   deletePurchaseOrder(id: number): Promise<void>;
   getPurchaseItems(purchaseId: number): Promise<schema.PurchaseItem[]>;
-
-  // Expense Category operations
   getExpenseCategories(): Promise<schema.ExpenseCategory[]>;
   getExpenseCategory(id: number): Promise<schema.ExpenseCategory | undefined>;
   createExpenseCategory(category: schema.InsertExpenseCategory): Promise<schema.ExpenseCategory>;
   updateExpenseCategory(id: number, category: Partial<schema.InsertExpenseCategory>): Promise<schema.ExpenseCategory>;
   deleteExpenseCategory(id: number): Promise<void>;
-
-  // Expense operations
   getExpenses(): Promise<schema.Expense[]>;
   getExpense(id: number): Promise<schema.Expense | undefined>;
   createExpense(expense: schema.InsertExpense): Promise<schema.Expense>;
-  updateExpense(id: number, expense: Partial<schema.InsertExpense>): Promise<schema.Expense>;
+  updateExpense(id: number, updates: Partial<schema.InsertExpense>): Promise<schema.Expense>;
   deleteExpense(id: number): Promise<void>;
-
-  // Database connection operations
   getDatabaseConnections(): Promise<schema.DatabaseConnection[]>;
   getDatabaseConnection(id: number): Promise<schema.DatabaseConnection | undefined>;
   createDatabaseConnection(connection: schema.InsertDatabaseConnection): Promise<schema.DatabaseConnection>;
   updateDatabaseConnection(id: number, connection: Partial<schema.InsertDatabaseConnection>): Promise<schema.DatabaseConnection>;
   deleteDatabaseConnection(id: number): Promise<void>;
   testDatabaseConnection(connection: schema.InsertDatabaseConnection): Promise<boolean>;
-
-  // Campaign Notification operations
   getCampaignNotifications(campaignId: number): Promise<schema.CampaignNotification[]>;
   createCampaignNotification(notification: schema.InsertCampaignNotification): Promise<schema.CampaignNotification>;
   updateCampaignNotification(id: number, notification: Partial<schema.InsertCampaignNotification>): Promise<schema.CampaignNotification>;
   getPendingNotifications(): Promise<schema.CampaignNotification[]>;
-
-  // Scheduled Post operations
   getScheduledPosts(campaignId: number): Promise<schema.ScheduledPost[]>;
   createScheduledPost(post: schema.InsertScheduledPost): Promise<schema.ScheduledPost>;
   updateScheduledPost(id: number, post: Partial<schema.InsertScheduledPost>): Promise<schema.ScheduledPost>;
   getPendingScheduledPosts(): Promise<schema.ScheduledPost[]>;
 }
 
-export class DatabaseStorage implements IStorage {
+export class MemoryStorage implements IStorage {
+  private data: Map<string, any> = new Map();
   sessionStore: session.Store;
 
   constructor() {
-    this.sessionStore = new PostgresSessionStore({
-      pool,
-      createTableIfMissing: true,
+    this.sessionStore = new MemoryStore({
+      checkPeriod: 86400000 // prune expired entries every 24h
     });
   }
 
-  // User operations
   async getUser(id: number): Promise<schema.User | undefined> {
-    const [user] = await db.select().from(schema.users).where(eq(schema.users.id, id));
-    return user;
+    return this.data.get(`user-${id}`);
   }
 
   async getUserByUsername(username: string): Promise<schema.User | undefined> {
-    const [user] = await db.select().from(schema.users).where(eq(schema.users.username, username));
-    return user;
+    for (const [key, value] of this.data) {
+        if (value.username === username && key.startsWith('user-')) {
+            return value;
+        }
+    }
+    return undefined;
   }
 
   async createUser(user: schema.InsertUser): Promise<schema.User> {
-    const [newUser] = await db.insert(schema.users).values(user).returning();
-    return newUser;
+    const newId = this.generateId('user');
+    this.data.set(`user-${newId}`, { ...user, id: newId });
+    return { ...user, id: newId };
   }
 
-  // Customer operations
   async getCustomers(): Promise<schema.Customer[]> {
-    return await db.select().from(schema.customers);
+    return Array.from(this.data.values()).filter(item => item.type === 'customer');
   }
 
   async getCustomer(id: number): Promise<schema.Customer | undefined> {
-    const [customer] = await db.select().from(schema.customers).where(eq(schema.customers.id, id));
-    return customer;
+    return this.data.get(`customer-${id}`);
   }
 
   async createCustomer(customer: schema.InsertCustomer): Promise<schema.Customer> {
-    const [newCustomer] = await db.insert(schema.customers).values(customer).returning();
-    return newCustomer;
+    const newId = this.generateId('customer');
+    this.data.set(`customer-${newId}`, { ...customer, id: newId });
+    return { ...customer, id: newId };
   }
 
+
   async updateCustomer(id: number, customer: Partial<schema.InsertCustomer>): Promise<schema.Customer> {
-    const [updatedCustomer] = await db
-      .update(schema.customers)
-      .set(customer)
-      .where(eq(schema.customers.id, id))
-      .returning();
-    return updatedCustomer;
+    const existingCustomer = this.data.get(`customer-${id}`);
+    if (existingCustomer) {
+      const updatedCustomer = { ...existingCustomer, ...customer };
+      this.data.set(`customer-${id}`, updatedCustomer);
+      return updatedCustomer;
+    }
+    throw new Error("Customer not found");
   }
 
   async deleteCustomer(id: number): Promise<void> {
-    await db.delete(schema.customers).where(eq(schema.customers.id, id));
+    this.data.delete(`customer-${id}`);
   }
 
-  // Appointment operations
   async getAppointments(): Promise<schema.Appointment[]> {
-    return await db.select().from(schema.appointments);
+    return Array.from(this.data.values()).filter(item => item.type === 'appointment');
   }
 
   async getAppointment(id: number): Promise<schema.Appointment | undefined> {
-    const [appointment] = await db.select().from(schema.appointments).where(eq(schema.appointments.id, id));
-    return appointment;
+      return this.data.get(`appointment-${id}`);
   }
 
   async createAppointment(appointment: schema.InsertAppointment): Promise<schema.Appointment> {
-    const [newAppointment] = await db.insert(schema.appointments).values(appointment).returning();
-    return newAppointment;
+    const newId = this.generateId('appointment');
+    this.data.set(`appointment-${newId}`, { ...appointment, id: newId });
+    return { ...appointment, id: newId };
   }
 
   async updateAppointment(id: number, updates: Partial<schema.InsertAppointment>): Promise<schema.Appointment> {
-    const [updatedAppointment] = await db
-      .update(schema.appointments)
-      .set(updates)
-      .where(eq(schema.appointments.id, id))
-      .returning();
-    return updatedAppointment;
+    const existingAppointment = this.data.get(`appointment-${id}`);
+    if (existingAppointment) {
+      const updatedAppointment = { ...existingAppointment, ...updates };
+      this.data.set(`appointment-${id}`, updatedAppointment);
+      return updatedAppointment;
+    }
+    throw new Error("Appointment not found");
   }
 
   async deleteAppointment(id: number): Promise<void> {
-    await db.delete(schema.appointments).where(eq(schema.appointments.id, id));
+    this.data.delete(`appointment-${id}`);
   }
 
-  // Staff operations
   async getStaff(): Promise<schema.Staff[]> {
-    return await db.select().from(schema.staff);
+    return Array.from(this.data.values()).filter(item => item.type === 'staff');
   }
 
   async getStaffMember(id: number): Promise<schema.Staff | undefined> {
-    const [staff] = await db.select().from(schema.staff).where(eq(schema.staff.id, id));
-    return staff;
+    return this.data.get(`staff-${id}`);
   }
 
   async createStaff(staff: schema.InsertStaff): Promise<schema.Staff> {
-    const [newStaff] = await db.insert(schema.staff).values(staff).returning();
-    return newStaff;
+    const newId = this.generateId('staff');
+    this.data.set(`staff-${newId}`, { ...staff, id: newId });
+    return { ...staff, id: newId };
   }
 
   async updateStaff(id: number, updates: Partial<schema.InsertStaff>): Promise<schema.Staff> {
-    const [updatedStaff] = await db
-      .update(schema.staff)
-      .set(updates)
-      .where(eq(schema.staff.id, id))
-      .returning();
-    return updatedStaff;
+    const existingStaff = this.data.get(`staff-${id}`);
+    if (existingStaff) {
+      const updatedStaff = { ...existingStaff, ...updates };
+      this.data.set(`staff-${id}`, updatedStaff);
+      return updatedStaff;
+    }
+    throw new Error("Staff member not found");
   }
 
   async deleteStaff(id: number): Promise<void> {
-    await db.delete(schema.staff).where(eq(schema.staff.id, id));
+    this.data.delete(`staff-${id}`);
   }
 
-  // Settings operations
   async getSetting(key: string): Promise<schema.Setting | undefined> {
-    const [setting] = await db.select().from(schema.settings).where(eq(schema.settings.key, key));
-    return setting;
+    return this.data.get(`setting-${key}`);
   }
 
   async getSettings(): Promise<schema.Setting[]> {
-    return await db.select().from(schema.settings);
+    return Array.from(this.data.values()).filter(item => item.type === 'setting');
   }
 
   async setSetting(key: string, value: string): Promise<schema.Setting> {
-    const [setting] = await db
-      .insert(schema.settings)
-      .values({ key, value })
-      .onConflictDoUpdate({
-        target: schema.settings.key,
-        set: { value, updatedAt: new Date() },
-      })
-      .returning();
-    return setting;
+    this.data.set(`setting-${key}`, { key, value, type: 'setting' });
+    return { key, value, type: 'setting' };
   }
 
-  // Marketing Campaign operations
   async getCampaigns(): Promise<schema.MarketingCampaign[]> {
-    return await db.select().from(schema.marketingCampaigns);
+    return Array.from(this.data.values()).filter(item => item.type === 'campaign');
   }
 
   async getCampaign(id: number): Promise<schema.MarketingCampaign | undefined> {
-    const [campaign] = await db.select().from(schema.marketingCampaigns).where(eq(schema.marketingCampaigns.id, id));
-    return campaign;
+    return this.data.get(`campaign-${id}`);
   }
 
   async createCampaign(campaign: schema.InsertMarketingCampaign): Promise<schema.MarketingCampaign> {
-    const [newCampaign] = await db.insert(schema.marketingCampaigns).values(campaign).returning();
-    return newCampaign;
+    const newId = this.generateId('campaign');
+    this.data.set(`campaign-${newId}`, { ...campaign, id: newId, type: 'campaign' });
+    return { ...campaign, id: newId, type: 'campaign' };
   }
 
   async updateCampaign(id: number, updates: Partial<schema.InsertMarketingCampaign>): Promise<schema.MarketingCampaign> {
-    const [updatedCampaign] = await db
-      .update(schema.marketingCampaigns)
-      .set(updates)
-      .where(eq(schema.marketingCampaigns.id, id))
-      .returning();
-    return updatedCampaign;
+    const existingCampaign = this.data.get(`campaign-${id}`);
+    if (existingCampaign) {
+      const updatedCampaign = { ...existingCampaign, ...updates };
+      this.data.set(`campaign-${id}`, updatedCampaign);
+      return updatedCampaign;
+    }
+    throw new Error("Campaign not found");
   }
 
   async deleteCampaign(id: number): Promise<void> {
-    await db.delete(schema.marketingCampaigns).where(eq(schema.marketingCampaigns.id, id));
+    this.data.delete(`campaign-${id}`);
   }
 
-  // Promotion operations
   async getPromotions(): Promise<schema.Promotion[]> {
-    return await db.select().from(schema.promotions);
+    return Array.from(this.data.values()).filter(item => item.type === 'promotion');
   }
 
   async getPromotion(id: number): Promise<schema.Promotion | undefined> {
-    const [promotion] = await db.select().from(schema.promotions).where(eq(schema.promotions.id, id));
-    return promotion;
+    return this.data.get(`promotion-${id}`);
   }
 
   async createPromotion(promotion: schema.InsertPromotion): Promise<schema.Promotion> {
-    const [newPromotion] = await db.insert(schema.promotions).values(promotion).returning();
-    return newPromotion;
+    const newId = this.generateId('promotion');
+    this.data.set(`promotion-${newId}`, { ...promotion, id: newId, type: 'promotion' });
+    return { ...promotion, id: newId, type: 'promotion' };
   }
 
   async updatePromotion(id: number, updates: Partial<schema.InsertPromotion>): Promise<schema.Promotion> {
-    const [updatedPromotion] = await db
-      .update(schema.promotions)
-      .set(updates)
-      .where(eq(schema.promotions.id, id))
-      .returning();
-    return updatedPromotion;
+    const existingPromotion = this.data.get(`promotion-${id}`);
+    if (existingPromotion) {
+      const updatedPromotion = { ...existingPromotion, ...updates };
+      this.data.set(`promotion-${id}`, updatedPromotion);
+      return updatedPromotion;
+    }
+    throw new Error("Promotion not found");
   }
 
   async deletePromotion(id: number): Promise<void> {
-    await db.delete(schema.promotions).where(eq(schema.promotions.id, id));
+    this.data.delete(`promotion-${id}`);
   }
 
-  // Discount Code operations
   async getDiscountCodes(): Promise<schema.DiscountCode[]> {
-    return await db.select().from(schema.discountCodes);
+    return Array.from(this.data.values()).filter(item => item.type === 'discountCode');
   }
 
   async getDiscountCode(id: number): Promise<schema.DiscountCode | undefined> {
-    const [discountCode] = await db.select().from(schema.discountCodes).where(eq(schema.discountCodes.id, id));
-    return discountCode;
+    return this.data.get(`discountCode-${id}`);
   }
 
   async getDiscountCodeByCode(code: string): Promise<schema.DiscountCode | undefined> {
-    const [discountCode] = await db.select().from(schema.discountCodes).where(eq(schema.discountCodes.code, code));
-    return discountCode;
+    for (const [key, value] of this.data) {
+      if (value.code === code && key.startsWith('discountCode-')) {
+        return value;
+      }
+    }
+    return undefined;
   }
 
   async createDiscountCode(code: schema.InsertDiscountCode): Promise<schema.DiscountCode> {
-    const [newDiscountCode] = await db.insert(schema.discountCodes).values(code).returning();
-    return newDiscountCode;
+    const newId = this.generateId('discountCode');
+    this.data.set(`discountCode-${newId}`, { ...code, id: newId, type: 'discountCode' });
+    return { ...code, id: newId, type: 'discountCode' };
   }
 
   async updateDiscountCode(id: number, updates: Partial<schema.InsertDiscountCode>): Promise<schema.DiscountCode> {
-    const [updatedDiscountCode] = await db
-      .update(schema.discountCodes)
-      .set(updates)
-      .where(eq(schema.discountCodes.id, id))
-      .returning();
-    return updatedDiscountCode;
+    const existingDiscountCode = this.data.get(`discountCode-${id}`);
+    if (existingDiscountCode) {
+      const updatedDiscountCode = { ...existingDiscountCode, ...updates };
+      this.data.set(`discountCode-${id}`, updatedDiscountCode);
+      return updatedDiscountCode;
+    }
+    throw new Error("Discount code not found");
   }
 
   async deleteDiscountCode(id: number): Promise<void> {
-    await db.delete(schema.discountCodes).where(eq(schema.discountCodes.id, id));
+    this.data.delete(`discountCode-${id}`);
   }
 
-  // Social Media Account operations
   async getSocialMediaAccounts(): Promise<schema.SocialMediaAccount[]> {
-    return await db.select().from(schema.socialMediaAccounts);
+    return Array.from(this.data.values()).filter(item => item.type === 'socialMediaAccount');
   }
 
   async getSocialMediaAccount(id: number): Promise<schema.SocialMediaAccount | undefined> {
-    const [account] = await db.select().from(schema.socialMediaAccounts).where(eq(schema.socialMediaAccounts.id, id));
-    return account;
+    return this.data.get(`socialMediaAccount-${id}`);
   }
 
   async createSocialMediaAccount(account: schema.InsertSocialMediaAccount): Promise<schema.SocialMediaAccount> {
-    const [newAccount] = await db.insert(schema.socialMediaAccounts).values(account).returning();
-    return newAccount;
+    const newId = this.generateId('socialMediaAccount');
+    this.data.set(`socialMediaAccount-${newId}`, { ...account, id: newId, type: 'socialMediaAccount' });
+    return { ...account, id: newId, type: 'socialMediaAccount' };
   }
 
   async updateSocialMediaAccount(id: number, updates: Partial<schema.InsertSocialMediaAccount>): Promise<schema.SocialMediaAccount> {
-    const [updatedAccount] = await db
-      .update(schema.socialMediaAccounts)
-      .set(updates)
-      .where(eq(schema.socialMediaAccounts.id, id))
-      .returning();
-    return updatedAccount;
+    const existingSocialMediaAccount = this.data.get(`socialMediaAccount-${id}`);
+    if (existingSocialMediaAccount) {
+      const updatedSocialMediaAccount = { ...existingSocialMediaAccount, ...updates };
+      this.data.set(`socialMediaAccount-${id}`, updatedSocialMediaAccount);
+      return updatedSocialMediaAccount;
+    }
+    throw new Error("Social media account not found");
   }
 
   async deleteSocialMediaAccount(id: number): Promise<void> {
-    await db.delete(schema.socialMediaAccounts).where(eq(schema.socialMediaAccounts.id, id));
+    this.data.delete(`socialMediaAccount-${id}`);
   }
 
-  // Product Group operations
   async getProductGroups(): Promise<schema.ProductGroup[]> {
-    return await db.select().from(schema.productGroups);
+    return Array.from(this.data.values()).filter(item => item.type === 'productGroup');
   }
 
   async getProductGroup(id: number): Promise<schema.ProductGroup | undefined> {
-    const [group] = await db.select().from(schema.productGroups).where(eq(schema.productGroups.id, id));
-    return group;
+    return this.data.get(`productGroup-${id}`);
   }
 
   async createProductGroup(group: schema.InsertProductGroup): Promise<schema.ProductGroup> {
-    const [newGroup] = await db.insert(schema.productGroups).values(group).returning();
-    return newGroup;
+    const newId = this.generateId('productGroup');
+    this.data.set(`productGroup-${newId}`, { ...group, id: newId, type: 'productGroup' });
+    return { ...group, id: newId, type: 'productGroup' };
   }
 
   async updateProductGroup(id: number, updates: Partial<schema.InsertProductGroup>): Promise<schema.ProductGroup> {
-    const [updatedGroup] = await db
-      .update(schema.productGroups)
-      .set(updates)
-      .where(eq(schema.productGroups.id, id))
-      .returning();
-    return updatedGroup;
+    const existingProductGroup = this.data.get(`productGroup-${id}`);
+    if (existingProductGroup) {
+      const updatedProductGroup = { ...existingProductGroup, ...updates };
+      this.data.set(`productGroup-${id}`, updatedProductGroup);
+      return updatedProductGroup;
+    }
+    throw new Error("Product group not found");
   }
 
   async deleteProductGroup(id: number): Promise<void> {
-    await db.delete(schema.productGroups).where(eq(schema.productGroups.id, id));
+    this.data.delete(`productGroup-${id}`);
   }
 
-  // Product operations
   async getProducts(): Promise<schema.Product[]> {
-    return await db.select().from(schema.products);
+    return Array.from(this.data.values()).filter(item => item.type === 'product');
   }
 
   async getProduct(id: number): Promise<schema.Product | undefined> {
-    const [product] = await db.select().from(schema.products).where(eq(schema.products.id, id));
-    return product;
+    return this.data.get(`product-${id}`);
   }
 
   async getProductByBarcode(barcode: string): Promise<schema.Product | undefined> {
-    const [product] = await db.select().from(schema.products).where(eq(schema.products.barcode, barcode));
-    return product;
+    for (const [key, value] of this.data) {
+      if (value.barcode === barcode && key.startsWith('product-')) {
+        return value;
+      }
+    }
+    return undefined;
   }
 
   async createProduct(product: schema.InsertProduct): Promise<schema.Product> {
-    const productWithStringNumbers = {
-      ...product,
-      costPrice: product.costPrice.toString(),
-      sellingPrice: product.sellingPrice.toString(),
-      quantity: product.quantity.toString(),
-    };
-    const [newProduct] = await db.insert(schema.products).values(productWithStringNumbers).returning();
-    return newProduct;
+    const newId = this.generateId('product');
+    this.data.set(`product-${newId}`, { ...product, id: newId, type: 'product' });
+    return { ...product, id: newId, type: 'product' };
   }
 
   async updateProduct(id: number, updates: Partial<schema.InsertProduct>): Promise<schema.Product> {
-    const updatesWithStringNumbers = {
-      ...updates,
-      ...(updates.costPrice && { costPrice: updates.costPrice.toString() }),
-      ...(updates.sellingPrice && { sellingPrice: updates.sellingPrice.toString() }),
-      ...(updates.quantity && { quantity: updates.quantity.toString() }),
-    };
-    const [updatedProduct] = await db
-      .update(schema.products)
-      .set(updatesWithStringNumbers)
-      .where(eq(schema.products.id, id))
-      .returning();
-    return updatedProduct;
+    const existingProduct = this.data.get(`product-${id}`);
+    if (existingProduct) {
+      const updatedProduct = { ...existingProduct, ...updates };
+      this.data.set(`product-${id}`, updatedProduct);
+      return updatedProduct;
+    }
+    throw new Error("Product not found");
   }
 
   async deleteProduct(id: number): Promise<void> {
-    await db.delete(schema.products).where(eq(schema.products.id, id));
+    this.data.delete(`product-${id}`);
   }
 
-  // Invoice operations
   async getInvoices(): Promise<schema.Invoice[]> {
-    return await db.select().from(schema.invoices);
+    return Array.from(this.data.values()).filter(item => item.type === 'invoice');
   }
 
   async getInvoice(id: number): Promise<schema.Invoice | undefined> {
-    const [invoice] = await db.select().from(schema.invoices).where(eq(schema.invoices.id, id));
-    return invoice;
+    return this.data.get(`invoice-${id}`);
   }
 
   async createInvoice(invoice: schema.InsertInvoice): Promise<schema.Invoice> {
-    const invoiceWithStringNumbers = {
-      ...invoice,
-      subtotal: invoice.subtotal.toString(),
-      discount: invoice.discount.toString(),
-      discountAmount: invoice.discountAmount.toString(),
-      finalTotal: invoice.finalTotal.toString(),
-    };
-    const [newInvoice] = await db.insert(schema.invoices).values([invoiceWithStringNumbers]).returning();
-    return newInvoice;
+    const newId = this.generateId('invoice');
+    this.data.set(`invoice-${newId}`, { ...invoice, id: newId, type: 'invoice' });
+    return { ...invoice, id: newId, type: 'invoice' };
   }
 
-  // Store Settings operations
   async getStoreSettings(): Promise<schema.StoreSetting | undefined> {
-    const [settings] = await db.select().from(schema.storeSettings);
-    return settings;
+    return this.data.get('storeSettings');
   }
 
-  async updateStoreSettings(settings: {
-    storeName: string;
-    storeLogo?: string;
-  }): Promise<schema.StoreSetting> {
-    const [updatedSettings] = await db
-      .insert(schema.storeSettings)
-      .values({
-        ...settings,
-        id: 1,
-      })
-      .onConflictDoUpdate({
-        target: schema.storeSettings.id,
-        set: { ...settings, updatedAt: new Date() },
-      })
-      .returning();
-    return updatedSettings;
+  async updateStoreSettings(settings: { storeName: string; storeLogo?: string }): Promise<schema.StoreSetting> {
+    this.data.set('storeSettings', { ...settings, id: 1, type: 'storeSettings' });
+    return { ...settings, id: 1, type: 'storeSettings' };
   }
 
-  // Supplier operations
   async getSuppliers(): Promise<schema.Supplier[]> {
-    return await db.select().from(schema.suppliers);
+    return Array.from(this.data.values()).filter(item => item.type === 'supplier');
   }
   async getSupplier(id: number): Promise<schema.Supplier | undefined> {
-    const [supplier] = await db.select().from(schema.suppliers).where(eq(schema.suppliers.id, id));
-    return supplier;
-  }
-  async createSupplier(supplier: schema.InsertSupplier): Promise<schema.Supplier> {
-    const [newSupplier] = await db.insert(schema.suppliers).values(supplier).returning();
-    return newSupplier;
-  }
-  async updateSupplier(id: number, supplier: Partial<schema.InsertSupplier>): Promise<schema.Supplier> {
-    const [updatedSupplier] = await db
-      .update(schema.suppliers)
-      .set(supplier)
-      .where(eq(schema.suppliers.id, id))
-      .returning();
-    return updatedSupplier;
-  }
-  async deleteSupplier(id: number): Promise<void> {
-    await db.delete(schema.suppliers).where(eq(schema.suppliers.id, id));
+    return this.data.get(`supplier-${id}`);
   }
 
-  // Purchase operations
+  async createSupplier(supplier: schema.InsertSupplier): Promise<schema.Supplier> {
+    const newId = this.generateId('supplier');
+    this.data.set(`supplier-${newId}`, { ...supplier, id: newId, type: 'supplier' });
+    return { ...supplier, id: newId, type: 'supplier' };
+  }
+
+  async updateSupplier(id: number, supplier: Partial<schema.InsertSupplier>): Promise<schema.Supplier> {
+    const existingSupplier = this.data.get(`supplier-${id}`);
+    if (existingSupplier) {
+      const updatedSupplier = { ...existingSupplier, ...supplier };
+      this.data.set(`supplier-${id}`, updatedSupplier);
+      return updatedSupplier;
+    }
+    throw new Error("Supplier not found");
+  }
+
+  async deleteSupplier(id: number): Promise<void> {
+    this.data.delete(`supplier-${id}`);
+  }
+
   async getPurchaseOrders(): Promise<schema.PurchaseOrder[]> {
-    return await db.select().from(schema.purchaseOrders);
+    return Array.from(this.data.values()).filter(item => item.type === 'purchaseOrder');
   }
   async getPurchaseOrder(id: number): Promise<schema.PurchaseOrder | undefined> {
-    const [purchaseOrder] = await db.select().from(schema.purchaseOrders).where(eq(schema.purchaseOrders.id, id));
-    return purchaseOrder;
-  }
-  async createPurchaseOrder(purchase: schema.InsertPurchaseOrder): Promise<schema.PurchaseOrder> {
-    const purchaseWithStringNumbers = {
-      ...purchase,
-      totalAmount: purchase.totalAmount.toString(),
-      paid: purchase.paid.toString(),
-      remaining: purchase.remaining.toString(),
-    };
-    const [newPurchaseOrder] = await db.insert(schema.purchaseOrders).values([purchaseWithStringNumbers]).returning();
-    return newPurchaseOrder;
-  }
-  async updatePurchaseOrder(id: number, updates: Partial<schema.InsertPurchaseOrder>): Promise<schema.PurchaseOrder> {
-    const updatesWithStringNumbers = {
-      ...updates,
-      ...(updates.totalAmount && { totalAmount: updates.totalAmount.toString() }),
-      ...(updates.paid && { paid: updates.paid.toString() }),
-      ...(updates.remaining && { remaining: updates.remaining.toString() }),
-    };
-    const [updatedPurchaseOrder] = await db
-      .update(schema.purchaseOrders)
-      .set({ ...updatesWithStringNumbers })
-      .where(eq(schema.purchaseOrders.id, id))
-      .returning();
-    return updatedPurchaseOrder;
-  }
-  async deletePurchaseOrder(id: number): Promise<void> {
-    await db.delete(schema.purchaseOrders).where(eq(schema.purchaseOrders.id, id));
-  }
-  async getPurchaseItems(purchaseId: number): Promise<schema.PurchaseItem[]> {
-    return await db.select().from(schema.purchaseItems).where(eq(schema.purchaseItems.purchaseId, purchaseId));
+    return this.data.get(`purchaseOrder-${id}`);
   }
 
-  // Expense Category operations
+  async createPurchaseOrder(purchase: schema.InsertPurchaseOrder): Promise<schema.PurchaseOrder> {
+    const newId = this.generateId('purchaseOrder');
+    this.data.set(`purchaseOrder-${newId}`, { ...purchase, id: newId, type: 'purchaseOrder' });
+    return { ...purchase, id: newId, type: 'purchaseOrder' };
+  }
+
+  async updatePurchaseOrder(id: number, updates: Partial<schema.InsertPurchaseOrder>): Promise<schema.PurchaseOrder> {
+    const existingPurchaseOrder = this.data.get(`purchaseOrder-${id}`);
+    if (existingPurchaseOrder) {
+      const updatedPurchaseOrder = { ...existingPurchaseOrder, ...updates };
+      this.data.set(`purchaseOrder-${id}`, updatedPurchaseOrder);
+      return updatedPurchaseOrder;
+    }
+    throw new Error("Purchase order not found");
+  }
+
+  async deletePurchaseOrder(id: number): Promise<void> {
+    this.data.delete(`purchaseOrder-${id}`);
+  }
+
+  async getPurchaseItems(purchaseId: number): Promise<schema.PurchaseItem[]> {
+    return Array.from(this.data.values()).filter(item => item.purchaseId === purchaseId && item.type === 'purchaseItem');
+  }
+
+
   async getExpenseCategories(): Promise<schema.ExpenseCategory[]> {
-    return await db.select().from(schema.expenseCategories);
+    return Array.from(this.data.values()).filter(item => item.type === 'expenseCategory');
   }
   async getExpenseCategory(id: number): Promise<schema.ExpenseCategory | undefined> {
-    const [expenseCategory] = await db.select().from(schema.expenseCategories).where(eq(schema.expenseCategories.id, id));
-    return expenseCategory;
-  }
-  async createExpenseCategory(category: schema.InsertExpenseCategory): Promise<schema.ExpenseCategory> {
-    const [newExpenseCategory] = await db.insert(schema.expenseCategories).values(category).returning();
-    return newExpenseCategory;
-  }
-  async updateExpenseCategory(id: number, category: Partial<schema.InsertExpenseCategory>): Promise<schema.ExpenseCategory> {
-    const [updatedExpenseCategory] = await db
-      .update(schema.expenseCategories)
-      .set(category)
-      .where(eq(schema.expenseCategories.id, id))
-      .returning();
-    return updatedExpenseCategory;
-  }
-  async deleteExpenseCategory(id: number): Promise<void> {
-    await db.delete(schema.expenseCategories).where(eq(schema.expenseCategories.id, id));
+    return this.data.get(`expenseCategory-${id}`);
   }
 
-  // Expense operations
+  async createExpenseCategory(category: schema.InsertExpenseCategory): Promise<schema.ExpenseCategory> {
+    const newId = this.generateId('expenseCategory');
+    this.data.set(`expenseCategory-${newId}`, { ...category, id: newId, type: 'expenseCategory' });
+    return { ...category, id: newId, type: 'expenseCategory' };
+  }
+
+  async updateExpenseCategory(id: number, category: Partial<schema.InsertExpenseCategory>): Promise<schema.ExpenseCategory> {
+    const existingExpenseCategory = this.data.get(`expenseCategory-${id}`);
+    if (existingExpenseCategory) {
+      const updatedExpenseCategory = { ...existingExpenseCategory, ...category };
+      this.data.set(`expenseCategory-${id}`, updatedExpenseCategory);
+      return updatedExpenseCategory;
+    }
+    throw new Error("Expense category not found");
+  }
+
+  async deleteExpenseCategory(id: number): Promise<void> {
+    this.data.delete(`expenseCategory-${id}`);
+  }
+
   async getExpenses(): Promise<schema.Expense[]> {
-    return await db.select().from(schema.expenses);
+    return Array.from(this.data.values()).filter(item => item.type === 'expense');
   }
   async getExpense(id: number): Promise<schema.Expense | undefined> {
-    const [expense] = await db.select().from(schema.expenses).where(eq(schema.expenses.id, id));
-    return expense;
-  }
-  async createExpense(expense: schema.InsertExpense): Promise<schema.Expense> {
-    const expenseWithStringNumbers = {
-      ...expense,
-      amount: expense.amount.toString(),
-    };
-    const [newExpense] = await db.insert(schema.expenses).values([expenseWithStringNumbers]).returning();
-    return newExpense;
-  }
-  async updateExpense(id: number, updates: Partial<schema.InsertExpense>): Promise<schema.Expense> {
-    const updatesWithStringNumbers = {
-      ...updates,
-      ...(updates.amount && { amount: updates.amount.toString() }),
-    };
-    const [updatedExpense] = await db
-      .update(schema.expenses)
-      .set({ ...updatesWithStringNumbers })
-      .where(eq(schema.expenses.id, id))
-      .returning();
-    return updatedExpense;
-  }
-  async deleteExpense(id: number): Promise<void> {
-    await db.delete(schema.expenses).where(eq(schema.expenses.id, id));
+    return this.data.get(`expense-${id}`);
   }
 
-  // Database connection operations
+  async createExpense(expense: schema.InsertExpense): Promise<schema.Expense> {
+    const newId = this.generateId('expense');
+    this.data.set(`expense-${newId}`, { ...expense, id: newId, type: 'expense' });
+    return { ...expense, id: newId, type: 'expense' };
+  }
+
+  async updateExpense(id: number, updates: Partial<schema.InsertExpense>): Promise<schema.Expense> {
+    const existingExpense = this.data.get(`expense-${id}`);
+    if (existingExpense) {
+      const updatedExpense = { ...existingExpense, ...updates };
+      this.data.set(`expense-${id}`, updatedExpense);
+      return updatedExpense;
+    }
+    throw new Error("Expense not found");
+  }
+
+  async deleteExpense(id: number): Promise<void> {
+    this.data.delete(`expense-${id}`);
+  }
+
   async getDatabaseConnections(): Promise<schema.DatabaseConnection[]> {
-    return await db.select().from(schema.databaseConnections);
+    return Array.from(this.data.values()).filter(item => item.type === 'databaseConnection');
   }
 
   async getDatabaseConnection(id: number): Promise<schema.DatabaseConnection | undefined> {
-    const [connection] = await db.select().from(schema.databaseConnections).where(eq(schema.databaseConnections.id, id));
-    return connection;
+    return this.data.get(`databaseConnection-${id}`);
   }
 
   async createDatabaseConnection(connection: schema.InsertDatabaseConnection): Promise<schema.DatabaseConnection> {
-    const [newConnection] = await db.insert(schema.databaseConnections).values(connection).returning();
-    return newConnection;
+    const newId = this.generateId('databaseConnection');
+    this.data.set(`databaseConnection-${newId}`, { ...connection, id: newId, type: 'databaseConnection' });
+    return { ...connection, id: newId, type: 'databaseConnection' };
   }
 
   async updateDatabaseConnection(id: number, connection: Partial<schema.InsertDatabaseConnection>): Promise<schema.DatabaseConnection> {
-    const [updatedConnection] = await db
-      .update(schema.databaseConnections)
-      .set({ ...connection, updatedAt: new Date() })
-      .where(eq(schema.databaseConnections.id, id))
-      .returning();
-    return updatedConnection;
+    const existingDatabaseConnection = this.data.get(`databaseConnection-${id}`);
+    if (existingDatabaseConnection) {
+      const updatedDatabaseConnection = { ...existingDatabaseConnection, ...connection };
+      this.data.set(`databaseConnection-${id}`, updatedDatabaseConnection);
+      return updatedDatabaseConnection;
+    }
+    throw new Error("Database connection not found");
   }
 
   async deleteDatabaseConnection(id: number): Promise<void> {
-    await db.delete(schema.databaseConnections).where(eq(schema.databaseConnections.id, id));
+    this.data.delete(`databaseConnection-${id}`);
   }
 
   async testDatabaseConnection(connection: schema.InsertDatabaseConnection): Promise<boolean> {
-    // TODO: Implement actual connection testing logic based on the database type
-    return true;
+    return true; // Placeholder - No actual connection testing needed
   }
 
-  // Campaign Notification operations
   async getCampaignNotifications(campaignId: number): Promise<schema.CampaignNotification[]> {
-    return await db
-      .select()
-      .from(schema.campaignNotifications)
-      .where(eq(schema.campaignNotifications.campaignId, campaignId));
+    return Array.from(this.data.values()).filter(item => item.campaignId === campaignId && item.type === 'campaignNotification');
   }
 
   async createCampaignNotification(notification: schema.InsertCampaignNotification): Promise<schema.CampaignNotification> {
-    const [newNotification] = await db
-      .insert(schema.campaignNotifications)
-      .values(notification)
-      .returning();
-    return newNotification;
+    const newId = this.generateId('campaignNotification');
+    this.data.set(`campaignNotification-${newId}`, { ...notification, id: newId, type: 'campaignNotification' });
+    return { ...notification, id: newId, type: 'campaignNotification' };
   }
 
-  async updateCampaignNotification(
-    id: number,
-    notification: Partial<schema.InsertCampaignNotification>
-  ): Promise<schema.CampaignNotification> {
-    const [updatedNotification] = await db
-      .update(schema.campaignNotifications)
-      .set(notification)
-      .where(eq(schema.campaignNotifications.id, id))
-      .returning();
-    return updatedNotification;
+  async updateCampaignNotification(id: number, notification: Partial<schema.InsertCampaignNotification>): Promise<schema.CampaignNotification> {
+    const existingCampaignNotification = this.data.get(`campaignNotification-${id}`);
+    if (existingCampaignNotification) {
+      const updatedCampaignNotification = { ...existingCampaignNotification, ...notification };
+      this.data.set(`campaignNotification-${id}`, updatedCampaignNotification);
+      return updatedCampaignNotification;
+    }
+    throw new Error("Campaign notification not found");
   }
 
   async getPendingNotifications(): Promise<schema.CampaignNotification[]> {
-    return await db
-      .select()
-      .from(schema.campaignNotifications)
-      .where(eq(schema.campaignNotifications.status, 'pending'))
-      .orderBy(schema.campaignNotifications.scheduledFor);
+    return Array.from(this.data.values()).filter(item => item.status === 'pending' && item.type === 'campaignNotification');
   }
 
-  // Scheduled Post operations
   async getScheduledPosts(campaignId: number): Promise<schema.ScheduledPost[]> {
-    return await db
-      .select()
-      .from(schema.scheduledPosts)
-      .where(eq(schema.scheduledPosts.campaignId, campaignId));
+    return Array.from(this.data.values()).filter(item => item.campaignId === campaignId && item.type === 'scheduledPost');
   }
 
   async createScheduledPost(post: schema.InsertScheduledPost): Promise<schema.ScheduledPost> {
-    const [newPost] = await db
-      .insert(schema.scheduledPosts)
-      .values(post)
-      .returning();
-    return newPost;
+    const newId = this.generateId('scheduledPost');
+    this.data.set(`scheduledPost-${newId}`, { ...post, id: newId, type: 'scheduledPost' });
+    return { ...post, id: newId, type: 'scheduledPost' };
   }
 
-  async updateScheduledPost(
-    id: number,
-    post: Partial<schema.InsertScheduledPost>
-  ): Promise<schema.ScheduledPost> {
-    const [updatedPost] = await db
-      .update(schema.scheduledPosts)
-      .set(post)
-      .where(eq(schema.scheduledPosts.id, id))
-      .returning();
-    return updatedPost;
+  async updateScheduledPost(id: number, post: Partial<schema.InsertScheduledPost>): Promise<schema.ScheduledPost> {
+    const existingScheduledPost = this.data.get(`scheduledPost-${id}`);
+    if (existingScheduledPost) {
+      const updatedScheduledPost = { ...existingScheduledPost, ...post };
+      this.data.set(`scheduledPost-${id}`, updatedScheduledPost);
+      return updatedScheduledPost;
+    }
+    throw new Error("Scheduled post not found");
   }
 
   async getPendingScheduledPosts(): Promise<schema.ScheduledPost[]> {
-    return await db
-      .select()
-      .from(schema.scheduledPosts)
-      .where(eq(schema.scheduledPosts.status, 'pending'))
-      .orderBy(schema.scheduledPosts.scheduledTime);
+    return Array.from(this.data.values()).filter(item => item.status === 'pending' && item.type === 'scheduledPost');
+  }
+
+  private generateId(type: string): number {
+    let id = 1;
+    while (this.data.has(`${type}-${id}`)) {
+      id++;
+    }
+    return id;
   }
 }
 
-export const storage = new DatabaseStorage();
+export const storage = new MemoryStorage();

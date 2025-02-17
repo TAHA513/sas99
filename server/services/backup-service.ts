@@ -4,7 +4,7 @@ import path from 'path';
 import fs from 'fs/promises';
 import { createWriteStream } from 'fs';
 import archiver from 'archiver';
-import { db } from '../db';
+import { storage } from '../storage';
 
 const execAsync = promisify(exec);
 
@@ -33,14 +33,22 @@ export class BackupService {
 
     archive.pipe(output);
 
-    // Backup database
-    const dbBackupPath = path.join(this.backupDir, 'database.sql');
-    await this.backupDatabase(dbBackupPath);
-    archive.file(dbBackupPath, { name: 'database.sql' });
+    // Get all data from memory storage
+    const data = {
+      settings: await storage.getSettings(),
+      customers: await storage.getCustomers(),
+      products: await storage.getProducts(),
+      invoices: await storage.getInvoices(),
+      staff: await storage.getStaff(),
+      appointments: await storage.getAppointments(),
+      productGroups: await storage.getProductGroups(),
+      suppliers: await storage.getSuppliers(),
+      purchaseOrders: await storage.getPurchaseOrders(),
+      storeSettings: await storage.getStoreSettings(),
+    };
 
-    // Backup settings and configurations
-    const settings = await this.getSystemSettings();
-    archive.append(JSON.stringify(settings, null, 2), { name: 'settings.json' });
+    // Add data to archive
+    archive.append(JSON.stringify(data, null, 2), { name: 'data.json' });
 
     // Backup uploads directory if exists
     const uploadsDir = path.join(process.cwd(), 'uploads');
@@ -53,36 +61,7 @@ export class BackupService {
 
     await archive.finalize();
 
-    // Cleanup temporary files
-    await fs.unlink(dbBackupPath);
-
     return backupPath;
-  }
-
-  private async backupDatabase(outputPath: string) {
-    const { DATABASE_URL } = process.env;
-    if (!DATABASE_URL) throw new Error('DATABASE_URL not found');
-
-    const connectionParams = new URL(DATABASE_URL);
-
-    // Using pg_dump for backup
-    await execAsync(
-      `pg_dump -h ${connectionParams.hostname} -p ${connectionParams.port} -U ${
-        connectionParams.username
-      } -d ${connectionParams.pathname.slice(1)} -f ${outputPath}`,
-      {
-        env: {
-          PGPASSWORD: connectionParams.password,
-          ...process.env,
-        },
-      }
-    );
-  }
-
-  private async getSystemSettings() {
-    // Fetch all settings from database
-    const settings = await db.query.settings.findMany();
-    return settings;
   }
 
   async restoreBackup(backupPath: string): Promise<void> {
@@ -92,57 +71,38 @@ export class BackupService {
     // Extract backup
     await execAsync(`unzip -o ${backupPath} -d ${extractDir}`);
 
-    // Restore database
-    await this.restoreDatabase(path.join(extractDir, 'database.sql'));
-
-    // Restore settings
-    const settings = JSON.parse(
-      await fs.readFile(path.join(extractDir, 'settings.json'), 'utf-8')
-    );
-    await this.restoreSettings(settings);
-
-    // Restore uploads if exists
-    const uploadsBackup = path.join(extractDir, 'uploads');
-    const uploadsDir = path.join(process.cwd(), 'uploads');
     try {
-      await fs.access(uploadsBackup);
-      await fs.rm(uploadsDir, { recursive: true, force: true });
-      await fs.cp(uploadsBackup, uploadsDir, { recursive: true });
-    } catch {
-      // No uploads to restore
-    }
+      // Read and restore data
+      const data = JSON.parse(
+        await fs.readFile(path.join(extractDir, 'data.json'), 'utf-8')
+      );
 
-    // Cleanup
-    await fs.rm(extractDir, { recursive: true });
-  }
+      // Clear existing data
+      (storage as any).data.clear();
 
-  private async restoreDatabase(sqlFile: string) {
-    const { DATABASE_URL } = process.env;
-    if (!DATABASE_URL) throw new Error('DATABASE_URL not found');
-
-    const connectionParams = new URL(DATABASE_URL);
-
-    // Using psql for restore
-    await execAsync(
-      `psql -h ${connectionParams.hostname} -p ${connectionParams.port} -U ${
-        connectionParams.username
-      } -d ${connectionParams.pathname.slice(1)} -f ${sqlFile}`,
-      {
-        env: {
-          PGPASSWORD: connectionParams.password,
-          ...process.env,
-        },
+      // Restore data
+      for (const [key, value] of Object.entries(data)) {
+        if (Array.isArray(value)) {
+          for (const item of value) {
+            const prefix = key.slice(0, -1); // Remove 's' from plural
+            (storage as any).data.set(`${prefix}-${item.id}`, item);
+          }
+        }
       }
-    );
-  }
 
-  private async restoreSettings(settings: any[]) {
-    // Restore settings to database
-    for (const setting of settings) {
-      await db.insert(db.settings).values(setting).onConflictDoUpdate({
-        target: db.settings.id,
-        set: setting
-      });
+      // Restore uploads if exists
+      const uploadsBackup = path.join(extractDir, 'uploads');
+      const uploadsDir = path.join(process.cwd(), 'uploads');
+      try {
+        await fs.access(uploadsBackup);
+        await fs.rm(uploadsDir, { recursive: true, force: true });
+        await fs.cp(uploadsBackup, uploadsDir, { recursive: true });
+      } catch {
+        // No uploads to restore
+      }
+    } finally {
+      // Cleanup
+      await fs.rm(extractDir, { recursive: true });
     }
   }
 }
