@@ -7,7 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { MessageSquare, Upload, Plus, Building2, Settings as SettingsIcon, Paintbrush, Database, Download } from "lucide-react";
+import { MessageSquare, Upload, Plus, Building2, Settings as SettingsIcon, Paintbrush, Database, Download, Settings } from "lucide-react";
 import { SiGooglecalendar } from "react-icons/si";
 import { SiFacebook, SiInstagram, SiSnapchat } from "react-icons/si";
 import { Label } from "@/components/ui/label";
@@ -81,6 +81,20 @@ const currencySettingsSchema = z.object({
 });
 
 type CurrencySettings = z.infer<typeof currencySettingsSchema>;
+
+const passwordSchema = z.object({
+  currentPassword: z.string().min(1, "كلمة المرور الحالية مطلوبة"),
+  newPassword: z.string().min(8, "يجب أن تكون كلمة المرور 8 أحرف على الأقل"),
+  confirmPassword: z.string().min(1, "تأكيد كلمة المرور مطلوب"),
+}).refine((data) => data.newPassword === data.confirmPassword, {
+  message: "كلمة المرور الجديدة وتأكيدها غير متطابقين",
+  path: ["confirmPassword"],
+}).refine((data) => data.currentPassword === "12345678", {
+  message: "كلمة المرور الحالية غير صحيحة",
+  path: ["currentPassword"],
+});
+
+type PasswordFormData = z.infer<typeof passwordSchema>;
 
 const CustomCard = ({ className, ...props }: CardComponentProps) => (
   <CardComponent className={cn("w-full", className)} {...props} />
@@ -169,6 +183,15 @@ export default function SettingsPage() {
       defaultCurrency: 'USD',
       usdToIqdRate: 1460, // Default exchange rate
     }
+  });
+
+  const passwordForm = useForm<PasswordFormData>({
+    resolver: zodResolver(passwordSchema),
+    defaultValues: {
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: "",
+    },
   });
 
   // Mutations
@@ -267,6 +290,19 @@ export default function SettingsPage() {
       description: "تم تحديث إعدادات وسائل التواصل الاجتماعي بنجاح",
     });
   };
+
+  const onPasswordSubmit = (data: PasswordFormData) => {
+    // Update password in localStorage
+    localStorage.setItem("admin_password", data.newPassword);
+
+    toast({
+      title: "تم تغيير كلمة المرور",
+      description: "تم تحديث كلمة المرور بنجاح",
+    });
+
+    passwordForm.reset();
+  };
+
 
   const handleLogoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -555,6 +591,76 @@ export default function SettingsPage() {
                     </div>
                   </div>
                 </div>
+              </CardContent>
+            </CustomCard>
+
+            <CustomCard>
+              <CardHeader>
+                <div className="flex items-center space-x-4">
+                  <div className="flex gap-2">
+                    <Settings className="h-8 w-8 text-primary" />
+                  </div>
+                  <div>
+                    <CardTitle>تغيير كلمة المرور</CardTitle>
+                    <CardDescription>
+                      تحديث كلمة المرور الخاصة بك
+                    </CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <Form {...passwordForm}>
+                  <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="space-y-4">
+                    <FormField
+                      control={passwordForm.control}
+                      name="currentPassword"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>كلمة المرور الحالية</FormLabel>
+                          <FormControl>
+                            <Input type="password" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={passwordForm.control}
+                      name="newPassword"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>كلمة المرور الجديدة</FormLabel>
+                          <FormControl>
+                            <Input type="password" {...field} />
+                          </FormControl>
+                          <FormDescription>
+                            يجب أن تكون كلمة المرور 8 أحرف على الأقل
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={passwordForm.control}
+                      name="confirmPassword"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>تأكيد كلمة المرور الجديدة</FormLabel>
+                          <FormControl>
+                            <Input type="password" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <Button type="submit">
+                      تغيير كلمة المرور
+                    </Button>
+                  </form>
+                </Form>
               </CardContent>
             </CustomCard>
 
